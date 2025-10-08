@@ -1,1 +1,11 @@
-{"Version":1,"Hash":"sxGGdMh3XZjLH15uATWCcN2oGbVJiymu3/1e8tZJ3H8=","Source":"veilingklok","BasePath":"_content/veilingklok","Mode":"Default","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}
+{
+  "Version": 1,
+  "Hash": "bJDka/UbOejLKWoq74sNLOmWySbcjUwj8OSJGXVQKXo=",
+  "Source": "veilingklok",
+  "BasePath": "_content/veilingklok",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

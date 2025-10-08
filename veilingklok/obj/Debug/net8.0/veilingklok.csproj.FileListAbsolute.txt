@@ -383,11 +383,9 @@
 /home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/veilingklok.pdb
 /home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/veilingklok.genruntimeconfig.cache
 /home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/ref/veilingklok.dll
-/home/casper/RiderProjects/veiling_klok/veilingklok/bin/Debug/net8.0/veilingklok.staticwebassets.endpoints.json
-/home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/rpswa.dswa.cache.json
-/home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/rjimswa.dswa.cache.json
-/home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/rjsmrazor.dswa.cache.json
-/home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/rjsmcshtml.dswa.cache.json
-/home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/staticwebassets.build.json.cache
-/home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/staticwebassets.build.endpoints.json
-/home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/veilingk.585D7280.Up2Date
+/home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/staticwebassets/msbuild.veilingklok.Microsoft.AspNetCore.StaticWebAssets.props
+/home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/staticwebassets/msbuild.build.veilingklok.props
+/home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.veilingklok.props
+/home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.veilingklok.props
+/home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/staticwebassets.pack.json
+/home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/veilingklok.csproj.CopyComplete
