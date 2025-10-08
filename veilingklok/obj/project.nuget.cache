@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "znTyQG11/b8=",
+  "dgSpecHash": "w0G75XCxfgQ=",
   "success": true,
-  "projectFilePath": "/home/casper/RiderProjects/veilingklok/veilingklok/veilingklok.csproj",
+  "projectFilePath": "/home/casper/RiderProjects/veiling_klok/veilingklok/veilingklok.csproj",
   "expectedPackageFiles": [
     "/home/casper/.nuget/packages/azure.core/1.38.0/azure.core.1.38.0.nupkg.sha512",
     "/home/casper/.nuget/packages/azure.identity/1.11.4/azure.identity.1.11.4.nupkg.sha512",

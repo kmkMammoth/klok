@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/casper/RiderProjects/veilingklok/veilingklok/veilingklok.csproj": {}
+    "/home/casper/RiderProjects/veiling_klok/veilingklok/veilingklok.csproj": {}
   },
   "projects": {
-    "/home/casper/RiderProjects/veilingklok/veilingklok/veilingklok.csproj": {
+    "/home/casper/RiderProjects/veiling_klok/veilingklok/veilingklok.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/casper/RiderProjects/veilingklok/veilingklok/veilingklok.csproj",
+        "projectUniqueName": "/home/casper/RiderProjects/veiling_klok/veilingklok/veilingklok.csproj",
         "projectName": "veilingklok",
-        "projectPath": "/home/casper/RiderProjects/veilingklok/veilingklok/veilingklok.csproj",
+        "projectPath": "/home/casper/RiderProjects/veiling_klok/veilingklok/veilingklok.csproj",
         "packagesPath": "/home/casper/.nuget/packages/",
-        "outputPath": "/home/casper/RiderProjects/veilingklok/veilingklok/obj/",
+        "outputPath": "/home/casper/RiderProjects/veiling_klok/veilingklok/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/casper/.nuget/NuGet/NuGet.Config"
@@ -32,11 +32,6 @@
           "warnAsError": [
             "NU1605"
           ]
-        },
-        "restoreAuditProperties": {
-          "enableAudit": "true",
-          "auditLevel": "low",
-          "auditMode": "direct"
         }
       },
       "frameworks": {
@@ -85,7 +80,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/home/casper/.dotnet/sdk/8.0.414/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/8.0.120/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
