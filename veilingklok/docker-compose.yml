@@ -1,7 +1,7 @@
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2025-latest
-    container_name: sqlserver
+    container_name: sqlserver2
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "password123!"

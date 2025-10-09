@@ -389,3 +389,7 @@
 /home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.veilingklok.props
 /home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/staticwebassets.pack.json
 /home/casper/RiderProjects/veiling_klok/veilingklok/obj/Debug/net8.0/veilingklok.csproj.CopyComplete
+/home/casper/RiderProjects/veilingklok/veilingklok/obj/Debug/net8.0/veilingklok.sourcelink.json
+/home/casper/RiderProjects/veilingklok/veilingklok/bin/Debug/net8.0/veilingklok.staticwebassets.endpoints.json
+/home/casper/RiderProjects/veilingklok/veilingklok/obj/Debug/net8.0/staticwebassets.build.endpoints.json
+/home/casper/RiderProjects/veilingklok/veilingklok/obj/Debug/net8.0/staticwebassets/msbuild.veilingklok.Microsoft.AspNetCore.StaticWebAssetEndpoints.props

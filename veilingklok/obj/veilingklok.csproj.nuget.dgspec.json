@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/casper/RiderProjects/veiling_klok/veilingklok/veilingklok.csproj": {}
+    "/home/casper/RiderProjects/veilingklok/veilingklok/veilingklok.csproj": {}
   },
   "projects": {
-    "/home/casper/RiderProjects/veiling_klok/veilingklok/veilingklok.csproj": {
+    "/home/casper/RiderProjects/veilingklok/veilingklok/veilingklok.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/casper/RiderProjects/veiling_klok/veilingklok/veilingklok.csproj",
+        "projectUniqueName": "/home/casper/RiderProjects/veilingklok/veilingklok/veilingklok.csproj",
         "projectName": "veilingklok",
-        "projectPath": "/home/casper/RiderProjects/veiling_klok/veilingklok/veilingklok.csproj",
+        "projectPath": "/home/casper/RiderProjects/veilingklok/veilingklok/veilingklok.csproj",
         "packagesPath": "/home/casper/.nuget/packages/",
-        "outputPath": "/home/casper/RiderProjects/veiling_klok/veilingklok/obj/",
+        "outputPath": "/home/casper/RiderProjects/veilingklok/veilingklok/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/casper/.nuget/NuGet/NuGet.Config"
@@ -20,6 +20,7 @@
           "net8.0"
         ],
         "sources": {
+          "/usr/lib64/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -32,7 +33,13 @@
           "warnAsError": [
             "NU1605"
           ]
-        }
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
       },
       "frameworks": {
         "net8.0": {
@@ -72,6 +79,20 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.14, 8.0.14]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.linux-x64",
+              "version": "[8.0.14, 8.0.14]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.14, 8.0.14]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -80,7 +101,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/8.0.120/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/9.0.104/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
