@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("veilingklok")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+70c4770f6d5936e517cf77d541e10213d3133779")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e6e9935fb124200a480516cc02749c188cc7515c")]
 [assembly: System.Reflection.AssemblyProductAttribute("veilingklok")]
 [assembly: System.Reflection.AssemblyTitleAttribute("veilingklok")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
