@@ -153,7 +153,7 @@ function HomePage() {
       {/* Footer */}
       <footer className="footer">
         <div className="footer-container">
-          <p>&copy; 2025 KloK. All rights reserved.</p>
+          <p>&copy; 2025 Flora Veiling. All rights reserved.</p>
         </div>
       </footer>
     </div>
