@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Register.css';
+import authService from '../services/authService';
 
 function Register() {
   const [step, setStep] = useState('select'); // 'select', 'koper', 'aanvoerder', 'veilingmeester'
@@ -13,19 +14,84 @@ function Register() {
     bevestigWachtwoord: '',
     gebruikersnaam: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    // 清除错误信息
+    if (error) setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', step, formData);
-    // Hier kun je de registratie logica toevoegen
-    alert('Registratie succesvol!');
+    setError('');
+    
+    // 前端验证
+    if (formData.wachtwoord !== formData.bevestigWachtwoord) {
+      setError('Wachtwoorden komen niet overeen');
+      return;
+    }
+
+    if (formData.wachtwoord.length < 6) {
+      setError('Wachtwoord moet minimaal 6 tekens zijn');
+      return;
+    }
+
+    // 根据账户类型验证必填字段
+    if (step === 'veilingmeester') {
+      if (!formData.gebruikersnaam) {
+        setError('Gebruikersnaam is verplicht');
+        return;
+      }
+    } else {
+      if (!formData.email) {
+        setError('E-mailadres is verplicht');
+        return;
+      }
+      if (!formData.bedrijfsnaam) {
+        setError('Bedrijfsnaam is verplicht');
+        return;
+      }
+      if (!formData.kvkNummer) {
+        setError('KvK-nummer is verplicht');
+        return;
+      }
+      if (!formData.bedrijfsadres) {
+        setError('Bedrijfsadres is verplicht');
+        return;
+      }
+      if (step === 'aanvoerder' && !formData.iban) {
+        setError('IBAN is verplicht voor Aanvoerders');
+        return;
+      }
+    }
+
+    setLoading(true);
+
+    try {
+      const registerData = {
+        accountType: step.charAt(0).toUpperCase() + step.slice(1), // Koper, Aanvoerder, Veilingmeester
+        ...formData
+      };
+
+      const result = await authService.register(registerData);
+
+      if (result.success) {
+        alert('Registratie succesvol! U wordt doorgestuurd naar de homepage.');
+        window.location.href = '#home';
+      } else {
+        setError(result.message || 'Registratie mislukt. Probeer het opnieuw.');
+      }
+    } catch (err) {
+      console.error('Registratiefout:', err);
+      setError('Er is een fout opgetreden. Probeer het later opnieuw.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const selectAccountType = (type) => {
@@ -165,7 +231,12 @@ function Register() {
                   required
                 />
               </div>
-              <button type="submit" className="submit-btn">Aanmelden</button>
+              
+              {error && <div className="error-message">{error}</div>}
+              
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? 'Bezig met aanmelden...' : 'Aanmelden'}
+              </button>
             </form>
 
             <div className="register-footer">
@@ -244,7 +315,12 @@ function Register() {
                   required
                 />
               </div>
-              <button type="submit" className="submit-btn">Aanmelden</button>
+              
+              {error && <div className="error-message">{error}</div>}
+              
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? 'Bezig met aanmelden...' : 'Aanmelden'}
+              </button>
             </form>
 
             <div className="register-footer">
@@ -291,7 +367,12 @@ function Register() {
                   required
                 />
               </div>
-              <button type="submit" className="submit-btn">Aanmelden</button>
+              
+              {error && <div className="error-message">{error}</div>}
+              
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? 'Bezig met aanmelden...' : 'Aanmelden'}
+              </button>
             </form>
 
             <div className="register-footer">

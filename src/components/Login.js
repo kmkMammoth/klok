@@ -1,26 +1,56 @@
 import React, { useState } from 'react';
 import './Login.css';
+import authService from '../services/authService';
 
 function Login() {
   const [formData, setFormData] = useState({
-    email: '',
+    emailOrUsername: '',
     password: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    // 清除错误信息
+    if (error) setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login submitted:', formData);
-    // 这里添加登录逻辑
-    alert('Inloggen succesvol!');
-    // 登录成功后跳转到首页
-    window.location.href = '#home';
+    setError('');
+
+    // 前端验证
+    if (!formData.emailOrUsername) {
+      setError('E-mailadres of gebruikersnaam is verplicht');
+      return;
+    }
+
+    if (!formData.password) {
+      setError('Wachtwoord is verplicht');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const result = await authService.login(formData.emailOrUsername, formData.password);
+
+      if (result.success) {
+        alert('Inloggen succesvol! U wordt doorgestuurd naar de homepage.');
+        window.location.href = '#home';
+      } else {
+        setError(result.message || 'Inloggen mislukt. Controleer uw gegevens.');
+      }
+    } catch (err) {
+      console.error('Inlogfout:', err);
+      setError('Er is een fout opgetreden. Probeer het later opnieuw.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -65,13 +95,13 @@ function Login() {
           
           <form className="login-form" onSubmit={handleSubmit}>
             <div className="form-group">
-              <label htmlFor="email">E-mailadres of Gebruikersnaam</label>
+              <label htmlFor="emailOrUsername">E-mailadres of Gebruikersnaam</label>
               <input
-                id="email"
+                id="emailOrUsername"
                 type="text"
-                name="email"
+                name="emailOrUsername"
                 placeholder="Voer uw e-mail of gebruikersnaam in"
-                value={formData.email}
+                value={formData.emailOrUsername}
                 onChange={handleInputChange}
                 required
               />
@@ -100,8 +130,10 @@ function Login() {
               </a>
             </div>
 
-            <button type="submit" className="login-btn">
-              Inloggen
+            {error && <div className="error-message">{error}</div>}
+
+            <button type="submit" className="login-btn" disabled={loading}>
+              {loading ? 'Bezig met inloggen...' : 'Inloggen'}
             </button>
           </form>
 
