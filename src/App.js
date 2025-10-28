@@ -1,43 +1,99 @@
-import { useState, useEffect } from 'react';
-import logo from './logo.svg';
+import { useState } from 'react';
 import './App.css';
+import Overview from './pages/VeilingmeesterOverview';
+import CreateAuction from './pages/VeilingmeesterCreateAuction';
 
 function App() {
-    const [seconds, setSeconds] = useState(0);
+    const [currentPage, setCurrentPage] = useState('overview');
+    const [auctions, setAuctions] = useState([
+        {
+            id: 1,
+            name: 'Rode Rozen Boeket',
+            maxTime: 120,
+            currentPrice: 45.00,
+            startingPrice: 100.00,
+            startTime: Date.now()
+        },
+        {
+            id: 2,
+            name: 'Tulpen Mix',
+            maxTime: 90,
+            currentPrice: 28.50,
+            startingPrice: 60.00,
+            startTime: Date.now()
+        }
+    ]);
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setSeconds(prev => prev + 1);
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, []);
-
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
+    const addAuction = (auction) => {
+        const newAuction = {
+            ...auction,
+            id: auctions.length + 1,
+            currentPrice: auction.startingPrice,
+            startTime: Date.now()
+        };
+        setAuctions([...auctions, newAuction]);
+    };
 
     return (
         <div className="App">
-            <header className="App-header">
-                <img src={logo} className="App-logo" alt="logo" />
-                <p>
-                    Time wasted:{' '}
-                    <span id="time-wasted">
-            {minutes > 0
-                ? `${minutes} minuut${minutes > 1 ? 'en' : ''} en ${remainingSeconds} seconde${remainingSeconds !== 1 ? 'n' : ''}`
-                : `${remainingSeconds} seconde${remainingSeconds !== 1 ? 'n' : ''}`}
-          </span>
-                </p>
-                <a
-                    style={{ textDecoration: 'none', color: 'white' }}
-                    className="App-link"
-                    href="https://google.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    Zoek het zelf uit!
-                </a>
-            </header>
+            <nav className="navbar">
+                <div className="nav-container">
+                    <h1 className="logo">Flora Veiling</h1>
+                    <ul className="nav-menu">
+                        <li>
+                            <a 
+                                href="#overview" 
+                                className={currentPage === 'overview' ? 'active' : ''}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setCurrentPage('overview');
+                                }}
+                            >
+                                Overzicht
+                            </a>
+                        </li>
+                        <li>
+                            <a 
+                                href="#create" 
+                                className={currentPage === 'create' ? 'active' : ''}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setCurrentPage('create');
+                                }}
+                            >
+                                Veiling Aanmaken
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href="#app"
+                                className={currentPage === 'app' ? 'active' : ''}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setCurrentPage('app');
+                                }}
+                            >
+                                Welkom, Veilingmeester!
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div className="content">
+                {currentPage === 'overview' && (
+                    <>
+                        <div className="welcome-section">
+                            <h2>Welkom bij Flora Veiling</h2>
+                            <p>Ontdek de beste bloemen tegen de beste prijzen via ons unieke aflopende veiling systeem</p>
+                        </div>
+                        <Overview auctions={auctions} setAuctions={setAuctions} />
+                    </>
+                )}
+                {currentPage === 'create' && (
+                    <CreateAuction auctions={auctions} addAuction={addAuction} />
+                )}
+            </div>
         </div>
     );
 }
