@@ -37,7 +37,7 @@ function Navbar() {
                 <circle cx="50" cy="50" r="8" fill="#3F4F45" stroke="white" strokeWidth="2"/>
               </svg>
             </div>
-            <span className="logo-text">KloK</span>
+            <span className="logo-text">FLora Veiling</span>
           </div>
 
           {/* Navigation Links */}

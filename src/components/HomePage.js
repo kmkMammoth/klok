@@ -12,7 +12,7 @@ function HomePage() {
         <div className="hero-container">
           <div className="hero-content">
             <h1 className="hero-title">
-              Welkom bij<span className="gradient-text">KloK</span>
+              Welkom bij <span className="gradient-text"> Flora Veiling </span>
             </h1>
             <p className="hero-subtitle">
               Professioneel bloemenveiling platform, met wereldwijde premium bloemen, realtime bieden, transparante transacties
@@ -71,7 +71,7 @@ function HomePage() {
       {/* Features Section */}
       <section className="features-section">
         <div className="features-container">
-          <h2 className="section-title">Waarom kiezen voor KloK</h2>
+          <h2 className="section-title">Waarom kiezen voor Flora Veiling</h2>
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon" style={{background: 'linear-gradient(135deg, #EB4511 0%, #FF6B3D 100%)'}}>

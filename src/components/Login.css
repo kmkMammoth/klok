@@ -44,9 +44,9 @@
 
 /* Header */
 .login-header {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(224, 221, 207, 0.95) 20%);
+  background: linear-gradient(135deg, #49393B 0%, #5A4B4D 100%);
   padding: 20px 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   position: relative;
   z-index: 100;
   backdrop-filter: blur(15px);
