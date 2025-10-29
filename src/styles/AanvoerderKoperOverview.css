@@ -1,0 +1,108 @@
+body {
+  margin: 0;
+  font-family: "Inter", Arial, sans-serif;
+  background-color: #e7e0d0;
+  color: #2d2d2d;
+}
+
+.koper-overview-container {
+  max-width: 1800px;
+  margin: 3rem auto;
+  background-color: #f9f7f2;
+  border-radius: 12px;
+  padding: 2rem 3rem;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.koper-overview-container h1 {
+  text-align: center;
+  font-size: 1.8rem;
+  color: #4b2e2b;
+  margin-bottom: 2rem;
+}
+
+/* Productinformatie */
+.product-info {
+  background-color: #597568;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  border: 2px solid #4b2e2b30;
+}
+
+.info-row-single {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.info-row-single label {
+  font-weight: 600;
+  color: white;
+  margin-right: 0.2rem;
+  padding: 9px;
+}
+
+.info-row-single input {
+  background-color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.95rem;
+  width: 130px;
+  color: #333;
+}
+
+/* Koperinformatie */
+.koper-info h2 {
+  color: #ffffff;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.koper-info {
+  background-color: #597568;
+  padding: 1.5rem;
+  border-radius: 10px;
+}
+
+.koper-box {
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.koper-box p {
+  margin: 0.4rem 0;
+  line-height: 1.4;
+}
+
+.koper-box strong {
+  color: #4b2e2b;
+}
+
+.koper-box a {
+  color: #ff6b00;
+  text-decoration: none;
+}
+
+.koper-box a:hover {
+  text-decoration: underline;
+}
+
+/* Responsief */
+@media (max-width: 850px) {
+  .info-row-single {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .info-row-single input {
+    width: 100%;
+  }
+}

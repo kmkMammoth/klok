@@ -2,6 +2,7 @@ import { useState } from 'react';
 import './App.css';
 import Overview from './pages/VeilingmeesterOverview';
 import CreateAuction from './pages/VeilingmeesterCreateAuction';
+import KoperOverview from './pages/AanvoerderKoperOverview';
 
 function App() {
     const [currentPage, setCurrentPage] = useState('overview');
@@ -65,6 +66,18 @@ function App() {
                             </a>
                         </li>
                         <li>
+                            <a 
+                                href="#kOverview" 
+                                className={currentPage === 'kOverview' ? 'active' : ''}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setCurrentPage('kOverview');
+                                }}
+                            >
+                                Koper Overview
+                            </a>
+                        </li>
+                        <li>
                             <a
                                 href="#app"
                                 className={currentPage === 'app' ? 'active' : ''}
@@ -93,6 +106,10 @@ function App() {
                 {currentPage === 'create' && (
                     <CreateAuction auctions={auctions} addAuction={addAuction} />
                 )}
+                {currentPage === 'kOverview' && (
+                    <KoperOverview />
+                )}
+
             </div>
         </div>
     );
