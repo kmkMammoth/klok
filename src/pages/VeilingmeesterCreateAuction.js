@@ -35,7 +35,7 @@ function CreateAuction({ auctions, addAuction }) {
     return (
         <div className="create-container">
             <div className="create-header">
-                <h2>Veilingen Beheren</h2>
+                <h2>Veilingen</h2>
                 <button
                     className="add-button"
                     onClick={() => setShowForm(!showForm)}

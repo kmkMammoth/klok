@@ -2,12 +2,11 @@ import { useState } from 'react';
 import './App.css';
 import Overview from './pages/VeilingmeesterOverview';
 import CreateAuction from './pages/VeilingmeesterCreateAuction';
-import KoperOverview from './pages/AanvoerderKoperOverview';
-import Productenoverzicht from './pages/Productenoverzicht';
+import ProductOverzicht from './pages/AanvoerderProductenoverzicht';
+import KoperOverview from "./pages/AanvoerderKoperOverview";
 import { NavLink, Routes, Route } from 'react-router-dom';
 
 function App() {
-    const [currentPage, setCurrentPage] = useState('overview');
     const [auctions, setAuctions] = useState([
         {
             id: 1,
@@ -50,37 +49,22 @@ function App() {
                         </li>
                         <li>
                             <NavLink to="/create" className={({isActive}) => isActive ? 'active' : ''}>
-                                Veiling Aanmaken
+                                Veiling Aanmaken (VM)
                             </NavLink>
                         </li>
                         <li>
-                            <a 
-                                href="#kOverview" 
-                                className={currentPage === 'kOverview' ? 'active' : ''}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    setCurrentPage('kOverview');
-                                }}
-                            >
-                                Koper Overview
-                            </a>
+                            <NavLink to="/kOverview" className={({isActive}) => isActive ? 'active' : ''}>
+                                Koper Overview (A)
+                            </NavLink>
                         </li>
                         <li>
-                            <a
-                                href="#app"
-                                className={currentPage === 'app' ? 'active' : ''}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    setCurrentPage('app');
-                                }}
-                            >
                             <NavLink to="/producten" className={({isActive}) => isActive ? 'active' : ''}>
-                                Productenoverzicht
+                                Productenoverzicht (A)
                             </NavLink>
                         </li>
                         <li>
                             <NavLink to="/app" className={({isActive}) => isActive ? 'active' : ''}>
-                                Welkom, Veilingmeester!
+                                Welkom, (actor) !
                             </NavLink>
                         </li>
                     </ul>
@@ -99,7 +83,8 @@ function App() {
                         </>
                     } />
                     <Route path="/create" element={<CreateAuction auctions={auctions} addAuction={addAuction} />} />
-                    <Route path="/producten" element={<Productenoverzicht auctions={auctions} />} />
+                    <Route path="/producten" element={<ProductOverzicht auctions={auctions} />} />
+                    <Route path="/kOverview" element={<KoperOverview auctions={auctions} />} />
                     <Route path="/app" element={<div><h2>Welkom, Veilingmeester!</h2></div>} />
                 </Routes>
             </div>

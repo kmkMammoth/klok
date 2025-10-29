@@ -19,10 +19,8 @@ function KoperOverview() {
 
   return (
     <>
-      <title>Productenoverzicht – Koperinformatie</title>
-
       <main className="koper-overview-container">
-        <h1>Productenoverzicht</h1>
+        <h1>Klant overzicht</h1>
 
         <section aria-labelledby="product-info-heading" className="product-info">
           <div className="info-row-single">

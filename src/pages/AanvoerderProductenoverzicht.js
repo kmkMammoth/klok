@@ -27,7 +27,6 @@ function Productenoverzicht({ auctions }) {
 
     return (
         <div className="producten-container">
-            <div className="aanvoerder-greeting">Hallo, aanvoerder.</div>
             <h1 className="producten-title">Productenoverzicht</h1>
 
             <div className="producten-table">
