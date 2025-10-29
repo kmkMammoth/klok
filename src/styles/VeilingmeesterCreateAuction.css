@@ -1,0 +1,244 @@
+﻿
+.create-container {
+    width: 100%;
+}
+
+.create-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.create-header h2 {
+    color: #463239;
+    font-size: 1.8rem;
+}
+
+.add-button {
+    background-color: #EB4511;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(235, 69, 17, 0.3);
+}
+
+.add-button:hover {
+    background-color: #d63d0f;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(235, 69, 17, 0.4);
+}
+
+.plus-icon {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.form-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(70, 50, 57, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.form-modal {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #E0DDCF;
+}
+
+.form-header h3 {
+    color: #463239;
+    font-size: 1.5rem;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #49393B;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.close-button:hover {
+    background-color: #E0DDCF;
+    color: #EB4511;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    color: #463239;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #E0DDCF;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #587D71;
+    box-shadow: 0 0 0 3px rgba(88, 125, 113, 0.1);
+}
+
+.submit-button {
+    width: 100%;
+    background-color: #587D71;
+    color: white;
+    border: none;
+    padding: 1.2rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.submit-button:hover {
+    background-color: #496d62;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(88, 125, 113, 0.3);
+}
+
+.auctions-list-create {
+    margin-top: 3rem;
+}
+
+.auctions-list-create h3 {
+    color: #463239;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.auctions-grid-create {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.auction-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.auction-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.auction-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #E0DDCF;
+}
+
+.auction-item-header h4 {
+    color: #463239;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.auction-badge {
+    background-color: #EB4511;
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.auction-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.detail-small {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-small span {
+    color: #49393B;
+    font-size: 0.95rem;
+}
+
+.detail-small strong {
+    color: #587D71;
+    font-size: 1rem;
+}
