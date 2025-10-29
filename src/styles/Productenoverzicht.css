@@ -1,0 +1,86 @@
+.producten-container {
+    width: 100%;
+    padding: 2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.aanvoerder-greeting {
+    align-self: flex-start;
+    color: #463239;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.producten-title {
+    color: #463239;
+    font-size: 2.4rem;
+    margin: 0.5rem 0 1.5rem 0;
+}
+
+.producten-table {
+    width: 100%;
+    max-width: 1000px;
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    border: 2px solid #E0DDCF;
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.5fr 1fr 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 2px solid #E0DDCF;
+    font-weight: 700;
+    color: #49393B;
+}
+
+.table-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.5fr 1fr 1fr;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    align-items: center;
+    border-bottom: 1px solid #E0DDCF;
+    transition: background 0.15s ease, transform 0.15s ease;
+    cursor: pointer;
+}
+
+.table-row:hover {
+    background: linear-gradient(90deg, rgba(88,125,113,0.03), rgba(235,69,17,0.02));
+    transform: translateY(-2px);
+}
+
+.cell {
+    color: #463239;
+    font-weight: 600;
+}
+
+.status-cell.sold {
+    color: #EB4511;
+}
+
+.status-cell.unsold {
+    color: #587D71;
+}
+
+.product-cell {
+    font-size: 1.05rem;
+    color: #463239;
+}
+
+@media (max-width: 720px) {
+    .table-header, .table-row {
+        grid-template-columns: 1fr 1fr;
+        grid-auto-rows: auto;
+    }
+
+    .table-header div:nth-child(n+3), .table-row .cell:nth-child(n+3) {
+        display: none;
+    }
+}
