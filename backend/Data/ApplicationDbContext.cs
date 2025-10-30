@@ -22,9 +22,12 @@ namespace FloraVeiling.Data
                 // 设置表名
                 entity.ToTable("Users");
 
-                // 配置索引
-                entity.HasIndex(e => e.Email).IsUnique();
-                entity.HasIndex(e => e.Gebruikersnaam);
+                // 配置索引 - Email 不再设置唯一索引，因为 Veilingmeester 可能没有真实 Email
+                entity.HasIndex(e => e.Email); // 移除 .IsUnique()
+                // Gebruikersnaam 使用条件唯一索引（只对非 NULL 值唯一）
+                entity.HasIndex(e => e.Gebruikersnaam)
+                    .IsUnique()
+                    .HasFilter("\"Gebruikersnaam\" IS NOT NULL"); // SQLite 语法的过滤条件
                 entity.HasIndex(e => e.KvkNummer);
 
                 // 配置默认值（SQLite 兼容）

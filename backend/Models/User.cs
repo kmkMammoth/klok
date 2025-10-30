@@ -23,10 +23,9 @@ namespace FloraVeiling.Models
         [StringLength(300)]
         public string? Bedrijfsadres { get; set; }
 
-        [Required]
         [EmailAddress]
         [StringLength(200)]
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         [StringLength(100)]
         public string? Iban { get; set; }

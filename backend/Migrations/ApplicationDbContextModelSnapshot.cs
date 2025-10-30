@@ -42,7 +42,6 @@ namespace FloraVeiling.Migrations
                         .HasDefaultValueSql("datetime('now')");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
@@ -78,10 +77,11 @@ namespace FloraVeiling.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email")
-                        .IsUnique();
+                    b.HasIndex("Email");
 
-                    b.HasIndex("Gebruikersnaam");
+                    b.HasIndex("Gebruikersnaam")
+                        .IsUnique()
+                        .HasFilter("\"Gebruikersnaam\" IS NOT NULL");
 
                     b.HasIndex("KvkNummer");
 

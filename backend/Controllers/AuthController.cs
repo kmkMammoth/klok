@@ -33,7 +33,7 @@ namespace FloraVeiling.Controllers
                 return BadRequest(new AuthResponseDto
                 {
                     Success = false,
-                    Message = "Invalid registration data",
+                    Message = "Ongeldige registratiegegevens",
                 });
             }
 
@@ -58,7 +58,7 @@ namespace FloraVeiling.Controllers
                 return StatusCode(500, new AuthResponseDto
                 {
                     Success = false,
-                    Message = "An error occurred during registration"
+                    Message = "Er is een fout opgetreden tijdens de registratie"
                 });
             }
         }
@@ -77,7 +77,7 @@ namespace FloraVeiling.Controllers
                 return BadRequest(new AuthResponseDto
                 {
                     Success = false,
-                    Message = "Invalid login data"
+                    Message = "Ongeldige inloggegevens"
                 });
             }
 
@@ -102,7 +102,7 @@ namespace FloraVeiling.Controllers
                 return StatusCode(500, new AuthResponseDto
                 {
                     Success = false,
-                    Message = "An error occurred during login"
+                    Message = "Er is een fout opgetreden tijdens het inloggen"
                 });
             }
         }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FloraVeiling.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class FinalFix : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,7 +21,7 @@ namespace FloraVeiling.Migrations
                     Bedrijfsnaam = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     KvkNummer = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
                     Bedrijfsadres = table.Column<string>(type: "TEXT", maxLength: 300, nullable: true),
-                    Email = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     Iban = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
                     PasswordHash = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
                     Gebruikersnaam = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
@@ -38,13 +38,14 @@ namespace FloraVeiling.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",
                 table: "Users",
-                column: "Email",
-                unique: true);
+                column: "Email");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Gebruikersnaam",
                 table: "Users",
-                column: "Gebruikersnaam");
+                column: "Gebruikersnaam",
+                unique: true,
+                filter: "\"Gebruikersnaam\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_KvkNummer",

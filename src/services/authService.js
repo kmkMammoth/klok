@@ -9,6 +9,8 @@ class AuthService {
    */
   async register(registerData) {
     try {
+      console.log('📤 发送注册请求:', registerData);
+      
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -16,19 +18,43 @@ class AuthService {
         },
         body: JSON.stringify({
           accountType: registerData.accountType,
-          email: registerData.email,
-          bedrijfsnaam: registerData.bedrijfsnaam,
-          kvkNummer: registerData.kvkNummer,
-          bedrijfsadres: registerData.bedrijfsadres,
-          iban: registerData.iban,
-          gebruikersnaam: registerData.gebruikersnaam,
+          email: registerData.email || '',
+          bedrijfsnaam: registerData.bedrijfsnaam || '',
+          kvkNummer: registerData.kvkNummer || '',
+          bedrijfsadres: registerData.bedrijfsadres || '',
+          iban: registerData.iban || '',
+          gebruikersnaam: registerData.gebruikersnaam || '',
           wachtwoord: registerData.wachtwoord,
           bevestigWachtwoord: registerData.bevestigWachtwoord,
         }),
       });
 
-      const data = await response.json();
+      console.log('📥 响应状态:', response.status, response.statusText);
+      
+      // 无论状态码如何，都尝试解析 JSON
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('JSON解析失败:', jsonError);
+        return {
+          success: false,
+          message: 'Server antwoordde met ongeldig formaat',
+        };
+      }
 
+      console.log('📥 响应数据:', data);
+
+      // 检查HTTP状态码
+      if (!response.ok) {
+        // HTTP 错误（4xx, 5xx）
+        return {
+          success: false,
+          message: data.message || `HTTP Fout ${response.status}: ${response.statusText}`,
+        };
+      }
+
+      // 检查业务逻辑是否成功
       if (data.success) {
         // 保存 token 到 localStorage
         this.setToken(data.token);
@@ -38,7 +64,7 @@ class AuthService {
 
       return data;
     } catch (error) {
-      console.error('Registratiefout:', error);
+      console.error(' Registratiefout:', error);
       return {
         success: false,
         message: 'Netwerkfout, probeer het later opnieuw',
@@ -54,19 +80,45 @@ class AuthService {
    */
   async login(emailOrUsername, password) {
     try {
+      console.log('📤 发送登录请求:', { emailOrUsername });
+      
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          emailOrUsername,
-          password,
+          emailOrUsername: emailOrUsername,
+          password: password,
         }),
       });
 
-      const data = await response.json();
+      console.log('📥 响应状态:', response.status, response.statusText);
 
+      // 无论状态码如何，都尝试解析 JSON
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('JSON解析失败:', jsonError);
+        return {
+          success: false,
+          message: 'Server antwoordde met ongeldig formaat',
+        };
+      }
+
+      console.log('📥 响应数据:', data);
+
+      // 检查HTTP状态码
+      if (!response.ok) {
+        // HTTP 错误（4xx, 5xx）
+        return {
+          success: false,
+          message: data.message || `HTTP Fout ${response.status}: ${response.statusText}`,
+        };
+      }
+
+      // 检查业务逻辑是否成功
       if (data.success) {
         // 保存 token 到 localStorage
         this.setToken(data.token);
@@ -76,7 +128,7 @@ class AuthService {
 
       return data;
     } catch (error) {
-      console.error('Inlogfout:', error);
+      console.error(' Inlogfout:', error);
       return {
         success: false,
         message: 'Netwerkfout, probeer het later opnieuw',

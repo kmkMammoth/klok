@@ -37,7 +37,7 @@ namespace FloraVeiling.Services
                     return new AuthResponseDto
                     {
                         Success = false,
-                        Message = "Invalid account type"
+                        Message = "Ongeldig accounttype"
                     };
                 }
 
@@ -49,7 +49,7 @@ namespace FloraVeiling.Services
                         return new AuthResponseDto
                         {
                             Success = false,
-                            Message = "Gebruikersnaam is required for Veilingmeester"
+                            Message = "Gebruikersnaam is verplicht voor Veilingmeester"
                         };
                     }
 
@@ -59,7 +59,7 @@ namespace FloraVeiling.Services
                         return new AuthResponseDto
                         {
                             Success = false,
-                            Message = "Gebruikersnaam already exists"
+                            Message = "Deze gebruikersnaam is al in gebruik"
                         };
                     }
                 }
@@ -70,7 +70,7 @@ namespace FloraVeiling.Services
                         return new AuthResponseDto
                         {
                             Success = false,
-                            Message = "Email is required"
+                            Message = "E-mailadres is verplicht"
                         };
                     }
 
@@ -80,7 +80,7 @@ namespace FloraVeiling.Services
                         return new AuthResponseDto
                         {
                             Success = false,
-                            Message = "Email already exists"
+                            Message = "Dit e-mailadres is al geregistreerd"
                         };
                     }
                 }
@@ -92,13 +92,17 @@ namespace FloraVeiling.Services
                     Bedrijfsnaam = registerDto.Bedrijfsnaam,
                     KvkNummer = registerDto.KvkNummer,
                     Bedrijfsadres = registerDto.Bedrijfsadres,
-                    Email = registerDto.Email ?? string.Empty,
+                    // 为 Veilingmeester 生成一个内部 Email 格式，避免 NULL 值问题
+                    Email = registerDto.Email ?? (registerDto.AccountType == "Veilingmeester" 
+                        ? $"{registerDto.Gebruikersnaam}@internal.veilingmeester" 
+                        : string.Empty),
                     Iban = registerDto.Iban,
-                    Gebruikersnaam = registerDto.Gebruikersnaam,
+                    // 只有 Veilingmeester 才设置 Gebruikersnaam，其他类型为 NULL（避免 UNIQUE 约束冲突）
+                    Gebruikersnaam = registerDto.AccountType == "Veilingmeester" ? registerDto.Gebruikersnaam : null,
                     PasswordHash = HashPassword(registerDto.Wachtwoord),
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true,
-                    IsEmailVerified = false
+                    IsEmailVerified = registerDto.AccountType != "Veilingmeester" // Veilingmeester 不需要验证邮箱
                 };
 
                 _context.Users.Add(user);
@@ -110,7 +114,7 @@ namespace FloraVeiling.Services
                 return new AuthResponseDto
                 {
                     Success = true,
-                    Message = "Registration successful",
+                    Message = "Registratie succesvol",
                     Token = token,
                     User = new UserInfoDto
                     {
@@ -128,7 +132,7 @@ namespace FloraVeiling.Services
                 return new AuthResponseDto
                 {
                     Success = false,
-                    Message = $"Registration failed: {ex.Message}"
+                    Message = $"Registratie mislukt: {ex.Message}"
                 };
             }
         }
@@ -148,7 +152,7 @@ namespace FloraVeiling.Services
                     return new AuthResponseDto
                     {
                         Success = false,
-                        Message = "Invalid credentials"
+                        Message = "Onjuiste inloggegevens"
                     };
                 }
 
@@ -158,7 +162,7 @@ namespace FloraVeiling.Services
                     return new AuthResponseDto
                     {
                         Success = false,
-                        Message = "Invalid credentials"
+                        Message = "Onjuiste inloggegevens"
                     };
                 }
 
@@ -168,7 +172,7 @@ namespace FloraVeiling.Services
                     return new AuthResponseDto
                     {
                         Success = false,
-                        Message = "Account is deactivated"
+                        Message = "Account is gedeactiveerd"
                     };
                 }
 
@@ -178,7 +182,7 @@ namespace FloraVeiling.Services
                 return new AuthResponseDto
                 {
                     Success = true,
-                    Message = "Login successful",
+                    Message = "Inloggen succesvol",
                     Token = token,
                     User = new UserInfoDto
                     {
@@ -196,7 +200,7 @@ namespace FloraVeiling.Services
                 return new AuthResponseDto
                 {
                     Success = false,
-                    Message = $"Login failed: {ex.Message}"
+                    Message = $"Inloggen mislukt: {ex.Message}"
                 };
             }
         }
@@ -210,10 +214,10 @@ namespace FloraVeiling.Services
         public string GenerateJwtToken(int userId, string accountType)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings["SecretKey"];
+            var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey is not configured");
             var issuer = jwtSettings["Issuer"];
             var audience = jwtSettings["Audience"];
-            var expiryMinutes = int.Parse(jwtSettings["ExpiryMinutes"]);
+            var expiryMinutes = int.Parse(jwtSettings["ExpiryMinutes"] ?? "1440");
 
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
