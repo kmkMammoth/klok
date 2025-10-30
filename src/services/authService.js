@@ -11,22 +11,34 @@ class AuthService {
     try {
       console.log('📤 发送注册请求:', registerData);
       
+      // 构建请求体，只包含非空字段
+      const requestBody = {
+        accountType: registerData.accountType,
+        wachtwoord: registerData.wachtwoord,
+        bevestigWachtwoord: registerData.bevestigWachtwoord,
+      };
+
+      // 根据账户类型添加相应字段
+      if (registerData.accountType === 'Veilingmeester') {
+        // Veilingmeester 只需要用户名
+        if (registerData.gebruikersnaam) {
+          requestBody.gebruikersnaam = registerData.gebruikersnaam;
+        }
+      } else {
+        // Koper 和 Aanvoerder 需要完整的业务信息
+        if (registerData.email) requestBody.email = registerData.email;
+        if (registerData.bedrijfsnaam) requestBody.bedrijfsnaam = registerData.bedrijfsnaam;
+        if (registerData.kvkNummer) requestBody.kvkNummer = registerData.kvkNummer;
+        if (registerData.bedrijfsadres) requestBody.bedrijfsadres = registerData.bedrijfsadres;
+        if (registerData.iban) requestBody.iban = registerData.iban;
+      }
+
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          accountType: registerData.accountType,
-          email: registerData.email || '',
-          bedrijfsnaam: registerData.bedrijfsnaam || '',
-          kvkNummer: registerData.kvkNummer || '',
-          bedrijfsadres: registerData.bedrijfsadres || '',
-          iban: registerData.iban || '',
-          gebruikersnaam: registerData.gebruikersnaam || '',
-          wachtwoord: registerData.wachtwoord,
-          bevestigWachtwoord: registerData.bevestigWachtwoord,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       console.log('📥 响应状态:', response.status, response.statusText);
