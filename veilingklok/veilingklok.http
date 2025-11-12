@@ -1,0 +1,6 @@
+@veilingklok_HostAddress = http://localhost:5102
+
+GET {{veilingklok_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
