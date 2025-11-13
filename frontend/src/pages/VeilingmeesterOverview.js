@@ -94,7 +94,7 @@ function Overview({ auctions, setAuctions }) {
         <div className="overview-container">
             <div className="auctions-grid">
                 <div className="auctions-list">
-                    <h2>Huidige Veilingen</h2>
+                    <h1>Huidige Veilingen</h1>
                     {localAuctions.length === 0 ? (
                         <div className="no-auctions">Geen veilingen gevonden.</div>
                     ) : (
@@ -121,8 +121,11 @@ function Overview({ auctions, setAuctions }) {
 
                 {selectedAuction && (
                     <div className="auction-details">
-                        <h2>Veiling Details</h2>
+                        <h2 id="auction-details-heading">Veilingdetails</h2>
                         <div className="details-content">
+                            <div aria-labelledby="auction-details-heading" className="sr-only">
+                                Details voor {selectedAuction.name} (Veiling ID: {selectedAuction.id})
+                            </div>
                             <div className="detail-row">
                                 <span className="detail-label">Veilingnaam:</span>
                                 <span className="detail-value">{selectedAuction.name}</span>
