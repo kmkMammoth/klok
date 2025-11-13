@@ -13,35 +13,37 @@ public class VeilingContext : DbContext
     public DbSet<Koper> Kopers { get; set; }
     public DbSet<Veilingmeester> Veilingmeesters { get; set; }
     public DbSet<Product> Producten { get; set; }
-    public DbSet<Veiling> Veilingen { get; set; }
+    public DbSet<Veiling> Veilingen { get; set; }   
     public DbSet<Bod> Biedingen { get; set; }
 
-    public string DbPath { get; }
-
-    public VeilingContext()
+    public VeilingContext(DbContextOptions<VeilingContext> options) : base(options)
     {
-        var folder = Environment.SpecialFolder.LocalApplicationData;
-        var path = Environment.GetFolderPath(folder);
-        DbPath = System.IO.Path.Join(path, "veilingapp.db");
-    }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseSqlServer("Server=127.0.0.1;Database=VeilingApp;User Id=sa;Password=password123!;TrustServerCertificate=True;");
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Stel alle tabellen in op enkelvoudige namen
+        modelBuilder.Entity<Gebruiker>().ToTable("Gebruiker");
+        modelBuilder.Entity<Aanvoerder>().ToTable("Aanvoerder");
+        modelBuilder.Entity<Koper>().ToTable("Koper");
+        modelBuilder.Entity<Veilingmeester>().ToTable("Veilingmeester");
+        modelBuilder.Entity<Product>().ToTable("Product");
+        modelBuilder.Entity<Veiling>().ToTable("Veiling");
+        modelBuilder.Entity<Bod>().ToTable("Bod");
+
+        // Check constraint voor Veiling status
         modelBuilder.Entity<Veiling>()
             .HasCheckConstraint("CK_Veiling_Status", "status IN ('Idle', 'Ongoing', 'Done')");
         
+        // Alle foreign keys op restrict zetten
         foreach (var foreignKey in modelBuilder.Model
-                     .GetEntityTypes()
-                     .SelectMany(e => e.GetForeignKeys()))
+                    .GetEntityTypes()
+                    .SelectMany(e => e.GetForeignKeys()))
         {
             foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
         }
     }
+
 }
 
 public class Gebruiker
@@ -200,6 +202,12 @@ public class Veiling
     [Required, MaxLength(50)]
     [Column("status")]
     public string Status { get; set; }
+
+    [Column("minimumprijs", TypeName = "decimal(10,2)")]
+    public decimal? MinimumPrijs { get; set; }
+
+    [Column("veilingnaam", TypeName = "nvarchar(255)")]
+    public string VeilingNaam { get; set; }
 
     public Veilingmeester Veilingmeester { get; set; }
     public Product Product { get; set; }

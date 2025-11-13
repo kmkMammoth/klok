@@ -4,16 +4,41 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Services
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddControllers();
 
+// ✅ Voeg CORS toe zodat frontend requests kan doen
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
 
-builder.Services.AddDbContext<VeilingContext>();
-
-
+// Voeg VeilingContext toe
+builder.Services.AddDbContext<VeilingContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
 
 var app = builder.Build();
+// Test Connection
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<VeilingContext>();
+    try
+    {
+        var canConnect = await context.Database.CanConnectAsync();
+        Console.WriteLine($"Database connection successful: {canConnect}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Database connection failed: {ex.Message}");
+    }
+}
 
 // Pipeline
 if (app.Environment.IsDevelopment())
@@ -22,9 +47,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// ✅ Voeg CORS middleware toe VOOR UseHttpsRedirection
+app.UseCors("AllowFrontend");
 
-// Use attribute-routed controllers (e.g., LoginController)
+app.UseHttpsRedirection();
 app.MapControllers();
+
+// Test database connectie
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<VeilingContext>();
+    var canConnect = await context.Database.CanConnectAsync();
+    Console.WriteLine($"Database connection successful: {canConnect}");
+}
 
 app.Run();

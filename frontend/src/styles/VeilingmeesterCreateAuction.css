@@ -148,6 +148,23 @@
     box-shadow: 0 0 0 3px rgba(88, 125, 113, 0.1);
 }
 
+.form-group input:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.error-message {
+    background-color: #fee;
+    border: 2px solid #eb4511;
+    color: #c33;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
 .submit-button {
     width: 100%;
     background-color: #587D71;
@@ -210,6 +227,13 @@
     color: #463239;
     font-size: 1.2rem;
     font-weight: 600;
+    flex: 1;
+}
+
+.auction-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .auction-badge {
@@ -219,6 +243,28 @@
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
+}
+
+.delete-button {
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-button:hover {
+    background-color: #fee;
+    transform: scale(1.1);
+}
+
+.delete-button:active {
+    transform: scale(0.95);
 }
 
 .auction-item-details {
