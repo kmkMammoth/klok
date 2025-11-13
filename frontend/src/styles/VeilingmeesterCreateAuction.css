@@ -10,7 +10,7 @@
     margin-bottom: 2rem;
 }
 
-.create-header h2 {
+.create-header h1 {
     color: #463239;
     font-size: 1.8rem;
 }
@@ -95,7 +95,7 @@
     border-bottom: 2px solid #E0DDCF;
 }
 
-.form-header h3 {
+.form-header h2 {
     color: #463239;
     font-size: 1.5rem;
 }
@@ -172,7 +172,7 @@
     margin-top: 3rem;
 }
 
-.auctions-list-create h3 {
+.auctions-list-create h2 {
     color: #463239;
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
@@ -206,7 +206,7 @@
     border-bottom: 2px solid #E0DDCF;
 }
 
-.auction-item-header h4 {
+.auction-item-header h3 {
     color: #463239;
     font-size: 1.2rem;
     font-weight: 600;
