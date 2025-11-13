@@ -22,6 +22,50 @@ namespace veilingklok.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("veilingklok.Aanvoerder", b =>
+                {
+                    b.Property<int>("AanvoerderId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("aanvoerder_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AanvoerderId"));
+
+                    b.Property<string>("Adres")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("adres");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("email");
+
+                    b.Property<int>("GebruikerId")
+                        .HasColumnType("int")
+                        .HasColumnName("gebruiker_id");
+
+                    b.Property<string>("IbanHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("iban_hash");
+
+                    b.Property<string>("KvkNummer")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)")
+                        .HasColumnName("kvk_nummer");
+
+                    b.HasKey("AanvoerderId");
+
+                    b.HasIndex("GebruikerId");
+
+                    b.ToTable("Aanvoerders", (string)null);
+                });
+
             modelBuilder.Entity("veilingklok.Bod", b =>
                 {
                     b.Property<int>("BodId")
@@ -53,7 +97,7 @@ namespace veilingklok.Migrations
 
                     b.HasIndex("VeilingId");
 
-                    b.ToTable("Biedingen");
+                    b.ToTable("Biedingen", (string)null);
                 });
 
             modelBuilder.Entity("veilingklok.Gebruiker", b =>
@@ -65,28 +109,65 @@ namespace veilingklok.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("GebruikerId"));
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(21)
-                        .HasColumnType("nvarchar(21)");
-
                     b.Property<string>("Naam")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("naam");
 
                     b.Property<string>("WachtwoordHash")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("wachtwoord_hash");
 
                     b.HasKey("GebruikerId");
 
-                    b.ToTable("Gebruikers");
+                    b.ToTable("Gebruikers", (string)null);
+                });
 
-                    b.HasDiscriminator().HasValue("Gebruiker");
+            modelBuilder.Entity("veilingklok.Koper", b =>
+                {
+                    b.Property<int>("KoperId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("koper_id");
 
-                    b.UseTphMappingStrategy();
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("KoperId"));
+
+                    b.Property<string>("Adres")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("adres");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("email");
+
+                    b.Property<int>("GebruikerId")
+                        .HasColumnType("int")
+                        .HasColumnName("gebruiker_id");
+
+                    b.Property<string>("IbanHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("iban_hash");
+
+                    b.Property<string>("KvkNummer")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)")
+                        .HasColumnName("kvk_nummer");
+
+                    b.HasKey("KoperId");
+
+                    b.HasIndex("GebruikerId");
+
+                    b.ToTable("Kopers", (string)null);
                 });
 
             modelBuilder.Entity("veilingklok.Product", b =>
@@ -140,7 +221,7 @@ namespace veilingklok.Migrations
 
                     b.HasIndex("AanvoerderId");
 
-                    b.ToTable("Producten");
+                    b.ToTable("Producten", (string)null);
                 });
 
             modelBuilder.Entity("veilingklok.Veiling", b =>
@@ -180,86 +261,41 @@ namespace veilingklok.Migrations
 
                     b.HasIndex("VeilingmeesterId");
 
-                    b.ToTable("Veilingen", t =>
+                    b.ToTable("Veilingen", null, t =>
                         {
                             t.HasCheckConstraint("CK_Veiling_Status", "status IN ('Idle', 'Ongoing', 'Done')");
                         });
                 });
 
-            modelBuilder.Entity("veilingklok.Aanvoerder", b =>
-                {
-                    b.HasBaseType("veilingklok.Gebruiker");
-
-                    b.Property<string>("Adres")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("IbanHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("KvkNummer")
-                        .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
-
-                    b.HasDiscriminator().HasValue("Aanvoerder");
-                });
-
-            modelBuilder.Entity("veilingklok.Koper", b =>
-                {
-                    b.HasBaseType("veilingklok.Gebruiker");
-
-                    b.Property<string>("Adres")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("IbanHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("KvkNummer")
-                        .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
-
-                    b.ToTable("Gebruikers", t =>
-                        {
-                            t.Property("Adres")
-                                .HasColumnName("Koper_Adres");
-
-                            t.Property("Email")
-                                .HasColumnName("Koper_Email");
-
-                            t.Property("IbanHash")
-                                .HasColumnName("Koper_IbanHash");
-
-                            t.Property("KvkNummer")
-                                .HasColumnName("Koper_KvkNummer");
-                        });
-
-                    b.HasDiscriminator().HasValue("Koper");
-                });
-
             modelBuilder.Entity("veilingklok.Veilingmeester", b =>
                 {
-                    b.HasBaseType("veilingklok.Gebruiker");
+                    b.Property<int>("VeilingmeesterId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("veilingmeester_id");
 
-                    b.HasDiscriminator().HasValue("Veilingmeester");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VeilingmeesterId"));
+
+                    b.Property<int>("GebruikerId")
+                        .HasColumnType("int")
+                        .HasColumnName("gebruiker_id");
+
+                    b.HasKey("VeilingmeesterId");
+
+                    b.HasIndex("GebruikerId");
+
+                    b.ToTable("Veilingmeesters", (string)null);
+                });
+
+            modelBuilder.Entity("veilingklok.Aanvoerder", b =>
+                {
+                    b.HasOne("veilingklok.Gebruiker", "Gebruiker")
+                        .WithMany("Aanvoerders")
+                        .HasForeignKey("GebruikerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Gebruiker");
                 });
 
             modelBuilder.Entity("veilingklok.Bod", b =>
@@ -279,6 +315,17 @@ namespace veilingklok.Migrations
                     b.Navigation("Koper");
 
                     b.Navigation("Veiling");
+                });
+
+            modelBuilder.Entity("veilingklok.Koper", b =>
+                {
+                    b.HasOne("veilingklok.Gebruiker", "Gebruiker")
+                        .WithMany("Kopers")
+                        .HasForeignKey("GebruikerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Gebruiker");
                 });
 
             modelBuilder.Entity("veilingklok.Product", b =>
@@ -310,14 +357,15 @@ namespace veilingklok.Migrations
                     b.Navigation("Veilingmeester");
                 });
 
-            modelBuilder.Entity("veilingklok.Product", b =>
+            modelBuilder.Entity("veilingklok.Veilingmeester", b =>
                 {
-                    b.Navigation("Veilingen");
-                });
+                    b.HasOne("veilingklok.Gebruiker", "Gebruiker")
+                        .WithMany("Veilingmeesters")
+                        .HasForeignKey("GebruikerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-            modelBuilder.Entity("veilingklok.Veiling", b =>
-                {
-                    b.Navigation("Biedingen");
+                    b.Navigation("Gebruiker");
                 });
 
             modelBuilder.Entity("veilingklok.Aanvoerder", b =>
@@ -325,7 +373,26 @@ namespace veilingklok.Migrations
                     b.Navigation("Producten");
                 });
 
+            modelBuilder.Entity("veilingklok.Gebruiker", b =>
+                {
+                    b.Navigation("Aanvoerders");
+
+                    b.Navigation("Kopers");
+
+                    b.Navigation("Veilingmeesters");
+                });
+
             modelBuilder.Entity("veilingklok.Koper", b =>
+                {
+                    b.Navigation("Biedingen");
+                });
+
+            modelBuilder.Entity("veilingklok.Product", b =>
+                {
+                    b.Navigation("Veilingen");
+                });
+
+            modelBuilder.Entity("veilingklok.Veiling", b =>
                 {
                     b.Navigation("Biedingen");
                 });
