@@ -39,12 +39,21 @@ function Overview({ auctions, setAuctions }) {
         <div className="overview-container">
             <div className="auctions-grid">
                 <div className="auctions-list">
-                    <h2>Huidige Veilingen</h2>
+                    <h1>Huidige Veilingen</h1>
                     {auctions.map(auction => (
                         <div 
                             key={auction.id}
+                            tabIndex="0"
                             className={`auction-card ${selectedAuction?.id === auction.id ? 'selected' : ''}`}
                             onClick={() => setSelectedAuction(auction)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    setSelectedAuction(auction);
+                                }
+                            }}
+                            role="button"
+                            aria-pressed={selectedAuction?.id === auction.id}
                         >
                             <div className="auction-card-header">
                                 <h3>{auction.name}</h3>
@@ -62,8 +71,11 @@ function Overview({ auctions, setAuctions }) {
 
                 {selectedAuction && (
                     <div className="auction-details">
-                        <h2>Veiling Details</h2>
+                        <h2 id="auction-details-heading">Veilingdetails</h2>
                         <div className="details-content">
+                            <div aria-labelledby="auction-details-heading" className="sr-only">
+                                Details voor {selectedAuction.name} (Veiling ID: {selectedAuction.id})
+                            </div>
                             <div className="detail-row">
                                 <span className="detail-label">Veilingnaam:</span>
                                 <span className="detail-value">{selectedAuction.name}</span>

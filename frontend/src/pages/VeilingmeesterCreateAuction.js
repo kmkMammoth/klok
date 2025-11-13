@@ -35,7 +35,7 @@ function CreateAuction({ auctions, addAuction }) {
     return (
         <div className="create-container">
             <div className="create-header">
-                <h2>Veilingen</h2>
+                <h1>Veilingen</h1>
                 <button
                     className="add-button"
                     onClick={() => setShowForm(!showForm)}
@@ -49,7 +49,7 @@ function CreateAuction({ auctions, addAuction }) {
                 <div className="form-overlay">
                     <div className="form-modal">
                         <div className="form-header">
-                            <h3>Nieuwe Veiling Aanmaken</h3>
+                            <h2>Nieuwe Veiling Aanmaken</h2>
                             <button
                                 className="close-button"
                                 onClick={() => setShowForm(false)}
@@ -100,12 +100,12 @@ function CreateAuction({ auctions, addAuction }) {
             )}
 
             <div className="auctions-list-create">
-                <h3>Huidige Veilingen</h3>
+                <h2>Huidige Veilingen</h2>
                 <div className="auctions-grid-create">
                     {auctions.map(auction => (
                         <div key={auction.id} className="auction-item">
                             <div className="auction-item-header">
-                                <h4>{auction.name}</h4>
+                                <h3>{auction.name}</h3>
                                 <span className="auction-badge">#{auction.id}</span>
                             </div>
                             <div className="auction-item-details">
