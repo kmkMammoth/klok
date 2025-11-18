@@ -169,8 +169,8 @@ public class Product
     [Column("kloklocatie")]
     public string KlokLocatie { get; set; }
 
-    [MaxLength(255)]
-    [Column("afbeelding")]
+    [MaxLength(-1)]
+    [Column("afbeelding", TypeName = "nvarchar(max)")]
     public string Afbeelding { get; set; }
 
     public Aanvoerder Aanvoerder { get; set; }
