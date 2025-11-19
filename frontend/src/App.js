@@ -4,6 +4,7 @@ import Overview from './pages/VeilingmeesterOverview';
 import CreateAuction from './pages/VeilingmeesterCreateAuction';
 import ProductOverzicht from './pages/AanvoerderProductenoverzicht';
 import KoperOverview from "./pages/AanvoerderKoperOverview";
+import AanvoerderCreateProduct from './pages/AanvoerderCreateProduct';
 import { NavLink, Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -63,6 +64,11 @@ function App() {
                             </NavLink>
                         </li>
                         <li>
+                            <NavLink to="/create-product" className={({isActive}) => isActive ? 'active' : ''}>
+                                Product Aanmaken (A)
+                            </NavLink>
+                        </li>
+                        <li>
                             <NavLink to="/app" className={({isActive}) => isActive ? 'active' : ''}>
                                 Welkom, (actor) !
                             </NavLink>
@@ -83,6 +89,7 @@ function App() {
                         </>
                     } />
                     <Route path="/create" element={<CreateAuction auctions={auctions} addAuction={addAuction} />} />
+                    <Route path="/create-product" element={<AanvoerderCreateProduct />} />
                     <Route path="/producten" element={<ProductOverzicht auctions={auctions} />} />
                     <Route path="/kOverview" element={<KoperOverview auctions={auctions} />} />
                     <Route path="/app" element={<div><h1>Welkom, Veilingmeester! (Accountinformatie)</h1></div>} />
