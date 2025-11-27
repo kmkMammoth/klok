@@ -1,4 +1,5 @@
-﻿.create-container {
+/* Styles copied and adapted for AanvoerderCreateProduct (based on VeilingmeesterCreateAuction.css) */
+.create-container {
     width: 100%;
 }
 
@@ -9,7 +10,7 @@
     margin-bottom: 2rem;
 }
 
-.create-header h2 {
+.create-header h1 {
     color: #463239;
     font-size: 1.8rem;
 }
@@ -68,10 +69,12 @@
     background: white;
     padding: 2.5rem;
     border-radius: 16px;
-    width: 90%;
-    max-width: 500px;
+    width: 96%;
+    max-width: 900px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     animation: slideUp 0.3s ease;
+    max-height: 90vh;
+    overflow: auto;
 }
 
 @keyframes slideUp {
@@ -94,7 +97,7 @@
     border-bottom: 2px solid #E0DDCF;
 }
 
-.form-header h3 {
+.form-header h2 {
     color: #463239;
     font-size: 1.5rem;
 }
@@ -120,7 +123,25 @@
 }
 
 .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* two-column layout for form fields on wider screens */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem 1.5rem;
+}
+
+@media (min-width: 720px) {
+    .form-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* allow specific form groups to span both columns */
+.form-grid .full-width {
+    grid-column: 1 / -1;
 }
 
 .form-group label {
@@ -141,10 +162,54 @@
     font-family: inherit;
 }
 
-.form-group input:focus {
+.form-group select {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #E0DDCF;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    background-color: white;
+}
+
+.form-group select:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* remove native spinner arrows on number inputs */
+/* Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}.form-group input:focus {
     outline: none;
     border-color: #587D71;
     box-shadow: 0 0 0 3px rgba(88, 125, 113, 0.1);
+}
+
+.form-group input:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.error-message {
+    background-color: #fee;
+    border: 2px solid #eb4511;
+    color: #c33;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
 }
 
 .submit-button {
@@ -171,7 +236,7 @@
     margin-top: 3rem;
 }
 
-.auctions-list-create h3 {
+.auctions-list-create h2 {
     color: #463239;
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
@@ -196,6 +261,77 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
+.auction-item {
+    cursor: pointer;
+}
+
+/* Detail modal styles */
+.detail-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+
+.detail-modal {
+    background: white;
+    border-radius: 12px;
+    width: 92%;
+    max-width: 920px;
+    padding: 1.25rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+    animation: slideUp 0.25s ease;
+}
+
+.detail-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.detail-modal-body {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.detail-image img {
+    max-width: 320px;
+    width: 100%;
+    max-height: 420px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.detail-fields {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.detail-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.detail-row strong {
+    min-width: 140px;
+    color: #463239;
+}
+
+.detail-row span {
+    color: #333;
+}
+
 .auction-item-header {
     display: flex;
     justify-content: space-between;
@@ -205,10 +341,17 @@
     border-bottom: 2px solid #E0DDCF;
 }
 
-.auction-item-header h4 {
+.auction-item-header h3 {
     color: #463239;
     font-size: 1.2rem;
     font-weight: 600;
+    flex: 1;
+}
+
+.auction-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .auction-badge {
@@ -218,6 +361,28 @@
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
+}
+
+.delete-button {
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-button:hover {
+    background-color: #fee;
+    transform: scale(1.1);
+}
+
+.delete-button:active {
+    transform: scale(0.95);
 }
 
 .auction-item-details {

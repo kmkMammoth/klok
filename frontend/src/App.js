@@ -4,6 +4,7 @@ import Overview from './pages/VeilingmeesterOverview';
 import CreateAuction from './pages/VeilingmeesterCreateAuction';
 import ProductOverzicht from './pages/AanvoerderProductenoverzicht';
 import KoperOverview from "./pages/AanvoerderKoperOverview";
+import AanvoerderCreateProduct from './pages/AanvoerderCreateProduct';
 import { NavLink, Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -40,7 +41,7 @@ function App() {
         <div className="App">
             <nav className="navbar">
                 <div className="nav-container">
-                    <h1 className="logo">Flora Veiling</h1>
+                    <p className="logo">Flora Veiling</p>
                     <ul className="nav-menu">
                         <li>
                             <NavLink to="/" end className={({isActive}) => isActive ? 'active' : ''}>
@@ -60,6 +61,11 @@ function App() {
                         <li>
                             <NavLink to="/producten" className={({isActive}) => isActive ? 'active' : ''}>
                                 Productenoverzicht (A)
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/create-product" className={({isActive}) => isActive ? 'active' : ''}>
+                                Product Aanmaken (A)
                             </NavLink>
                         </li>
                         <li>
@@ -83,9 +89,10 @@ function App() {
                         </>
                     } />
                     <Route path="/create" element={<CreateAuction auctions={auctions} addAuction={addAuction} />} />
+                    <Route path="/create-product" element={<AanvoerderCreateProduct />} />
                     <Route path="/producten" element={<ProductOverzicht auctions={auctions} />} />
                     <Route path="/kOverview" element={<KoperOverview auctions={auctions} />} />
-                    <Route path="/app" element={<div><h2>Welkom, Veilingmeester!</h2></div>} />
+                    <Route path="/app" element={<div><h1>Welkom, Veilingmeester! (Accountinformatie)</h1></div>} />
                 </Routes>
             </div>
         </div>

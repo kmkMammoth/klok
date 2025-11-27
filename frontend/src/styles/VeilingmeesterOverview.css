@@ -15,6 +15,12 @@
     font-size: 1.8rem;
 }
 
+.auctions-list h1 {
+    color: #463239;
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+}
+
 .auction-card {
     background: white;
     padding: 1.5rem;
@@ -29,6 +35,12 @@
 .auction-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    border-color: #587D71;
+}
+
+.auction-card:focus {
+    outline: 3px solid #587D71;
+    outline-offset: 2px;
     border-color: #587D71;
 }
 
@@ -142,6 +154,15 @@
     background: linear-gradient(90deg, #587D71 0%, #EB4511 100%);
     transition: width 0.3s ease;
     border-radius: 10px;
+}
+
+/* Visually hidden text for screen readers */
+.sr-only {
+    position: absolute !important;
+    height: 1px; width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
 }
 
 @media (max-width: 968px) {
