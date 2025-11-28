@@ -13,7 +13,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins("http://localhost:3000", "http://localhost:3001")
             .AllowAnyMethod()
             .AllowAnyHeader();
     });
@@ -50,7 +50,12 @@ if (app.Environment.IsDevelopment())
 // ✅ Voeg CORS middleware toe VOOR UseHttpsRedirection
 app.UseCors("AllowFrontend");
 
-app.UseHttpsRedirection();
+// Only use HTTPS redirection in production
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
 app.MapControllers();
 
 // Test database connectie

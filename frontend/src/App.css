@@ -33,6 +33,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 1.2rem 2rem;
+    gap: 2rem;
 }
 
 .logo {
@@ -45,6 +46,8 @@ body {
     display: flex;
     list-style: none;
     gap: 2rem;
+    flex: 1;
+    justify-content: center;
 }
 
 .nav-menu li a {
@@ -67,10 +70,79 @@ body {
     color: white;
 }
 
+.nav-buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.nav-btn-login,
+.nav-btn-register {
+    padding: 0.7rem 1.8rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.nav-btn-login {
+    background-color: transparent;
+    color: #E0DDCF;
+    border: 2px solid #E0DDCF;
+}
+
+.nav-btn-login:hover {
+    background-color: rgba(224, 221, 207, 0.1);
+}
+
+.nav-btn-register {
+    background-color: #EA5A2B;
+    color: white;
+    box-shadow: 0 2px 8px rgba(234, 90, 43, 0.3);
+}
+
+.nav-btn-register:hover {
+    background-color: #D94D1F;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(234, 90, 43, 0.4);
+}
+
+.user-welcome {
+    color: #E0DDCF;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.7rem 1rem;
+}
+
+.nav-btn-logout {
+    padding: 0.7rem 1.8rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: transparent;
+    color: #E0DDCF;
+    border: 2px solid #E0DDCF;
+}
+
+.nav-btn-logout:hover {
+    background-color: rgba(234, 90, 43, 0.1);
+    border-color: #EA5A2B;
+    color: #EA5A2B;
+}
+
 .content {
     max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
+}
+
+.content-wrapper {
+    width: 100%;
 }
 
 .welcome-section {
@@ -92,4 +164,55 @@ body {
     font-size: 1.2rem;
     opacity: 0.95;
     line-height: 1.6;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .nav-container {
+        flex-wrap: wrap;
+    }
+
+    .nav-menu {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(224, 221, 207, 0.2);
+        margin-top: 1rem;
+    }
+
+    .nav-buttons {
+        order: 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-container {
+        padding: 1rem;
+    }
+
+    .nav-menu {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .nav-menu li a {
+        font-size: 0.95rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .nav-buttons {
+        gap: 0.5rem;
+    }
+
+    .nav-btn-login,
+    .nav-btn-register {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
+
+    .logo {
+        font-size: 1.4rem;
+    }
 }

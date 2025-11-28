@@ -1,12 +1,21 @@
 import { useState } from 'react';
 import './App.css';
+import HomePage from './pages/HomePage';
+import RegisterPage from './pages/RegisterPage';
+import LoginPage from './pages/LoginPage';
+import TestAPIPage from './pages/TestAPIPage';
 import Overview from './pages/VeilingmeesterOverview';
 import CreateAuction from './pages/VeilingmeesterCreateAuction';
 import ProductOverzicht from './pages/AanvoerderProductenoverzicht';
 import KoperOverview from "./pages/AanvoerderKoperOverview";
-import { NavLink, Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
+import { useAuth } from './context/AuthContext';
+import { NavLink, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 
 function App() {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { user, logout } = useAuth();
     const [auctions, setAuctions] = useState([
         {
             id: 1,
@@ -36,44 +45,72 @@ function App() {
         setAuctions([...auctions, newAuction]);
     };
 
+    // Hide main navbar on register and login pages
+    const hideNavbarPaths = ['/register', '/login'];
+    const showNavbar = !hideNavbarPaths.includes(location.pathname);
+
+    const handleLogout = () => {
+        logout();
+        navigate('/');
+    };
+
     return (
         <div className="App">
+            {showNavbar && (
             <nav className="navbar">
                 <div className="nav-container">
-                    <p className="logo">Flora Veiling</p>
+                    <p className="logo"> Flora Veiling</p>
                     <ul className="nav-menu">
                         <li>
                             <NavLink to="/" end className={({isActive}) => isActive ? 'active' : ''}>
-                                Overzicht
+                                Startpagina
                             </NavLink>
                         </li>
                         <li>
-                            <NavLink to="/create" className={({isActive}) => isActive ? 'active' : ''}>
-                                Veiling Aanmaken (VM)
+                            <NavLink to="/veilingzaal" className={({isActive}) => isActive ? 'active' : ''}>
+                                Veilingzaal
                             </NavLink>
                         </li>
                         <li>
-                            <NavLink to="/kOverview" className={({isActive}) => isActive ? 'active' : ''}>
-                                Koper Overview (A)
+                            <NavLink to="/mijn-veilingen" className={({isActive}) => isActive ? 'active' : ''}>
+                                Mijn Veilingen
                             </NavLink>
                         </li>
                         <li>
-                            <NavLink to="/producten" className={({isActive}) => isActive ? 'active' : ''}>
-                                Productenoverzicht (A)
-                            </NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/app" className={({isActive}) => isActive ? 'active' : ''}>
-                                Welkom, (actor) !
+                            <NavLink to="/helpcentrum" className={({isActive}) => isActive ? 'active' : ''}>
+                                Helpcentrum
                             </NavLink>
                         </li>
                     </ul>
+                    <div className="nav-buttons">
+                        {user ? (
+                            <>
+                                <span className="user-welcome">Welkom, {user.name}!</span>
+                                <button className="nav-btn-logout" onClick={handleLogout}>Uitloggen</button>
+                            </>
+                        ) : (
+                            <>
+                                <button className="nav-btn-login" onClick={() => navigate('/login')}>Inloggen</button>
+                                <button className="nav-btn-register" onClick={() => navigate('/register')}>Registreren</button>
+                            </>
+                        )}
+                    </div>
                 </div>
             </nav>
+            )}
 
-            <div className="content">
+            <div className="content-wrapper">
                 <Routes>
-                    <Route path="/" element={
+                    {/* Public Routes */}
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/test-api" element={<TestAPIPage />} />
+                    <Route path="/helpcentrum" element={<div className="content"><h1>Helpcentrum</h1><p>Hier vindt u hulp en ondersteuning.</p></div>} />
+                    
+                    {/* Protected Routes - Veilingmeester */}
+                    <Route path="/veilingzaal" element={
+                        <ProtectedRoute allowedRoles={['veilingmeester']}>
                         <>
                             <div className="welcome-section">
                                 <h2>Welkom bij Flora Veiling</h2>
@@ -81,11 +118,27 @@ function App() {
                             </div>
                             <Overview auctions={auctions} setAuctions={setAuctions} />
                         </>
+                        </ProtectedRoute>
                     } />
-                    <Route path="/create" element={<CreateAuction auctions={auctions} addAuction={addAuction} />} />
-                    <Route path="/producten" element={<ProductOverzicht auctions={auctions} />} />
-                    <Route path="/kOverview" element={<KoperOverview auctions={auctions} />} />
-                    <Route path="/app" element={<div><h1>Welkom, Veilingmeester! (Accountinformatie)</h1></div>} />
+                    <Route path="/mijn-veilingen" element={
+                        <ProtectedRoute allowedRoles={['veilingmeester']}>
+                            <CreateAuction auctions={auctions} addAuction={addAuction} />
+                        </ProtectedRoute>
+                    } />
+                    
+                    {/* Protected Routes - Aanvoerder */}
+                    <Route path="/producten" element={
+                        <ProtectedRoute allowedRoles={['aanvoerder']}>
+                            <ProductOverzicht auctions={auctions} />
+                        </ProtectedRoute>
+                    } />
+                    
+                    {/* Protected Routes - Koper */}
+                    <Route path="/kOverview" element={
+                        <ProtectedRoute allowedRoles={['koper']}>
+                            <KoperOverview auctions={auctions} />
+                        </ProtectedRoute>
+                    } />
                 </Routes>
             </div>
         </div>
