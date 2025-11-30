@@ -36,7 +36,7 @@ const RegisterPage = () => {
         setError('');
         setSuccess('');
 
-        // 验证密码匹配
+        // Controleer of wachtwoorden overeenkomen
         if (formData.wachtwoord !== formData.bevestigWachtwoord) {
             setError('Wachtwoorden komen niet overeen');
             setLoading(false);
