@@ -63,7 +63,7 @@ namespace veilingklok.Migrations
 
                     b.HasIndex("GebruikerId");
 
-                    b.ToTable("Aanvoerder", (string)null);
+                    b.ToTable("Aanvoerders");
                 });
 
             modelBuilder.Entity("veilingklok.Bod", b =>
@@ -97,7 +97,7 @@ namespace veilingklok.Migrations
 
                     b.HasIndex("VeilingId");
 
-                    b.ToTable("Bod", (string)null);
+                    b.ToTable("Biedingen");
                 });
 
             modelBuilder.Entity("veilingklok.Gebruiker", b =>
@@ -123,7 +123,7 @@ namespace veilingklok.Migrations
 
                     b.HasKey("GebruikerId");
 
-                    b.ToTable("Gebruiker", (string)null);
+                    b.ToTable("Gebruikers");
                 });
 
             modelBuilder.Entity("veilingklok.Koper", b =>
@@ -167,7 +167,7 @@ namespace veilingklok.Migrations
 
                     b.HasIndex("GebruikerId");
 
-                    b.ToTable("Koper", (string)null);
+                    b.ToTable("Kopers");
                 });
 
             modelBuilder.Entity("veilingklok.Product", b =>
@@ -220,7 +220,7 @@ namespace veilingklok.Migrations
 
                     b.HasIndex("AanvoerderId");
 
-                    b.ToTable("Product", (string)null);
+                    b.ToTable("Producten");
                 });
 
             modelBuilder.Entity("veilingklok.Veiling", b =>
@@ -269,7 +269,7 @@ namespace veilingklok.Migrations
 
                     b.HasIndex("VeilingmeesterId");
 
-                    b.ToTable("Veiling", null, t =>
+                    b.ToTable("Veilingen", t =>
                         {
                             t.HasCheckConstraint("CK_Veiling_Status", "status IN ('Idle', 'Ongoing', 'Done')");
                         });
@@ -292,7 +292,7 @@ namespace veilingklok.Migrations
 
                     b.HasIndex("GebruikerId");
 
-                    b.ToTable("Veilingmeester", (string)null);
+                    b.ToTable("Veilingmeesters");
                 });
 
             modelBuilder.Entity("veilingklok.Aanvoerder", b =>

@@ -22,15 +22,6 @@ public class VeilingContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Stel alle tabellen in op enkelvoudige namen
-        modelBuilder.Entity<Gebruiker>().ToTable("Gebruiker");
-        modelBuilder.Entity<Aanvoerder>().ToTable("Aanvoerder");
-        modelBuilder.Entity<Koper>().ToTable("Koper");
-        modelBuilder.Entity<Veilingmeester>().ToTable("Veilingmeester");
-        modelBuilder.Entity<Product>().ToTable("Product");
-        modelBuilder.Entity<Veiling>().ToTable("Veiling");
-        modelBuilder.Entity<Bod>().ToTable("Bod");
-
         // Check constraint voor Veiling status
         modelBuilder.Entity<Veiling>()
             .HasCheckConstraint("CK_Veiling_Status", "status IN ('Idle', 'Ongoing', 'Done')");

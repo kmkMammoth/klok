@@ -39,6 +39,11 @@ body {
     color: #E0DDCF;
     font-size: 1.8rem;
     font-weight: 700;
+    text-decoration: none;
+}
+
+.logo:hover {
+    color: #fff;
 }
 
 .nav-menu {
