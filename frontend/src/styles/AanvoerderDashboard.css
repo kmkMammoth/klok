@@ -1,0 +1,541 @@
+/* Aanvoerder Dashboard Styles */
+.av-dashboard {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 50%, #415a77 100%);
+    color: #fff;
+}
+
+/* Navbar */
+.av-navbar {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.av-nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.av-nav-logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4ade80;
+    letter-spacing: 1px;
+}
+
+.av-nav-title {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+}
+
+.av-nav-user {
+    position: relative;
+}
+
+.av-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.av-user-info:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.av-user-icon {
+    font-size: 1.2rem;
+}
+
+.av-username {
+    font-weight: 500;
+}
+
+.av-dropdown-arrow {
+    font-size: 0.7rem;
+    transition: transform 0.3s ease;
+}
+
+.av-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: #1b263b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    min-width: 150px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.av-dropdown-item {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    color: #fff;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.av-dropdown-item:hover {
+    background: rgba(74, 222, 128, 0.3);
+}
+
+/* Content */
+.av-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.av-welcome {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.av-welcome h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(90deg, #4ade80, #22c55e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.av-welcome p {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.1rem;
+}
+
+/* Header */
+.av-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.av-header h2 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.av-add-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.av-add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(74, 222, 128, 0.4);
+}
+
+.av-plus-icon {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+/* Products Grid */
+.av-products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.av-product-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.av-product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    border-color: rgba(74, 222, 128, 0.3);
+}
+
+.av-product-image {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.av-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.av-product-card:hover .av-product-image img {
+    transform: scale(1.05);
+}
+
+.av-no-image {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    opacity: 0.3;
+}
+
+.av-product-info {
+    padding: 1rem;
+}
+
+.av-product-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.av-product-header h3 {
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.av-product-id {
+    background: rgba(74, 222, 128, 0.2);
+    color: #4ade80;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.av-product-details {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.av-product-meta {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.av-delete-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.8);
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0;
+}
+
+.av-product-card:hover .av-delete-btn {
+    opacity: 1;
+}
+
+.av-delete-btn:hover {
+    background: #ef4444;
+    transform: scale(1.1);
+}
+
+/* Empty State */
+.av-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.av-empty-icon {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.av-empty p {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.av-empty small {
+    display: block;
+    margin-top: 0.5rem;
+}
+
+/* Modal */
+.av-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.av-modal {
+    background: #1b263b;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.av-detail-modal {
+    max-width: 500px;
+}
+
+.av-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    background: #1b263b;
+    z-index: 10;
+}
+
+.av-modal-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.av-close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.av-close-btn:hover {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+.av-modal-content {
+    padding: 1.5rem;
+}
+
+/* Form */
+.av-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 500px) {
+    .av-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.av-form-group {
+    margin-bottom: 1rem;
+}
+
+.av-full-width {
+    grid-column: 1 / -1;
+}
+
+.av-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.av-form-group input,
+.av-form-group select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.av-form-group input:focus,
+.av-form-group select:focus {
+    outline: none;
+    border-color: #4ade80;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.av-form-group input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.av-form-group select {
+    cursor: pointer;
+}
+
+.av-form-group select option {
+    background: #1b263b;
+    color: #fff;
+}
+
+.av-file-input {
+    cursor: pointer;
+}
+
+.av-image-preview {
+    margin-top: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.av-image-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+}
+
+.av-error {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    color: #ef4444;
+    font-size: 0.9rem;
+    grid-column: 1 / -1;
+}
+
+.av-submit-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    grid-column: 1 / -1;
+    margin-top: 0.5rem;
+}
+
+.av-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(74, 222, 128, 0.4);
+}
+
+.av-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Detail Modal */
+.av-detail-image {
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.av-detail-image img {
+    width: 100%;
+    max-height: 250px;
+    object-fit: cover;
+}
+
+.av-detail-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.av-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.av-detail-label {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.av-detail-value {
+    font-weight: 600;
+    color: #fff;
+}
+
+/* Scrollbar */
+.av-modal::-webkit-scrollbar {
+    width: 6px;
+}
+
+.av-modal::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.av-modal::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.av-modal::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+

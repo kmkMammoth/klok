@@ -60,7 +60,7 @@ const LoginPage = () => {
                         navigate('/veilingzaal');
                         break;
                     case 'aanvoerder':
-                        navigate('/producten');
+                        navigate('/aanvoerder');
                         break;
                     default:
                         navigate('/veilingzaal');

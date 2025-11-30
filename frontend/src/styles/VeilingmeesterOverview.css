@@ -1,4 +1,254 @@
-﻿.overview-container {
+﻿/* Veilingmeester Page */
+.vm-page {
+    min-height: 100vh;
+    background: #E0DDCF;
+}
+
+/* Navbar */
+.vm-navbar {
+    background: #49393B;
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.vm-nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.vm-nav-logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.vm-nav-title {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+}
+
+.vm-nav-user {
+    position: relative;
+}
+
+.vm-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #fff;
+}
+
+.vm-user-info:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.vm-user-icon {
+    font-size: 1.2rem;
+}
+
+.vm-username {
+    font-weight: 500;
+}
+
+.vm-dropdown-arrow {
+    font-size: 0.7rem;
+}
+
+.vm-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    min-width: 150px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.vm-dropdown-item {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    color: #49393B;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.vm-dropdown-item:hover {
+    background: #f5f5f5;
+}
+
+/* Main Content */
+.vm-main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.vm-welcome-section {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.vm-welcome-section h1 {
+    font-size: 2rem;
+    color: #49393B;
+    margin-bottom: 0.5rem;
+}
+
+.vm-welcome-section p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+/* Three Column Layout */
+.vm-three-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+    .vm-three-column {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .vm-three-column {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Section */
+.vm-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.vm-section h2 {
+    font-size: 1.3rem;
+    color: #49393B;
+    margin-bottom: 0.5rem;
+}
+
+.vm-section-desc {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+/* Products List */
+.vm-products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.vm-product-card {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    transition: all 0.3s ease;
+}
+
+.vm-product-card:hover {
+    background: #f0f0f0;
+    border-color: #587D71;
+}
+
+.vm-product-image {
+    width: 70px;
+    height: 70px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.vm-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.vm-product-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.vm-product-info h3 {
+    font-size: 1rem;
+    color: #49393B;
+    margin: 0;
+}
+
+.vm-product-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.vm-select-btn {
+    align-self: flex-start;
+    padding: 0.4rem 0.8rem;
+    background: #587D71;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.vm-select-btn:hover {
+    background: #4a6b60;
+    transform: scale(1.02);
+}
+
+/* Empty State */
+.vm-empty {
+    text-align: center;
+    padding: 2rem;
+    color: #888;
+}
+
+.vm-empty-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+/* Original Auction Styles */
+.overview-container {
     width: 100%;
 }
 
@@ -9,12 +259,12 @@
     margin-top: 1rem;
 }
 
-.auctions-list h2 {
-    color: #463239;
-    margin-bottom: 1.5rem;
-    font-size: 1.8rem;
+.auctions-list {
+    max-height: 500px;
+    overflow-y: auto;
 }
 
+.auctions-list h2,
 .auctions-list h1 {
     color: #463239;
     margin-bottom: 1.5rem;
@@ -22,155 +272,339 @@
 }
 
 .auction-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 12px;
-    margin-bottom: 1rem;
+    background: #f9f9f9;
+    padding: 1.2rem;
+    border-radius: 10px;
+    margin-bottom: 0.8rem;
     cursor: pointer;
     transition: all 0.3s ease;
-    border: 3px solid transparent;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 2px solid transparent;
 }
 
 .auction-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    border-color: #587D71;
-}
-
-.auction-card:focus {
-    outline: 3px solid #587D71;
-    outline-offset: 2px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: #587D71;
 }
 
 .auction-card.selected {
     border-color: #EB4511;
-    box-shadow: 0 4px 20px rgba(235, 69, 17, 0.2);
+    box-shadow: 0 4px 15px rgba(235, 69, 17, 0.2);
 }
 
 .auction-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.8rem;
 }
 
 .auction-card-header h3 {
     color: #463239;
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     font-weight: 600;
+    margin: 0;
 }
 
 .auction-id {
     background-color: #587D71;
     color: white;
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.9rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
     font-weight: 600;
 }
 
 .auction-card-price {
-    font-size: 2rem;
+    font-size: 1.6rem;
     font-weight: 700;
     color: #EB4511;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.3rem;
 }
 
 .auction-card-time {
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: #587D71;
     font-weight: 600;
 }
 
-.auction-details {
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    position: sticky;
-    top: 100px;
+/* Auction Details Section */
+.auction-details-section {
     height: fit-content;
 }
 
-.auction-details h2 {
-    color: #463239;
-    margin-bottom: 1.5rem;
-    font-size: 1.8rem;
+.auction-details-section h2 {
     padding-bottom: 1rem;
-    border-bottom: 3px solid #E0DDCF;
+    border-bottom: 2px solid #E0DDCF;
+    margin-bottom: 1rem;
 }
 
 .details-content {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
 .detail-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.8rem 0;
-    border-bottom: 1px solid #E0DDCF;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #eee;
 }
 
 .detail-label {
-    color: #49393B;
-    font-weight: 600;
-    font-size: 1.1rem;
+    color: #666;
+    font-weight: 500;
 }
 
 .detail-value {
-    color: #463239;
-    font-size: 1.1rem;
-    font-weight: 500;
+    color: #49393B;
+    font-weight: 600;
 }
 
 .price-highlight {
     color: #EB4511;
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     font-weight: 700;
 }
 
 .time-highlight {
     color: #587D71;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 700;
 }
 
 .price-bar {
     width: 100%;
-    height: 12px;
+    height: 10px;
     background-color: #E0DDCF;
-    border-radius: 10px;
+    border-radius: 5px;
     overflow: hidden;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
 }
 
 .price-progress {
     height: 100%;
     background: linear-gradient(90deg, #587D71 0%, #EB4511 100%);
     transition: width 0.3s ease;
-    border-radius: 10px;
+    border-radius: 5px;
 }
 
-/* Visually hidden text for screen readers */
+.vm-delete-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: #fff;
+    border: 2px solid #ef4444;
+    border-radius: 8px;
+    color: #ef4444;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.vm-delete-btn:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+/* Modal */
+.vm-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.vm-modal {
+    background: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.vm-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.vm-modal-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: #49393B;
+}
+
+.vm-close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f5f5f5;
+    border: none;
+    color: #666;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.vm-close-btn:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+.vm-modal-content {
+    padding: 1.5rem;
+}
+
+.vm-selected-product-info {
+    background: #f9f9f9;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.vm-selected-product-info h3 {
+    font-size: 0.9rem;
+    color: #888;
+    margin: 0 0 0.75rem 0;
+}
+
+.vm-product-preview {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.vm-product-preview img {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.vm-product-preview strong {
+    display: block;
+    font-size: 1.1rem;
+    color: #49393B;
+    margin-bottom: 0.25rem;
+}
+
+.vm-product-preview p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.vm-form-group {
+    margin-bottom: 1.25rem;
+}
+
+.vm-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #49393B;
+}
+
+.vm-form-group input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.vm-form-group input:focus {
+    outline: none;
+    border-color: #587D71;
+    background: #fff;
+}
+
+.vm-error {
+    background: #fff5f5;
+    border: 1px solid #feb2b2;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    color: #c53030;
+    font-size: 0.9rem;
+}
+
+.vm-submit-btn {
+    width: 100%;
+    padding: 1rem;
+    background: #587D71;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.vm-submit-btn:hover:not(:disabled) {
+    background: #4a6b60;
+    transform: translateY(-2px);
+}
+
+.vm-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* No auctions message */
+.no-auctions {
+    text-align: center;
+    padding: 2rem;
+    color: #888;
+    font-style: italic;
+}
+
+/* Scrollbar */
+.vm-products-list::-webkit-scrollbar,
+.auctions-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.vm-products-list::-webkit-scrollbar-track,
+.auctions-list::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.vm-products-list::-webkit-scrollbar-thumb,
+.auctions-list::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+.vm-products-list::-webkit-scrollbar-thumb:hover,
+.auctions-list::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+
+/* Screen reader only */
 .sr-only {
     position: absolute !important;
     height: 1px; width: 1px;
     overflow: hidden;
     clip: rect(1px, 1px, 1px, 1px);
     white-space: nowrap;
-}
-
-@media (max-width: 968px) {
-    .auctions-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .auction-details {
-        position: static;
-    }
 }

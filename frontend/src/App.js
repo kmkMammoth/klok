@@ -10,14 +10,18 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Veilingzaal from './pages/Veilingzaal';
 import MijnVeilingen from './pages/MijnVeilingen';
+import AanvoerderDashboard from './pages/AanvoerderDashboard';
 import { NavLink, Routes, Route, useLocation } from 'react-router-dom';
 
 function App() {
     const location = useLocation();
     
-    // 公共页面（有自己的导航栏）
-    const publicPages = ['/', '/login', '/register', '/veilingzaal', '/mijn-veilingen'];
-    const isPublicPage = publicPages.includes(location.pathname);
+    // Pagina's met eigen navigatie (geen gedeelde navbar)
+    const standalonePages = [
+        '/', '/login', '/register', '/veilingzaal', '/mijn-veilingen',
+        '/aanvoerder', '/dashboard'
+    ];
+    const isStandalonePage = standalonePages.includes(location.pathname);
 
     const [auctions, setAuctions] = useState([
         {
@@ -48,8 +52,8 @@ function App() {
         setAuctions([...auctions, newAuction]);
     };
 
-    // 使用 Navbar 组件的页面
-    if (isPublicPage) {
+    // Pagina's met eigen navigatie
+    if (isStandalonePage) {
         return (
             <Routes>
                 <Route path="/" element={<HomePage />} />
@@ -57,11 +61,14 @@ function App() {
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/veilingzaal" element={<Veilingzaal />} />
                 <Route path="/mijn-veilingen" element={<MijnVeilingen />} />
+                {/* Gescheiden dashboards */}
+                <Route path="/dashboard" element={<Overview auctions={auctions} setAuctions={setAuctions} />} />
+                <Route path="/aanvoerder" element={<AanvoerderDashboard />} />
             </Routes>
         );
     }
 
-    // 内部页面（Veilingmeester/Aanvoerder dashboard）
+    // Legacy pagina's met gedeelde navbar (voor backwards compatibility)
     return (
         <div className="App">
             <nav className="navbar">
