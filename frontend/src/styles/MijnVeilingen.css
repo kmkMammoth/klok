@@ -1,0 +1,232 @@
+/* ============================================
+   Flora Veiling - Mijn Veilingen Page Styles
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.mijn-veilingen-page {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #e8e5dc 0%, #d4d1c3 100%);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.mijn-veilingen-main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Header */
+.mijn-veilingen-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.mijn-veilingen-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: #2a2825;
+    margin-bottom: 0.5rem;
+}
+
+.mijn-veilingen-header p {
+    font-size: 1.2rem;
+    color: #6b6860;
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 4rem;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e5e2da;
+    border-top-color: #5a7a6d;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-state p {
+    color: #6b6860;
+    font-size: 1.1rem;
+}
+
+/* Veilingen List */
+.veilingen-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Mijn Veiling Card */
+.mijn-veiling-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.mijn-veiling-card:hover {
+    transform: translateX(8px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+}
+
+.mijn-veiling-image {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #f5e6dc 0%, #e8d5c4 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    flex-shrink: 0;
+}
+
+.mijn-veiling-info {
+    flex: 1;
+}
+
+.mijn-veiling-info h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2a2825;
+    margin-bottom: 0.25rem;
+}
+
+.mijn-veiling-datum {
+    font-size: 0.9rem;
+    color: #6b6860;
+}
+
+.mijn-veiling-bod {
+    text-align: right;
+    padding: 0 1.5rem;
+}
+
+.bod-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #6b6860;
+    margin-bottom: 0.25rem;
+}
+
+.bod-bedrag {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2a2825;
+}
+
+.mijn-veiling-status {
+    padding: 0.6rem 1.25rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.status-gewonnen {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+}
+
+.status-overboden {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+}
+
+.status-actief {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: #d39e00;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2a2825;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #6b6860;
+    margin-bottom: 1.5rem;
+}
+
+.btn-primary {
+    background-color: #eb5a3c;
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.btn-primary:hover {
+    background-color: #d94e32;
+    transform: translateY(-2px);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 768px) {
+    .mijn-veilingen-header h1 {
+        font-size: 2.5rem;
+    }
+    
+    .mijn-veilingen-main {
+        padding: 1.5rem 1rem;
+    }
+    
+    .mijn-veiling-card {
+        flex-wrap: wrap;
+        padding: 1.25rem;
+    }
+    
+    .mijn-veiling-info {
+        flex: 1 1 calc(100% - 100px);
+    }
+    
+    .mijn-veiling-bod {
+        text-align: left;
+        padding: 0;
+        flex: 1;
+    }
+    
+    .mijn-veiling-status {
+        margin-top: 0.5rem;
+    }
+}
+

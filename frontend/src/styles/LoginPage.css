@@ -1,0 +1,315 @@
+/* ============================================
+   Flora Veiling - Login Page Styles
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.login-page {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #d4d1c3 0%, #c8c4b5 50%, #6b7c72 100%);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ============================================
+   Navigation
+   ============================================ */
+.login-nav {
+    background-color: #49393B;
+    padding: 0;
+}
+
+.login-nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+}
+
+.login-logo {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.login-logo .logo-text {
+    color: #f5f3ee;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.btn-nav-register {
+    background-color: #eb5a3c;
+    color: white;
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.btn-nav-register:hover {
+    background-color: #d94e32;
+    transform: translateY(-1px);
+}
+
+/* ============================================
+   Login Container
+   ============================================ */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 82px);
+    padding: 2rem;
+}
+
+.login-card {
+    background: linear-gradient(135deg, #5a7a6d 0%, #4a6b5d 100%);
+    border-radius: 24px;
+    padding: 3rem;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================
+   Avatar
+   ============================================ */
+.login-avatar {
+    width: 80px;
+    height: 80px;
+    background-color: #eb5a3c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 4px 20px rgba(235, 90, 60, 0.4);
+}
+
+.avatar-icon {
+    width: 40px;
+    height: 40px;
+    color: white;
+}
+
+/* ============================================
+   Title & Subtitle
+   ============================================ */
+.login-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #f5f3ee;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.login-subtitle {
+    font-size: 1rem;
+    color: rgba(245, 243, 238, 0.7);
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+/* ============================================
+   Form
+   ============================================ */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: rgba(245, 243, 238, 0.9);
+}
+
+.form-group input {
+    background-color: #f5f3ee;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    font-family: inherit;
+    color: #2a2825;
+    transition: all 0.3s ease;
+}
+
+.form-group input::placeholder {
+    color: #8a8780;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #eb5a3c;
+    box-shadow: 0 0 0 3px rgba(235, 90, 60, 0.2);
+}
+
+/* ============================================
+   Form Options (Remember me & Forgot password)
+   ============================================ */
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: rgba(245, 243, 238, 0.9);
+}
+
+.checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.checkbox-custom {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(245, 243, 238, 0.5);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
+    background-color: #eb5a3c;
+    border-color: #eb5a3c;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
+    content: '✓';
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.forgot-link {
+    font-size: 0.9rem;
+    color: #eb5a3c;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.forgot-link:hover {
+    color: #ff7a5c;
+    text-decoration: underline;
+}
+
+/* ============================================
+   Submit Button
+   ============================================ */
+.btn-login-submit {
+    background-color: #eb5a3c;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+    box-shadow: 0 4px 15px rgba(235, 90, 60, 0.3);
+}
+
+.btn-login-submit:hover {
+    background-color: #d94e32;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(235, 90, 60, 0.4);
+}
+
+.btn-login-submit:active {
+    transform: translateY(0);
+}
+
+/* ============================================
+   Register Prompt
+   ============================================ */
+.register-prompt {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+    color: rgba(245, 243, 238, 0.7);
+}
+
+.register-link {
+    color: #eb5a3c;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.register-link:hover {
+    color: #ff7a5c;
+    text-decoration: underline;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 500px) {
+    .login-card {
+        padding: 2rem 1.5rem;
+        border-radius: 20px;
+    }
+    
+    .login-title {
+        font-size: 1.75rem;
+    }
+    
+    .form-options {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .forgot-link {
+        align-self: flex-end;
+    }
+}
+
+/* ============================================
+   Messages
+   ============================================ */
+.message {
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+.error-message {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #ff6b6b;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.btn-login-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+

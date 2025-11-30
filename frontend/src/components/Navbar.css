@@ -1,0 +1,372 @@
+/* ============================================
+   Flora Veiling - Main Navbar Styles
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.main-nav {
+    background-color: #49393B;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.main-nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 2rem;
+}
+
+/* Logo */
+.main-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+}
+
+.main-logo .logo-icon {
+    font-size: 1.8rem;
+}
+
+.main-logo .logo-text {
+    color: #f5f3ee;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Nav Links */
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-link {
+    color: #c4c0b5;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.nav-link:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link.active {
+    background-color: rgba(235, 120, 80, 0.15);
+    color: #eb7850;
+}
+
+.nav-button {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Nav Actions */
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.btn-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #5a494b;
+    color: #f5f3ee;
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    border: 1px solid #6a595b;
+}
+
+.btn-login:hover {
+    background-color: #6a595b;
+}
+
+.btn-register {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #eb5a3c;
+    color: white;
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.btn-register:hover {
+    background-color: #d94e32;
+    transform: translateY(-1px);
+}
+
+/* User Section */
+.user-section {
+    position: relative;
+}
+
+.user-button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.user-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    background-color: #eb5a3c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-avatar svg {
+    width: 20px;
+    height: 20px;
+    color: white;
+}
+
+.user-name {
+    color: #f5f3ee;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.dropdown-arrow {
+    color: #c4c0b5;
+    font-size: 0.6rem;
+    margin-left: 0.25rem;
+}
+
+/* User Menu Dropdown */
+.user-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    min-width: 220px;
+    overflow: hidden;
+    z-index: 100;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.user-menu-header {
+    padding: 1rem;
+    background-color: #f5f3ee;
+    border-bottom: 1px solid #e5e2da;
+}
+
+.user-type {
+    font-size: 0.85rem;
+    color: #5a7a6d;
+    font-weight: 600;
+}
+
+.menu-item {
+    display: block;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 0.95rem;
+    color: #2a2825;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-family: inherit;
+}
+
+.menu-item:hover {
+    background-color: #f5f3ee;
+}
+
+.menu-item.logout {
+    color: #eb5a3c;
+    border-top: 1px solid #e5e2da;
+}
+
+/* ============================================
+   Login Prompt Modal
+   ============================================ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.login-prompt-modal {
+    background: linear-gradient(135deg, #5a7a6d 0%, #4a6b5d 100%);
+    border-radius: 24px;
+    padding: 2.5rem;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #fff;
+}
+
+.modal-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.login-prompt-modal h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #f5f3ee;
+    margin-bottom: 0.75rem;
+}
+
+.login-prompt-modal p {
+    color: rgba(245, 243, 238, 0.8);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn-modal-login {
+    background-color: #eb5a3c;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.btn-modal-login:hover {
+    background-color: #d94e32;
+    transform: translateY(-2px);
+}
+
+.btn-modal-register {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #f5f3ee;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.btn-modal-register:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 900px) {
+    .nav-links {
+        display: none;
+    }
+    
+    .main-nav-container {
+        padding: 0.75rem 1rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .user-name {
+        display: none;
+    }
+    
+    .btn-login, .btn-register {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+    }
+}
+

@@ -5,9 +5,20 @@ import CreateAuction from './pages/VeilingmeesterCreateAuction';
 import ProductOverzicht from './pages/AanvoerderProductenoverzicht';
 import KoperOverview from "./pages/AanvoerderKoperOverview";
 import AanvoerderCreateProduct from './pages/AanvoerderCreateProduct';
-import { NavLink, Routes, Route } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import Veilingzaal from './pages/Veilingzaal';
+import MijnVeilingen from './pages/MijnVeilingen';
+import { NavLink, Routes, Route, useLocation } from 'react-router-dom';
 
 function App() {
+    const location = useLocation();
+    
+    // 公共页面（有自己的导航栏）
+    const publicPages = ['/', '/login', '/register', '/veilingzaal', '/mijn-veilingen'];
+    const isPublicPage = publicPages.includes(location.pathname);
+
     const [auctions, setAuctions] = useState([
         {
             id: 1,
@@ -37,14 +48,28 @@ function App() {
         setAuctions([...auctions, newAuction]);
     };
 
+    // 使用 Navbar 组件的页面
+    if (isPublicPage) {
+        return (
+            <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/veilingzaal" element={<Veilingzaal />} />
+                <Route path="/mijn-veilingen" element={<MijnVeilingen />} />
+            </Routes>
+        );
+    }
+
+    // 内部页面（Veilingmeester/Aanvoerder dashboard）
     return (
         <div className="App">
             <nav className="navbar">
                 <div className="nav-container">
-                    <p className="logo">Flora Veiling</p>
+                    <NavLink to="/" className="logo">Flora Veiling</NavLink>
                     <ul className="nav-menu">
                         <li>
-                            <NavLink to="/" end className={({isActive}) => isActive ? 'active' : ''}>
+                            <NavLink to="/dashboard" end className={({isActive}) => isActive ? 'active' : ''}>
                                 Overzicht
                             </NavLink>
                         </li>
@@ -69,7 +94,7 @@ function App() {
                             </NavLink>
                         </li>
                         <li>
-                            <NavLink to="/app" className={({isActive}) => isActive ? 'active' : ''}>
+                            <NavLink to="/account" className={({isActive}) => isActive ? 'active' : ''}>
                                 Welkom, (actor) !
                             </NavLink>
                         </li>
@@ -79,7 +104,7 @@ function App() {
 
             <div className="content">
                 <Routes>
-                    <Route path="/" element={
+                    <Route path="/dashboard" element={
                         <>
                             <div className="welcome-section">
                                 <h2>Welkom bij Flora Veiling</h2>
@@ -92,7 +117,7 @@ function App() {
                     <Route path="/create-product" element={<AanvoerderCreateProduct />} />
                     <Route path="/producten" element={<ProductOverzicht auctions={auctions} />} />
                     <Route path="/kOverview" element={<KoperOverview auctions={auctions} />} />
-                    <Route path="/app" element={<div><h1>Welkom, Veilingmeester! (Accountinformatie)</h1></div>} />
+                    <Route path="/account" element={<div><h1>Welkom, Veilingmeester! (Accountinformatie)</h1></div>} />
                 </Routes>
             </div>
         </div>

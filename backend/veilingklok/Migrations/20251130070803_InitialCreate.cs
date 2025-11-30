@@ -103,7 +103,7 @@ namespace veilingklok.Migrations
                     hoeveelheid = table.Column<int>(type: "int", nullable: true),
                     minimumprijs = table.Column<decimal>(type: "decimal(6,2)", nullable: true),
                     kloklocatie = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    afbeelding = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false)
+                    afbeelding = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -126,7 +126,9 @@ namespace veilingklok.Migrations
                     artikel_id = table.Column<int>(type: "int", nullable: true),
                     starttijd = table.Column<DateTime>(type: "datetime2", nullable: false),
                     eindtijd = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                    status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    minimumprijs = table.Column<decimal>(type: "decimal(10,2)", nullable: true),
+                    veilingnaam = table.Column<string>(type: "nvarchar(255)", nullable: false)
                 },
                 constraints: table =>
                 {

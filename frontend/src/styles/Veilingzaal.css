@@ -1,0 +1,188 @@
+/* ============================================
+   Flora Veiling - Veilingzaal Page Styles
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.veilingzaal-page {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #e8e5dc 0%, #d4d1c3 100%);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.veilingzaal-main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Header */
+.veilingzaal-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.veilingzaal-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: #2a2825;
+    margin-bottom: 0.5rem;
+}
+
+.veilingzaal-header p {
+    font-size: 1.2rem;
+    color: #6b6860;
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 4rem;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e5e2da;
+    border-top-color: #5a7a6d;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-state p {
+    color: #6b6860;
+    font-size: 1.1rem;
+}
+
+/* Veilingen Grid */
+.veilingen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+}
+
+/* Veiling Card */
+.veiling-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.veiling-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+}
+
+.veiling-image {
+    height: 180px;
+    background: linear-gradient(135deg, #f5e6dc 0%, #e8d5c4 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+}
+
+.veiling-content {
+    padding: 1.5rem;
+}
+
+.veiling-content h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2a2825;
+    margin-bottom: 1rem;
+}
+
+.veiling-details {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid #e5e2da;
+}
+
+.veiling-prijs, .veiling-tijd {
+    display: flex;
+    flex-direction: column;
+}
+
+.prijs-label, .tijd-label {
+    font-size: 0.8rem;
+    color: #6b6860;
+    margin-bottom: 0.25rem;
+}
+
+.prijs-bedrag {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #eb5a3c;
+}
+
+.tijd-waarde {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2a2825;
+}
+
+.veiling-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.veiling-status {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-actief {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+}
+
+.btn-bieden {
+    background-color: #5a7a6d;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.btn-bieden:hover {
+    background-color: #4a6b5d;
+    transform: translateY(-2px);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 768px) {
+    .veilingzaal-header h1 {
+        font-size: 2.5rem;
+    }
+    
+    .veilingzaal-main {
+        padding: 1.5rem 1rem;
+    }
+    
+    .veilingen-grid {
+        grid-template-columns: 1fr;
+    }
+}
+

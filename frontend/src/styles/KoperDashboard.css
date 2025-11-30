@@ -1,0 +1,486 @@
+/* ============================================
+   Flora Veiling - Koper Dashboard Styles
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.koper-dashboard {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #e8e5dc 0%, #d4d1c3 100%);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-size: 1.2rem;
+    color: #5a7a6d;
+}
+
+/* ============================================
+   Navigation
+   ============================================ */
+.koper-nav {
+    background-color: #49393B;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.koper-nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 2rem;
+}
+
+.koper-logo {
+    text-decoration: none;
+}
+
+.koper-logo .logo-text {
+    color: #f5f3ee;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Nav Tabs */
+.nav-tabs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.nav-tab {
+    background: none;
+    border: none;
+    color: #c4c0b5;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.nav-tab:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-tab.active {
+    background-color: rgba(235, 120, 80, 0.15);
+    color: #eb7850;
+}
+
+/* User Section */
+.user-section {
+    position: relative;
+}
+
+.user-button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.user-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    background-color: #eb5a3c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-avatar svg {
+    width: 20px;
+    height: 20px;
+    color: white;
+}
+
+.user-name {
+    color: #f5f3ee;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.dropdown-arrow {
+    color: #c4c0b5;
+    font-size: 0.6rem;
+    margin-left: 0.25rem;
+}
+
+/* User Menu Dropdown */
+.user-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    overflow: hidden;
+    z-index: 100;
+}
+
+.user-menu-header {
+    padding: 1rem;
+    background-color: #f5f3ee;
+    border-bottom: 1px solid #e5e2da;
+}
+
+.user-type {
+    font-size: 0.85rem;
+    color: #5a7a6d;
+    font-weight: 600;
+}
+
+.menu-item {
+    display: block;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 0.95rem;
+    color: #2a2825;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-family: inherit;
+}
+
+.menu-item:hover {
+    background-color: #f5f3ee;
+}
+
+.menu-item:last-child {
+    color: #eb5a3c;
+    border-top: 1px solid #e5e2da;
+}
+
+/* ============================================
+   Main Content
+   ============================================ */
+.koper-main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.content-section {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.section-header {
+    margin-bottom: 2rem;
+}
+
+.section-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2a2825;
+    margin-bottom: 0.5rem;
+}
+
+.section-header p {
+    font-size: 1.1rem;
+    color: #6b6860;
+}
+
+/* ============================================
+   Veilingen Grid
+   ============================================ */
+.veilingen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.veiling-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.veiling-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+}
+
+.veiling-image {
+    height: 150px;
+    background: linear-gradient(135deg, #f5e6dc 0%, #e8d5c4 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+}
+
+.veiling-info {
+    padding: 1.25rem;
+}
+
+.veiling-info h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2a2825;
+    margin-bottom: 0.75rem;
+}
+
+.veiling-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.veiling-prijs {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #eb5a3c;
+}
+
+.veiling-tijd {
+    font-size: 0.85rem;
+    color: #6b6860;
+}
+
+.veiling-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-actief {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+}
+
+.btn-bieden {
+    width: 100%;
+    padding: 1rem;
+    background-color: #5a7a6d;
+    color: white;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-family: inherit;
+}
+
+.btn-bieden:hover {
+    background-color: #4a6b5d;
+}
+
+/* ============================================
+   Mijn Veilingen List
+   ============================================ */
+.mijn-veilingen-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.mijn-veiling-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.mijn-veiling-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+}
+
+.mijn-veiling-image {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #f5e6dc 0%, #e8d5c4 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.mijn-veiling-info {
+    flex: 1;
+}
+
+.mijn-veiling-info h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2a2825;
+    margin-bottom: 0.25rem;
+}
+
+.mijn-veiling-datum {
+    font-size: 0.9rem;
+    color: #6b6860;
+}
+
+.mijn-veiling-bod {
+    text-align: right;
+}
+
+.bod-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #6b6860;
+    margin-bottom: 0.25rem;
+}
+
+.bod-bedrag {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2a2825;
+}
+
+.mijn-veiling-status {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.status-gewonnen {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+}
+
+.status-overboden {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2a2825;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #6b6860;
+    margin-bottom: 1.5rem;
+}
+
+.btn-primary {
+    background-color: #eb5a3c;
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.btn-primary:hover {
+    background-color: #d94e32;
+    transform: translateY(-2px);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 900px) {
+    .koper-nav-container {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .nav-tabs {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .section-header h1 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .koper-nav-container {
+        padding: 0.75rem 1rem;
+    }
+    
+    .nav-tab {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .user-name {
+        display: none;
+    }
+    
+    .koper-main {
+        padding: 1.5rem 1rem;
+    }
+    
+    .mijn-veiling-card {
+        flex-wrap: wrap;
+    }
+    
+    .mijn-veiling-bod {
+        text-align: left;
+    }
+}
+
