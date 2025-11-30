@@ -10,7 +10,6 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Veilingzaal from './pages/Veilingzaal';
 import MijnVeilingen from './pages/MijnVeilingen';
-import AanvoerderDashboard from './pages/AanvoerderDashboard';
 import { NavLink, Routes, Route, useLocation } from 'react-router-dom';
 
 function App() {
@@ -63,7 +62,7 @@ function App() {
                 <Route path="/mijn-veilingen" element={<MijnVeilingen />} />
                 {/* Gescheiden dashboards */}
                 <Route path="/dashboard" element={<Overview auctions={auctions} setAuctions={setAuctions} />} />
-                <Route path="/aanvoerder" element={<AanvoerderDashboard />} />
+                <Route path="/aanvoerder" element={<ProductOverzicht />} />
             </Routes>
         );
     }
