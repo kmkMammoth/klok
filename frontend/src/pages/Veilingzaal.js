@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../components/Navbar';
+import { useNavigate } from 'react-router-dom';
+import HomeNavbar from '../components/HomeNavbar';
 import '../styles/Veilingzaal.css';
+import '../styles/HomePage.css';
 
 const Veilingzaal = () => {
+    const navigate = useNavigate();
     const [veilingen, setVeilingen] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
     useEffect(() => {
         // Mock data - later te vervangen door API call
@@ -26,7 +30,7 @@ const Veilingzaal = () => {
     const handleBieden = (veilingId) => {
         const user = localStorage.getItem('user');
         if (!user) {
-            alert('U moet ingelogd zijn om te bieden. Ga naar de login pagina.');
+            setShowLoginPrompt(true);
             return;
         }
         const userData = JSON.parse(user);
@@ -40,7 +44,8 @@ const Veilingzaal = () => {
 
     return (
         <div className="veilingzaal-page">
-            <Navbar />
+            {/* Navigation */}
+            <HomeNavbar activePage="/veilingzaal" />
             
             <main className="veilingzaal-main">
                 <div className="veilingzaal-header">
@@ -89,6 +94,32 @@ const Veilingzaal = () => {
                     </div>
                 )}
             </main>
+
+            {/* Login Prompt Modal for Bidding */}
+            {showLoginPrompt && (
+                <div className="modal-overlay" onClick={() => setShowLoginPrompt(false)}>
+                    <div className="login-prompt-modal" onClick={(e) => e.stopPropagation()}>
+                        <button className="modal-close" onClick={() => setShowLoginPrompt(false)}>×</button>
+                        <div className="modal-icon">🔐</div>
+                        <h2>Inloggen vereist</h2>
+                        <p>U moet ingelogd zijn als Koper om te kunnen bieden.</p>
+                        <div className="modal-buttons">
+                            <button 
+                                className="btn-modal-login"
+                                onClick={() => { setShowLoginPrompt(false); navigate('/login'); }}
+                            >
+                                Inloggen
+                            </button>
+                            <button 
+                                className="btn-modal-register"
+                                onClick={() => { setShowLoginPrompt(false); navigate('/register'); }}
+                            >
+                                Registreren
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

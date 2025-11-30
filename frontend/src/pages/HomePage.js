@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import HomeNavbar from '../components/HomeNavbar';
 import '../styles/HomePage.css';
 
 const HomePage = () => {
@@ -13,24 +14,7 @@ const HomePage = () => {
     return (
         <div className="home-page">
             {/* Navigation */}
-            <nav className="home-nav">
-                <div className="home-nav-container">
-                    <div className="home-logo">
-                    
-                        <span className="logo-text">Flora Veiling</span>
-                    </div>
-                    <ul className="home-nav-menu">
-                        <li><button className="nav-link nav-active" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Startpagina</button></li>
-                        <li><button className="nav-link" onClick={() => scrollToSection('features')}>Veilingzaal</button></li>
-                        <li><button className="nav-link" onClick={() => scrollToSection('stats')}>Mijn Veilingen</button></li>
-                        <li><button className="nav-link" onClick={() => scrollToSection('footer')}>Helpcentrum</button></li>
-                    </ul>
-                    <div className="home-nav-buttons">
-                        <Link to="/login" className="btn-login">Inloggen</Link>
-                        <Link to="/register" className="btn-register">Registreren</Link>
-                    </div>
-                </div>
-            </nav>
+            <HomeNavbar activePage="/" />
 
             {/* Hero Section */}
             <section className="hero-section">

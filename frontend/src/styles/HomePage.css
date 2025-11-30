@@ -41,6 +41,10 @@
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 
+.logo-text-link {
+    text-decoration: none;
+}
+
 .logo-text {
     color: #f5f3ee;
     font-family: 'Playfair Display', serif;
@@ -132,6 +136,18 @@
 .btn-register:hover {
     background-color: #d94e32;
     transform: translateY(-1px);
+}
+
+.home-user-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.home-username {
+    color: #f5f3ee;
+    font-weight: 500;
+    font-size: 0.95rem;
 }
 
 /* ============================================
@@ -497,6 +513,128 @@
     
     .stat-item h3 {
         font-size: 2.5rem;
+    }
+}
+
+/* ============================================
+   Login Prompt Modal
+   ============================================ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.login-prompt-modal {
+    background: linear-gradient(135deg, #5a7a6d 0%, #4a6b5d 100%);
+    border-radius: 24px;
+    padding: 2.5rem;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #fff;
+}
+
+.modal-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.login-prompt-modal h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #f5f3ee;
+    margin-bottom: 0.75rem;
+}
+
+.login-prompt-modal p {
+    color: rgba(245, 243, 238, 0.8);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn-modal-login {
+    background-color: #eb5a3c;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.btn-modal-login:hover {
+    background-color: #d94e32;
+    transform: translateY(-2px);
+}
+
+.btn-modal-register {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #f5f3ee;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.btn-modal-register:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+@media (max-width: 600px) {
+    .modal-buttons {
+        flex-direction: column;
     }
 }
 
