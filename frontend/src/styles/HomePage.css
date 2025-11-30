@@ -139,15 +139,106 @@
 }
 
 .home-user-section {
+    position: relative;
+}
+
+.home-user-button {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.home-user-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.home-user-avatar {
+    width: 36px;
+    height: 36px;
+    background-color: #eb5a3c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.home-user-avatar svg {
+    width: 20px;
+    height: 20px;
+    color: white;
 }
 
 .home-username {
     color: #f5f3ee;
     font-weight: 500;
     font-size: 0.95rem;
+}
+
+.home-dropdown-arrow {
+    color: #c4c0b5;
+    font-size: 0.6rem;
+    margin-left: 0.25rem;
+}
+
+/* User Menu Dropdown */
+.home-user-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    min-width: 220px;
+    overflow: hidden;
+    z-index: 100;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.home-user-menu-header {
+    padding: 1rem;
+    background-color: #f5f3ee;
+    border-bottom: 1px solid #e5e2da;
+}
+
+.home-user-type {
+    font-size: 0.85rem;
+    color: #5a7a6d;
+    font-weight: 600;
+}
+
+.home-menu-item {
+    display: block;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 0.95rem;
+    color: #2a2825;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-family: inherit;
+}
+
+.home-menu-item:hover {
+    background-color: #f5f3ee;
+}
+
+.home-menu-item.home-menu-logout {
+    color: #eb5a3c;
+    border-top: 1px solid #e5e2da;
 }
 
 /* ============================================

@@ -10,6 +10,8 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Veilingzaal from './pages/Veilingzaal';
 import MijnVeilingen from './pages/MijnVeilingen';
+import Helpcentrum from './pages/Helpcentrum';
+import Account from './pages/Account';
 import { NavLink, Routes, Route, useLocation } from 'react-router-dom';
 
 function App() {
@@ -18,7 +20,7 @@ function App() {
     // Pagina's met eigen navigatie (geen gedeelde navbar)
     const standalonePages = [
         '/', '/login', '/register', '/veilingzaal', '/mijn-veilingen',
-        '/aanvoerder', '/dashboard'
+        '/aanvoerder', '/dashboard', '/helpcentrum', '/account'
     ];
     const isStandalonePage = standalonePages.includes(location.pathname);
 
@@ -60,6 +62,8 @@ function App() {
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/veilingzaal" element={<Veilingzaal />} />
                 <Route path="/mijn-veilingen" element={<MijnVeilingen />} />
+                <Route path="/helpcentrum" element={<Helpcentrum />} />
+                <Route path="/account" element={<Account />} />
                 {/* Gescheiden dashboards */}
                 <Route path="/dashboard" element={<Overview auctions={auctions} setAuctions={setAuctions} />} />
                 <Route path="/aanvoerder" element={<ProductOverzicht />} />

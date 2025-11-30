@@ -14,11 +14,19 @@ public class KoperController : ControllerBase
         _db = db;
     }
 
-    // GET: api/login
+    // GET: api/Koper?id={koperId}
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Gebruiker>>> GetUser(int id)
+    public async Task<ActionResult<Koper>> GetUser(int id)
     {
-        var koper = await _db.Kopers.Where(koper => koper.GebruikerId == id).SingleAsync();
+        var koper = await _db.Kopers
+            .Include(k => k.Gebruiker)
+            .FirstOrDefaultAsync(k => k.KoperId == id);
+        
+        if (koper == null)
+        {
+            return NotFound(new { message = "Koper niet gevonden" });
+        }
+        
         return Ok(koper);
     }
     

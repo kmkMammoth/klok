@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import HomeNavbar from '../components/HomeNavbar';
 import '../styles/MijnVeilingen.css';
 
 const MijnVeilingen = () => {
@@ -45,7 +45,7 @@ const MijnVeilingen = () => {
 
     return (
         <div className="mijn-veilingen-page">
-            <Navbar />
+            <HomeNavbar activePage="/mijn-veilingen" />
             
             <main className="mijn-veilingen-main">
                 <div className="mijn-veilingen-header">

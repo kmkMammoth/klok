@@ -6,6 +6,7 @@ const HomeNavbar = ({ activePage = null }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [user, setUser] = useState(null);
+    const [showUserMenu, setShowUserMenu] = useState(false);
     const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
     useEffect(() => {
@@ -14,6 +15,20 @@ const HomeNavbar = ({ activePage = null }) => {
             setUser(JSON.parse(userData));
         }
     }, [location]);
+
+    // Sluit het gebruikersmenu wanneer er buiten geklikt wordt
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showUserMenu && !event.target.closest('.home-user-section')) {
+                setShowUserMenu(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showUserMenu]);
 
     const handleMijnVeilingenClick = (e) => {
         e.preventDefault();
@@ -38,27 +53,10 @@ const HomeNavbar = ({ activePage = null }) => {
         }
     };
 
-    const handleHelpcentrumClick = (e) => {
-        e.preventDefault();
-        if (location.pathname === '/') {
-            const footer = document.getElementById('footer');
-            if (footer) {
-                footer.scrollIntoView({ behavior: 'smooth' });
-            }
-        } else {
-            navigate('/');
-            setTimeout(() => {
-                const footer = document.getElementById('footer');
-                if (footer) {
-                    footer.scrollIntoView({ behavior: 'smooth' });
-                }
-            }, 100);
-        }
-    };
-
     const handleLogout = () => {
         localStorage.removeItem('user');
         setUser(null);
+        setShowUserMenu(false);
         navigate('/');
     };
 
@@ -104,24 +102,61 @@ const HomeNavbar = ({ activePage = null }) => {
                             </button>
                         </li>
                         <li>
-                            <button 
-                                className="nav-link" 
-                                onClick={handleHelpcentrumClick}
+                            <Link 
+                                to="/helpcentrum"
+                                className={`nav-link ${getActiveClass('/helpcentrum')}`}
                             >
                                 Helpcentrum
-                            </button>
+                            </Link>
                         </li>
                     </ul>
                     <div className="home-nav-buttons">
                         {user ? (
                             <div className="home-user-section">
-                                <span className="home-username">{user.gebruikersnaam}</span>
                                 <button 
-                                    className="btn-login"
-                                    onClick={handleLogout}
+                                    className="home-user-button"
+                                    onClick={() => setShowUserMenu(!showUserMenu)}
                                 >
-                                    Uitloggen
+                                    <div className="home-user-avatar">
+                                        <svg viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                        </svg>
+                                    </div>
+                                    <span className="home-username">{user.gebruikersnaam}</span>
+                                    <span className="home-dropdown-arrow">▼</span>
                                 </button>
+                                
+                                {showUserMenu && (
+                                    <div className="home-user-menu">
+                                        <div className="home-user-menu-header">
+                                            <span className="home-user-type">
+                                                {user.accountType === 'koper' && 'Koper Account'}
+                                                {user.accountType === 'aanvoerder' && 'Aanvoerder Account'}
+                                                {user.accountType === 'veilingmeester' && 'Veilingmeester Account'}
+                                            </span>
+                                        </div>
+                                        <button 
+                                            className="home-menu-item" 
+                                            onClick={() => { navigate('/account'); setShowUserMenu(false); }}
+                                        >
+                                            Mijn Account
+                                        </button>
+                                        {user.accountType === 'koper' && (
+                                            <button 
+                                                className="home-menu-item" 
+                                                onClick={() => { navigate('/mijn-veilingen'); setShowUserMenu(false); }}
+                                            >
+                                                Mijn Veilingen
+                                            </button>
+                                        )}
+                                        <button 
+                                            className="home-menu-item home-menu-logout" 
+                                            onClick={handleLogout}
+                                        >
+                                            Uitloggen
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <>

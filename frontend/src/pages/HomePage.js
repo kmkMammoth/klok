@@ -1,9 +1,24 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import HomeNavbar from '../components/HomeNavbar';
 import '../styles/HomePage.css';
 
 const HomePage = () => {
+    const location = useLocation();
+
+    useEffect(() => {
+        // Controleer of er een hash in de URL is (bijv. #footer)
+        if (location.hash) {
+            const elementId = location.hash.substring(1); // Verwijder de # uit de hash
+            setTimeout(() => {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100);
+        }
+    }, [location]);
+
     const scrollToSection = (sectionId) => {
         const element = document.getElementById(sectionId);
         if (element) {
