@@ -100,7 +100,7 @@ public class ProductsController : ControllerBase
 
         // Check if Aanvoerder exists
         var aanvoerder = await _db.Aanvoerders
-            .Where(a => a.AanvoerderId == request.aanvoerderId)
+            .Where(a => a.GebruikerId == request.aanvoerderId)
             .SingleOrDefaultAsync();
 
         if (aanvoerder == null)
@@ -159,7 +159,7 @@ public class ProductsController : ControllerBase
         if (request.aanvoerderId > 0)
         {
             var aanvoerder = await _db.Aanvoerders
-                .Where(a => a.AanvoerderId == request.aanvoerderId)
+                .Where(a => a.GebruikerId == request.aanvoerderId)
                 .SingleOrDefaultAsync();
 
             if (aanvoerder == null)

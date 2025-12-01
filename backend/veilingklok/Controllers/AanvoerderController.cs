@@ -19,8 +19,7 @@ public class AanvoerderController : ControllerBase
     public async Task<ActionResult<Aanvoerder>> GetUser(int id)
     {
         var aanvoerder = await _db.Aanvoerders
-            .Include(a => a.Gebruiker)
-            .FirstOrDefaultAsync(a => a.AanvoerderId == id);
+            .FirstOrDefaultAsync(a => a.GebruikerId == id);
         
         if (aanvoerder == null)
         {

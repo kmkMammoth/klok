@@ -19,8 +19,7 @@ public class KoperController : ControllerBase
     public async Task<ActionResult<Koper>> GetUser(int id)
     {
         var koper = await _db.Kopers
-            .Include(k => k.Gebruiker)
-            .FirstOrDefaultAsync(k => k.KoperId == id);
+            .FirstOrDefaultAsync(k => k.GebruikerId == id);
         
         if (koper == null)
         {
@@ -55,8 +54,8 @@ public class KoperController : ControllerBase
     [HttpDelete]
     public async Task<ActionResult<IEnumerable<Gebruiker>>> DeleteUser(int koperID)
     {
-        var koper = await _db.Kopers.Where(koper => koper.GebruikerId == koperID).SingleAsync();
-        _db.Remove(User);
+        var koper = await _db.Kopers.Where(k => k.GebruikerId == koperID).SingleAsync();
+        _db.Remove(koper);
         await _db.SaveChangesAsync();
         return Ok();
     }

@@ -52,22 +52,13 @@ public class RegisterController : ControllerBase
             return BadRequest(new ErrorResponseDto { Message = "Wachtwoorden komen niet overeen" });
         }
 
-        using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
-            // Maak Gebruiker aan
-            var gebruiker = new Gebruiker
-            {
-                Naam = dto.Bedrijfsnaam,
-                WachtwoordHash = HashPassword(dto.Wachtwoord)
-            };
-            _db.Gebruikers.Add(gebruiker);
-            await _db.SaveChangesAsync();
-
-            // Maak Koper aan
+            // Maak Koper aan (erft van Gebruiker)
             var koper = new Koper
             {
-                GebruikerId = gebruiker.GebruikerId,
+                Naam = dto.Bedrijfsnaam,
+                WachtwoordHash = HashPassword(dto.Wachtwoord),
                 KvkNummer = dto.KvkNummer,
                 Adres = dto.Bedrijfsadres,
                 Email = dto.Email,
@@ -76,18 +67,15 @@ public class RegisterController : ControllerBase
             _db.Kopers.Add(koper);
             await _db.SaveChangesAsync();
 
-            await transaction.CommitAsync();
-
             return Ok(new RegistratieResponseDto
             {
                 Message = "Koper succesvol geregistreerd",
-                GebruikerId = gebruiker.GebruikerId,
-                KoperId = koper.KoperId
+                GebruikerId = koper.GebruikerId,
+                KoperId = koper.GebruikerId
             });
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
             return StatusCode(500, new ErrorResponseDto 
             { 
                 Message = "Er is een fout opgetreden", 
@@ -116,22 +104,13 @@ public class RegisterController : ControllerBase
             return BadRequest(new ErrorResponseDto { Message = "Wachtwoorden komen niet overeen" });
         }
 
-        using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
-            // Maak Gebruiker aan
-            var gebruiker = new Gebruiker
-            {
-                Naam = dto.Bedrijfsnaam,
-                WachtwoordHash = HashPassword(dto.Wachtwoord)
-            };
-            _db.Gebruikers.Add(gebruiker);
-            await _db.SaveChangesAsync();
-
-            // Maak Aanvoerder aan
+            // Maak Aanvoerder aan (erft van Gebruiker)
             var aanvoerder = new Aanvoerder
             {
-                GebruikerId = gebruiker.GebruikerId,
+                Naam = dto.Bedrijfsnaam,
+                WachtwoordHash = HashPassword(dto.Wachtwoord),
                 KvkNummer = dto.KvkNummer,
                 Adres = dto.Bedrijfsadres,
                 Email = dto.Email,
@@ -140,18 +119,15 @@ public class RegisterController : ControllerBase
             _db.Aanvoerders.Add(aanvoerder);
             await _db.SaveChangesAsync();
 
-            await transaction.CommitAsync();
-
             return Ok(new RegistratieResponseDto
             {
                 Message = "Aanvoerder succesvol geregistreerd",
-                GebruikerId = gebruiker.GebruikerId,
-                AanvoerderId = aanvoerder.AanvoerderId
+                GebruikerId = aanvoerder.GebruikerId,
+                AanvoerderId = aanvoerder.GebruikerId
             });
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
             return StatusCode(500, new ErrorResponseDto 
             { 
                 Message = "Er is een fout opgetreden", 
@@ -180,38 +156,26 @@ public class RegisterController : ControllerBase
             return BadRequest(new ErrorResponseDto { Message = "Wachtwoorden komen niet overeen" });
         }
 
-        using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
-            // Maak Gebruiker aan
-            var gebruiker = new Gebruiker
+            // Maak Veilingmeester aan (erft van Gebruiker)
+            var veilingmeester = new Veilingmeester
             {
                 Naam = dto.Gebruikersnaam,
                 WachtwoordHash = HashPassword(dto.Wachtwoord)
             };
-            _db.Gebruikers.Add(gebruiker);
-            await _db.SaveChangesAsync();
-
-            // Maak Veilingmeester aan
-            var veilingmeester = new Veilingmeester
-            {
-                GebruikerId = gebruiker.GebruikerId
-            };
             _db.Veilingmeesters.Add(veilingmeester);
             await _db.SaveChangesAsync();
-
-            await transaction.CommitAsync();
 
             return Ok(new RegistratieResponseDto
             {
                 Message = "Veilingmeester succesvol geregistreerd",
-                GebruikerId = gebruiker.GebruikerId,
-                VeilingmeesterId = veilingmeester.VeilingmeesterId
+                GebruikerId = veilingmeester.GebruikerId,
+                VeilingmeesterId = veilingmeester.GebruikerId
             });
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
             return StatusCode(500, new ErrorResponseDto 
             { 
                 Message = "Er is een fout opgetreden", 

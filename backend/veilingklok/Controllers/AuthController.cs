@@ -40,27 +40,62 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginDto dto)
     {
-        // Zoek gebruiker op naam
-        var gebruiker = await _db.Gebruikers
-            .FirstOrDefaultAsync(g => g.Naam == dto.Gebruikersnaam);
+        // Zoek in alle subklassen (Aanvoerder, Koper, Veilingmeester) omdat ze nu Gebruiker erven
+        string accountType = "";
+        int? roleId = null;
+        Gebruiker gebruiker = null;
 
-        // Als gebruiker niet gevonden, probeer via email in Kopers tabel
+        // Controleer eerst op naam in alle tabellen
+        var koperByNaam = await _db.Kopers.FirstOrDefaultAsync(k => k.Naam == dto.Gebruikersnaam);
+        if (koperByNaam != null)
+        {
+            gebruiker = koperByNaam;
+            accountType = "koper";
+            roleId = koperByNaam.GebruikerId;
+        }
+
+        if (gebruiker == null)
+        {
+            var aanvoerderByNaam = await _db.Aanvoerders.FirstOrDefaultAsync(a => a.Naam == dto.Gebruikersnaam);
+            if (aanvoerderByNaam != null)
+            {
+                gebruiker = aanvoerderByNaam;
+                accountType = "aanvoerder";
+                roleId = aanvoerderByNaam.GebruikerId;
+            }
+        }
+
+        if (gebruiker == null)
+        {
+            var veilingmeesterByNaam = await _db.Veilingmeesters.FirstOrDefaultAsync(v => v.Naam == dto.Gebruikersnaam);
+            if (veilingmeesterByNaam != null)
+            {
+                gebruiker = veilingmeesterByNaam;
+                accountType = "veilingmeester";
+                roleId = veilingmeesterByNaam.GebruikerId;
+            }
+        }
+
+        // Als niet gevonden via naam, probeer via email in Kopers of Aanvoerders
         if (gebruiker == null)
         {
             var koperByEmail = await _db.Kopers.FirstOrDefaultAsync(k => k.Email == dto.Gebruikersnaam);
             if (koperByEmail != null)
             {
-                gebruiker = await _db.Gebruikers.FirstOrDefaultAsync(g => g.GebruikerId == koperByEmail.GebruikerId);
+                gebruiker = koperByEmail;
+                accountType = "koper";
+                roleId = koperByEmail.GebruikerId;
             }
         }
 
-        // Als gebruiker nog steeds niet gevonden, probeer via email in Aanvoerders tabel
         if (gebruiker == null)
         {
             var aanvoerderByEmail = await _db.Aanvoerders.FirstOrDefaultAsync(a => a.Email == dto.Gebruikersnaam);
             if (aanvoerderByEmail != null)
             {
-                gebruiker = await _db.Gebruikers.FirstOrDefaultAsync(g => g.GebruikerId == aanvoerderByEmail.GebruikerId);
+                gebruiker = aanvoerderByEmail;
+                accountType = "aanvoerder";
+                roleId = aanvoerderByEmail.GebruikerId;
             }
         }
 
@@ -81,46 +116,6 @@ public class AuthController : ControllerBase
             { 
                 Success = false, 
                 Message = "Gebruikersnaam of wachtwoord is onjuist" 
-            });
-        }
-
-        // Bepaal account type
-        string accountType = "";
-        int? roleId = null;
-
-        // Controleer of gebruiker een Veilingmeester is
-        var veilingmeester = await _db.Veilingmeesters
-            .FirstOrDefaultAsync(v => v.GebruikerId == gebruiker.GebruikerId);
-        if (veilingmeester != null)
-        {
-            accountType = "veilingmeester";
-            roleId = veilingmeester.VeilingmeesterId;
-        }
-
-        // Controleer of gebruiker een Koper is
-        var koper = await _db.Kopers
-            .FirstOrDefaultAsync(k => k.GebruikerId == gebruiker.GebruikerId);
-        if (koper != null)
-        {
-            accountType = "koper";
-            roleId = koper.KoperId;
-        }
-
-        // Controleer of gebruiker een Aanvoerder is
-        var aanvoerder = await _db.Aanvoerders
-            .FirstOrDefaultAsync(a => a.GebruikerId == gebruiker.GebruikerId);
-        if (aanvoerder != null)
-        {
-            accountType = "aanvoerder";
-            roleId = aanvoerder.AanvoerderId;
-        }
-
-        if (string.IsNullOrEmpty(accountType))
-        {
-            return BadRequest(new LoginResponseDto 
-            { 
-                Success = false, 
-                Message = "Account heeft geen geldige rol" 
             });
         }
 

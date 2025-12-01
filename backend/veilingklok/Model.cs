@@ -22,23 +22,50 @@ public class VeilingContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Tabelnamen instellen op enkelvoud
+        // Table Per Type (TPT) inheritance configuratie
         modelBuilder.Entity<Gebruiker>().ToTable("Gebruiker");
         modelBuilder.Entity<Aanvoerder>().ToTable("Aanvoerder");
         modelBuilder.Entity<Koper>().ToTable("Koper");
         modelBuilder.Entity<Veilingmeester>().ToTable("Veilingmeester");
+        
+        // Tabelnamen instellen op enkelvoud voor andere entiteiten
         modelBuilder.Entity<Product>().ToTable("Product");
         modelBuilder.Entity<Veiling>().ToTable("Veiling");
         modelBuilder.Entity<Bod>().ToTable("Bod");
+
+        // Configuratie voor Product -> Aanvoerder foreign key
+        modelBuilder.Entity<Product>()
+            .HasOne(p => p.Aanvoerder)
+            .WithMany(a => a.Producten)
+            .HasForeignKey(p => p.AanvoerderId)
+            .HasPrincipalKey(a => a.GebruikerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configuratie voor Veiling -> Veilingmeester foreign key
+        modelBuilder.Entity<Veiling>()
+            .HasOne(v => v.Veilingmeester)
+            .WithMany(vm => vm.Veilingen)
+            .HasForeignKey(v => v.VeilingmeesterId)
+            .HasPrincipalKey(vm => vm.GebruikerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configuratie voor Bod -> Koper foreign key
+        modelBuilder.Entity<Bod>()
+            .HasOne(b => b.Koper)
+            .WithMany(k => k.Biedingen)
+            .HasForeignKey(b => b.KoperId)
+            .HasPrincipalKey(k => k.GebruikerId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Check constraint voor Veiling status
         modelBuilder.Entity<Veiling>()
             .HasCheckConstraint("CK_Veiling_Status", "status IN ('Idle', 'Ongoing', 'Done')");
         
-        // Alle foreign keys op restrict zetten
+        // Alle overige foreign keys op restrict zetten
         foreach (var foreignKey in modelBuilder.Model
                     .GetEntityTypes()
-                    .SelectMany(e => e.GetForeignKeys()))
+                    .SelectMany(e => e.GetForeignKeys())
+                    .Where(fk => !fk.IsOwnership && fk.DeleteBehavior != DeleteBehavior.Restrict))
         {
             foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
         }
@@ -59,22 +86,10 @@ public class Gebruiker
     [Required, MaxLength(255)]
     [Column("wachtwoord_hash")]
     public string WachtwoordHash { get; set; }
-
-    public List<Aanvoerder> Aanvoerders { get; set; } = new();
-    public List<Koper> Kopers { get; set; } = new();
-    public List<Veilingmeester> Veilingmeesters { get; set; } = new();
 }
 
-public class Aanvoerder
+public class Aanvoerder : Gebruiker
 {
-    [Key]
-    [Column("aanvoerder_id")]
-    public int AanvoerderId { get; set; }
-
-    [Required, ForeignKey("Gebruiker")]
-    [Column("gebruiker_id")]
-    public int GebruikerId { get; set; }
-
     [StringLength(8)]
     [Column("kvk_nummer")]
     public string KvkNummer { get; set; }
@@ -91,20 +106,11 @@ public class Aanvoerder
     [Column("iban_hash")]
     public string IbanHash { get; set; }
 
-    public Gebruiker Gebruiker { get; set; }
     public List<Product> Producten { get; set; } = new();
 }
 
-public class Koper
+public class Koper : Gebruiker
 {
-    [Key]
-    [Column("koper_id")]
-    public int KoperId { get; set; }
-
-    [Required, ForeignKey("Gebruiker")]
-    [Column("gebruiker_id")]
-    public int GebruikerId { get; set; }
-
     [StringLength(8)]
     [Column("kvk_nummer")]
     public string KvkNummer { get; set; }
@@ -121,21 +127,11 @@ public class Koper
     [Column("iban_hash")]
     public string IbanHash { get; set; }
 
-    public Gebruiker Gebruiker { get; set; }
     public List<Bod> Biedingen { get; set; } = new();
 }
 
-public class Veilingmeester
+public class Veilingmeester : Gebruiker
 {
-    [Key]
-    [Column("veilingmeester_id")]
-    public int VeilingmeesterId { get; set; }
-
-    [Required, ForeignKey("Gebruiker")]
-    [Column("gebruiker_id")]
-    public int GebruikerId { get; set; }
-
-    public Gebruiker Gebruiker { get; set; }
     public List<Veiling> Veilingen { get; set; } = new();
 }
 

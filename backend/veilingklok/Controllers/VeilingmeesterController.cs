@@ -19,8 +19,7 @@ public class VeilingmeesterController : ControllerBase
     public async Task<ActionResult<Veilingmeester>> GetUser(int id)
     {
         var veilingmeester = await _db.Veilingmeesters
-            .Include(v => v.Gebruiker)
-            .FirstOrDefaultAsync(v => v.VeilingmeesterId == id);
+            .FirstOrDefaultAsync(v => v.GebruikerId == id);
         
         if (veilingmeester == null)
         {
