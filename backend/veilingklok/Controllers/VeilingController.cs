@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using veilingklok.Models;
 
 namespace veilingklok;
 
@@ -38,7 +39,7 @@ public class AuctionsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AuctionResponse>>> GetAllAuctions()
     {
-        var veilingen = await _db.Veilingen
+        var veilingen = await _db.Veiling
             .OrderBy(v => v.VeilingId)
             .ToListAsync();
 
@@ -60,7 +61,7 @@ public class AuctionsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<AuctionResponse>> GetAuction(int id)
     {
-        var veiling = await _db.Veilingen
+        var veiling = await _db.Veiling
             .Where(v => v.VeilingId == id)
             .SingleOrDefaultAsync();
 
@@ -95,10 +96,10 @@ public class AuctionsController : ControllerBase
             Status = "Idle",
             StartTijd = DateTime.Now,
             EindTijd = DateTime.Now.AddSeconds(request.maxTime),
-            VeilingmeesterId = 1, // tijdelijke placeholder — later koppelen aan echte user
+            Gebruiker_id = "1", // tijdelijke placeholder — later koppelen aan echte user
         };
 
-        _db.Veilingen.Add(veiling);
+        _db.Veiling.Add(veiling);
         await _db.SaveChangesAsync();
 
         // Return de gegevens in het frontend-format
@@ -120,7 +121,7 @@ public class AuctionsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateAuction(int id, string status)
     {
-        var veiling = await _db.Veilingen
+        var veiling = await _db.Veiling
             .Where(v => v.VeilingId == id)
             .SingleOrDefaultAsync();
 
@@ -137,14 +138,14 @@ public class AuctionsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteAuction(int id)
     {
-        var veiling = await _db.Veilingen
+        var veiling = await _db.Veiling
             .Where(v => v.VeilingId == id)
             .SingleOrDefaultAsync();
 
         if (veiling == null)
             return NotFound($"Veiling met ID {id} niet gevonden.");
 
-        _db.Veilingen.Remove(veiling);
+        _db.Veiling.Remove(veiling);
         await _db.SaveChangesAsync();
 
         return Ok();

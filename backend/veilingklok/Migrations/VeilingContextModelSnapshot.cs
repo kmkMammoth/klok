@@ -22,92 +22,163 @@ namespace veilingklok.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("veilingklok.Aanvoerder", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
-                    b.Property<int>("AanvoerderId")
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("aanvoerder_id");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AanvoerderId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Adres")
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RoleId")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("adres");
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RoleId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("veilingklok.Models.Gebruiker", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("email");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
-                    b.Property<int>("GebruikerId")
-                        .HasColumnType("int")
-                        .HasColumnName("gebruiker_id");
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
 
-                    b.Property<string>("IbanHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("iban_hash");
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("bit");
 
-                    b.Property<string>("KvkNummer")
-                        .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)")
-                        .HasColumnName("kvk_nummer");
-
-                    b.HasKey("AanvoerderId");
-
-                    b.HasIndex("GebruikerId");
-
-                    b.ToTable("Aanvoerder", (string)null);
-                });
-
-            modelBuilder.Entity("veilingklok.Bod", b =>
-                {
-                    b.Property<int>("BodId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("bod_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BodId"));
-
-                    b.Property<decimal>("Bedrag")
-                        .HasColumnType("decimal(10,2)")
-                        .HasColumnName("bedrag");
-
-                    b.Property<int>("KoperId")
-                        .HasColumnType("int")
-                        .HasColumnName("koper_id");
-
-                    b.Property<DateTime>("Tijdstip")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("tijdstip");
-
-                    b.Property<int>("VeilingId")
-                        .HasColumnType("int")
-                        .HasColumnName("veiling_id");
-
-                    b.HasKey("BodId");
-
-                    b.HasIndex("KoperId");
-
-                    b.HasIndex("VeilingId");
-
-                    b.ToTable("Bod", (string)null);
-                });
-
-            modelBuilder.Entity("veilingklok.Gebruiker", b =>
-                {
-                    b.Property<int>("GebruikerId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("gebruiker_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("GebruikerId"));
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Naam")
                         .IsRequired()
@@ -115,62 +186,49 @@ namespace veilingklok.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("naam");
 
-                    b.Property<string>("WachtwoordHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("wachtwoord_hash");
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
-                    b.HasKey("GebruikerId");
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("Gebruiker", (string)null);
+
+                    b.UseTptMappingStrategy();
                 });
 
-            modelBuilder.Entity("veilingklok.Koper", b =>
-                {
-                    b.Property<int>("KoperId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("koper_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("KoperId"));
-
-                    b.Property<string>("Adres")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("adres");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("email");
-
-                    b.Property<int>("GebruikerId")
-                        .HasColumnType("int")
-                        .HasColumnName("gebruiker_id");
-
-                    b.Property<string>("IbanHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("iban_hash");
-
-                    b.Property<string>("KvkNummer")
-                        .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)")
-                        .HasColumnName("kvk_nummer");
-
-                    b.HasKey("KoperId");
-
-                    b.HasIndex("GebruikerId");
-
-                    b.ToTable("Koper", (string)null);
-                });
-
-            modelBuilder.Entity("veilingklok.Product", b =>
+            modelBuilder.Entity("veilingklok.Models.Product", b =>
                 {
                     b.Property<int>("ArtikelId")
                         .ValueGeneratedOnAdd()
@@ -179,21 +237,20 @@ namespace veilingklok.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ArtikelId"));
 
-                    b.Property<int>("AanvoerderId")
-                        .HasColumnType("int")
-                        .HasColumnName("aanvoerder_id");
-
                     b.Property<string>("Afbeelding")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("afbeelding");
+
+                    b.Property<string>("Gebruiker_id")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("gebruiker_id");
 
                     b.Property<int?>("Hoeveelheid")
                         .HasColumnType("int")
                         .HasColumnName("hoeveelheid");
 
                     b.Property<string>("KlokLocatie")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("kloklocatie");
@@ -216,14 +273,19 @@ namespace veilingklok.Migrations
                         .HasColumnType("decimal(5,2)")
                         .HasColumnName("steellengte");
 
+                    b.Property<int?>("VeilingId")
+                        .HasColumnType("int");
+
                     b.HasKey("ArtikelId");
 
-                    b.HasIndex("AanvoerderId");
+                    b.HasIndex("Gebruiker_id");
+
+                    b.HasIndex("VeilingId");
 
                     b.ToTable("Product", (string)null);
                 });
 
-            modelBuilder.Entity("veilingklok.Veiling", b =>
+            modelBuilder.Entity("veilingklok.Models.Veiling", b =>
                 {
                     b.Property<int>("VeilingId")
                         .ValueGeneratedOnAdd()
@@ -239,6 +301,19 @@ namespace veilingklok.Migrations
                     b.Property<DateTime>("EindTijd")
                         .HasColumnType("datetime2")
                         .HasColumnName("eindtijd");
+
+                    b.Property<string>("Gebruiker_id")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("gebruiker_id");
+
+                    b.Property<string>("KlantId")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("klant_id");
+
+                    b.Property<decimal?>("Koopprijs")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("koopprijs");
 
                     b.Property<decimal?>("MinimumPrijs")
                         .HasColumnType("decimal(10,2)")
@@ -259,15 +334,11 @@ namespace veilingklok.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("veilingnaam");
 
-                    b.Property<int>("VeilingmeesterId")
-                        .HasColumnType("int")
-                        .HasColumnName("veilingmeester_id");
-
                     b.HasKey("VeilingId");
 
-                    b.HasIndex("ArtikelId");
+                    b.HasIndex("Gebruiker_id");
 
-                    b.HasIndex("VeilingmeesterId");
+                    b.HasIndex("KlantId");
 
                     b.ToTable("Veiling", null, t =>
                         {
@@ -275,137 +346,186 @@ namespace veilingklok.Migrations
                         });
                 });
 
-            modelBuilder.Entity("veilingklok.Veilingmeester", b =>
+            modelBuilder.Entity("veilingklok.Models.Aanvoerder", b =>
                 {
-                    b.Property<int>("VeilingmeesterId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("veilingmeester_id");
+                    b.HasBaseType("veilingklok.Models.Gebruiker");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VeilingmeesterId"));
+                    b.Property<string>("Adres")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("adres");
 
-                    b.Property<int>("GebruikerId")
-                        .HasColumnType("int")
-                        .HasColumnName("gebruiker_id");
+                    b.Property<string>("IbanHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("iban_hash");
 
-                    b.HasKey("VeilingmeesterId");
+                    b.Property<string>("KvkNummer")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)")
+                        .HasColumnName("kvk_nummer");
 
-                    b.HasIndex("GebruikerId");
+                    b.ToTable("Aanvoerder", (string)null);
+                });
+
+            modelBuilder.Entity("veilingklok.Models.Koper", b =>
+                {
+                    b.HasBaseType("veilingklok.Models.Gebruiker");
+
+                    b.Property<string>("Adres")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("adres");
+
+                    b.Property<string>("IbanHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("iban_hash");
+
+                    b.Property<string>("KvkNummer")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)")
+                        .HasColumnName("kvk_nummer");
+
+                    b.ToTable("Koper", (string)null);
+                });
+
+            modelBuilder.Entity("veilingklok.Models.Veilingmeester", b =>
+                {
+                    b.HasBaseType("veilingklok.Models.Gebruiker");
 
                     b.ToTable("Veilingmeester", (string)null);
                 });
 
-            modelBuilder.Entity("veilingklok.Aanvoerder", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
-                    b.HasOne("veilingklok.Gebruiker", "Gebruiker")
-                        .WithMany("Aanvoerders")
-                        .HasForeignKey("GebruikerId")
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Gebruiker");
                 });
 
-            modelBuilder.Entity("veilingklok.Bod", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("veilingklok.Koper", "Koper")
-                        .WithMany("Biedingen")
-                        .HasForeignKey("KoperId")
+                    b.HasOne("veilingklok.Models.Gebruiker", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("veilingklok.Veiling", "Veiling")
-                        .WithMany("Biedingen")
-                        .HasForeignKey("VeilingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Koper");
-
-                    b.Navigation("Veiling");
                 });
 
-            modelBuilder.Entity("veilingklok.Koper", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("veilingklok.Gebruiker", "Gebruiker")
-                        .WithMany("Kopers")
-                        .HasForeignKey("GebruikerId")
+                    b.HasOne("veilingklok.Models.Gebruiker", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Gebruiker");
+                    b.HasOne("veilingklok.Models.Gebruiker", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("veilingklok.Product", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("veilingklok.Aanvoerder", "Aanvoerder")
+                    b.HasOne("veilingklok.Models.Gebruiker", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("veilingklok.Models.Product", b =>
+                {
+                    b.HasOne("veilingklok.Models.Aanvoerder", "Aanvoerder")
                         .WithMany("Producten")
-                        .HasForeignKey("AanvoerderId")
+                        .HasForeignKey("Gebruiker_id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("veilingklok.Models.Veiling", null)
+                        .WithMany("Producten")
+                        .HasForeignKey("VeilingId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Aanvoerder");
                 });
 
-            modelBuilder.Entity("veilingklok.Veiling", b =>
+            modelBuilder.Entity("veilingklok.Models.Veiling", b =>
                 {
-                    b.HasOne("veilingklok.Product", "Product")
+                    b.HasOne("veilingklok.Models.Veilingmeester", "Veilingmeester")
                         .WithMany("Veilingen")
-                        .HasForeignKey("ArtikelId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("veilingklok.Veilingmeester", "Veilingmeester")
-                        .WithMany("Veilingen")
-                        .HasForeignKey("VeilingmeesterId")
+                        .HasForeignKey("Gebruiker_id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Product");
+                    b.HasOne("veilingklok.Models.Koper", "Koper")
+                        .WithMany()
+                        .HasForeignKey("KlantId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Koper");
 
                     b.Navigation("Veilingmeester");
                 });
 
-            modelBuilder.Entity("veilingklok.Veilingmeester", b =>
+            modelBuilder.Entity("veilingklok.Models.Aanvoerder", b =>
                 {
-                    b.HasOne("veilingklok.Gebruiker", "Gebruiker")
-                        .WithMany("Veilingmeesters")
-                        .HasForeignKey("GebruikerId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("veilingklok.Models.Gebruiker", null)
+                        .WithOne()
+                        .HasForeignKey("veilingklok.Models.Aanvoerder", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Gebruiker");
                 });
 
-            modelBuilder.Entity("veilingklok.Aanvoerder", b =>
+            modelBuilder.Entity("veilingklok.Models.Koper", b =>
+                {
+                    b.HasOne("veilingklok.Models.Gebruiker", null)
+                        .WithOne()
+                        .HasForeignKey("veilingklok.Models.Koper", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("veilingklok.Models.Veilingmeester", b =>
+                {
+                    b.HasOne("veilingklok.Models.Gebruiker", null)
+                        .WithOne()
+                        .HasForeignKey("veilingklok.Models.Veilingmeester", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("veilingklok.Models.Veiling", b =>
                 {
                     b.Navigation("Producten");
                 });
 
-            modelBuilder.Entity("veilingklok.Gebruiker", b =>
+            modelBuilder.Entity("veilingklok.Models.Aanvoerder", b =>
                 {
-                    b.Navigation("Aanvoerders");
-
-                    b.Navigation("Kopers");
-
-                    b.Navigation("Veilingmeesters");
+                    b.Navigation("Producten");
                 });
 
-            modelBuilder.Entity("veilingklok.Koper", b =>
-                {
-                    b.Navigation("Biedingen");
-                });
-
-            modelBuilder.Entity("veilingklok.Product", b =>
-                {
-                    b.Navigation("Veilingen");
-                });
-
-            modelBuilder.Entity("veilingklok.Veiling", b =>
-                {
-                    b.Navigation("Biedingen");
-                });
-
-            modelBuilder.Entity("veilingklok.Veilingmeester", b =>
+            modelBuilder.Entity("veilingklok.Models.Veilingmeester", b =>
                 {
                     b.Navigation("Veilingen");
                 });
