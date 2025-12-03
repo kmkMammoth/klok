@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import './App.css';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import Overview from './pages/VeilingmeesterOverview';
 import CreateAuction from './pages/VeilingmeesterCreateAuction';
 import ProductOverzicht from './pages/AanvoerderProductenoverzicht';
 import KoperOverview from "./pages/AanvoerderKoperOverview";
 import AanvoerderCreateProduct from './pages/AanvoerderCreateProduct';
-import { NavLink, Routes, Route } from 'react-router-dom';
+import DashboardNavbar from './components/DashboardNavbar';
+import ProtectedRoute from './components/ProtectedRoute';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 function App() {
     const [auctions, setAuctions] = useState([
@@ -39,62 +43,81 @@ function App() {
 
     return (
         <div className="App">
-            <nav className="navbar">
-                <div className="nav-container">
-                    <p className="logo">Flora Veiling</p>
-                    <ul className="nav-menu">
-                        <li>
-                            <NavLink to="/" end className={({isActive}) => isActive ? 'active' : ''}>
-                                Overzicht
-                            </NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/create" className={({isActive}) => isActive ? 'active' : ''}>
-                                Veiling Aanmaken (VM)
-                            </NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/kOverview" className={({isActive}) => isActive ? 'active' : ''}>
-                                Koper Overview (A)
-                            </NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/producten" className={({isActive}) => isActive ? 'active' : ''}>
-                                Productenoverzicht (A)
-                            </NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/create-product" className={({isActive}) => isActive ? 'active' : ''}>
-                                Product Aanmaken (A)
-                            </NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/app" className={({isActive}) => isActive ? 'active' : ''}>
-                                Welkom, (actor) !
-                            </NavLink>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-
-            <div className="content">
-                <Routes>
-                    <Route path="/" element={
-                        <>
-                            <div className="welcome-section">
-                                <h2>Welkom bij Flora Veiling</h2>
-                                <p>Ontdek de beste bloemen tegen de beste prijzen via ons unieke aflopende veiling systeem</p>
+            <Routes>
+                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/veilingzaal" element={
+                    <ProtectedRoute>
+                        <div>
+                            <DashboardNavbar activePage="/veilingzaal" />
+                            <div className="content">
+                                <div className="welcome-section">
+                                    <h2>Welkom bij Flora Veiling</h2>
+                                    <p>Ontdek de beste bloemen tegen de beste prijzen via ons unieke aflopende veiling systeem</p>
+                                </div>
+                                <Overview auctions={auctions} setAuctions={setAuctions} />
                             </div>
-                            <Overview auctions={auctions} setAuctions={setAuctions} />
-                        </>
-                    } />
-                    <Route path="/create" element={<CreateAuction auctions={auctions} addAuction={addAuction} />} />
-                    <Route path="/create-product" element={<AanvoerderCreateProduct />} />
-                    <Route path="/producten" element={<ProductOverzicht auctions={auctions} />} />
-                    <Route path="/kOverview" element={<KoperOverview auctions={auctions} />} />
-                    <Route path="/app" element={<div><h1>Welkom, Veilingmeester! (Accountinformatie)</h1></div>} />
-                </Routes>
-            </div>
+                        </div>
+                    </ProtectedRoute>
+                } />
+                <Route path="/create" element={
+                    <ProtectedRoute>
+                        <div>
+                            <DashboardNavbar activePage="/create" />
+                            <div className="content">
+                                <CreateAuction auctions={auctions} addAuction={addAuction} />
+                            </div>
+                        </div>
+                    </ProtectedRoute>
+                } />
+                <Route path="/create-product" element={
+                    <ProtectedRoute>
+                        <div>
+                            <DashboardNavbar activePage="/create-product" />
+                            <div className="content">
+                                <AanvoerderCreateProduct />
+                            </div>
+                        </div>
+                    </ProtectedRoute>
+                } />
+                <Route path="/producten" element={
+                    <ProtectedRoute>
+                        <div>
+                            <DashboardNavbar activePage="/producten" />
+                            <div className="content">
+                                <ProductOverzicht auctions={auctions} />
+                            </div>
+                        </div>
+                    </ProtectedRoute>
+                } />
+                <Route path="/kOverview" element={
+                    <ProtectedRoute>
+                        <div>
+                            <DashboardNavbar activePage="/kOverview" />
+                            <div className="content">
+                                <KoperOverview auctions={auctions} />
+                            </div>
+                        </div>
+                    </ProtectedRoute>
+                } />
+                <Route path="/mijn-veilingen" element={
+                    <div className="content">
+                        <KoperOverview auctions={auctions} />
+                    </div>
+                } />
+                <Route path="/helpcentrum" element={
+                    <div className="content">
+                        <h1>Helpcentrum</h1>
+                        <p>Hier vindt u hulp en ondersteuning.</p>
+                    </div>
+                } />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/app" element={
+                    <div className="content">
+                        <h1>Welkom, Veilingmeester! (Accountinformatie)</h1>
+                    </div>
+                } />
+            </Routes>
         </div>
     );
 }
