@@ -155,7 +155,7 @@ public class ProductsController : ControllerBase
         if (request.minimumprijs.HasValue && request.minimumprijs < 0)
             return BadRequest("MinimumPrijs kan niet negatief zijn.");
 
-        // Check if new Aanvoerder exists
+        // Update AanvoerderId directly (database FK constraint will enforce validity)
         if (request.aanvoerderId > 0)
         {
             var aanvoerder = await _db.Aanvoerders
@@ -204,9 +204,16 @@ public class ProductsController : ControllerBase
         if (product == null)
             return NotFound($"Product met ID {id} niet gevonden.");
 
+        // Controleer of het product wordt gebruikt in een veiling
+        var isUsedInAuction = await _db.VeilingProducten
+            .AnyAsync(vp => vp.ArtikelId == id);
+
+        if (isUsedInAuction)
+            return BadRequest($"Product met ID {id} kan niet worden verwijderd omdat het wordt gebruikt in een veiling. Verwijder eerst de veiling(en) waarin dit product voorkomt.");
+
         _db.Producten.Remove(product);
         await _db.SaveChangesAsync();
 
-        return Ok();
+        return Ok(new { message = $"Product met ID {id} succesvol verwijderd." });
     }
 }

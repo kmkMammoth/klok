@@ -1,5 +1,6 @@
 using veilingklok;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,12 +59,65 @@ app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 app.MapControllers();
 
-// Test database connectie
+// Test database connectie and create VeilingProduct table if needed
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<VeilingContext>();
     var canConnect = await context.Database.CanConnectAsync();
     Console.WriteLine($"Database connection successful: {canConnect}");
+    
+    // Create VeilingProduct table if it doesn't exist, enforce huidige_prijs NOT NULL, and mark migrations applied
+    try
+    {
+        await using var conn = new SqlConnection(context.Database.GetConnectionString());
+        await conn.OpenAsync();
+        var sql = @"
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[VeilingProduct]') AND type = 'U')
+BEGIN
+    CREATE TABLE [VeilingProduct] (
+        [veiling_product_id] int NOT NULL IDENTITY(1,1),
+        [veiling_id] int NOT NULL,
+        [artikel_id] int NOT NULL,
+        [startprijs] decimal(10,2) NOT NULL,
+        [prijsreductie_bedrag] decimal(10,2) NOT NULL,
+        [prijsreductie_interval] int NOT NULL,
+        [huidige_prijs] decimal(10,2) NOT NULL CONSTRAINT DF_VeilingProduct_huidige_prijs DEFAULT(0),
+        [laatste_reductie_tijd] datetime2 NULL,
+        CONSTRAINT [PK_VeilingProduct] PRIMARY KEY ([veiling_product_id]),
+        CONSTRAINT [FK_VeilingProduct_Product_artikel_id] FOREIGN KEY ([artikel_id]) REFERENCES [Product]([artikel_id]) ON DELETE NO ACTION,
+        CONSTRAINT [FK_VeilingProduct_Veiling_veiling_id] FOREIGN KEY ([veiling_id]) REFERENCES [Veiling]([veiling_id]) ON DELETE NO ACTION
+    );
+    CREATE INDEX [IX_VeilingProduct_artikel_id] ON [VeilingProduct]([artikel_id]);
+    CREATE INDEX [IX_VeilingProduct_veiling_id] ON [VeilingProduct]([veiling_id]);
+END;
+
+IF COL_LENGTH('VeilingProduct','huidige_prijs') IS NOT NULL
+BEGIN
+    UPDATE VeilingProduct SET huidige_prijs = 0 WHERE huidige_prijs IS NULL;
+    ALTER TABLE VeilingProduct ALTER COLUMN huidige_prijs decimal(10,2) NOT NULL;
+END;
+
+IF NOT EXISTS (SELECT 1 FROM __EFMigrationsHistory WHERE MigrationId='20251008094229_InitialCreate')
+    INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ('20251008094229_InitialCreate','9.0.9');
+IF NOT EXISTS (SELECT 1 FROM __EFMigrationsHistory WHERE MigrationId='20251118133805_IncreaseAfbeeldingSize')
+    INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ('20251118133805_IncreaseAfbeeldingSize','9.0.9');
+IF NOT EXISTS (SELECT 1 FROM __EFMigrationsHistory WHERE MigrationId='20251206212637_AddVeilingProductTable')
+    INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ('20251206212637_AddVeilingProductTable','9.0.9');
+IF NOT EXISTS (SELECT 1 FROM __EFMigrationsHistory WHERE MigrationId='20251206214823_MakeHuidigePrijsRequired')
+    INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ('20251206214823_MakeHuidigePrijsRequired','9.0.9');
+";
+        await using (var cmd = new SqlCommand(sql, conn))
+        {
+            await cmd.ExecuteNonQueryAsync();
+        }
+        await conn.CloseAsync();
+        
+        Console.WriteLine("✓ VeilingProduct table and migration history ensured");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠ Warning creating VeilingProduct table: {ex.Message}");
+    }
 }
 
 app.Run();
@@ -92,10 +146,10 @@ async Task CreateDemoAccounts(VeilingContext db)
                 db.Gebruikers.Add(veilingmeesterUser);
                 await db.SaveChangesAsync();
 
-                var veilingmeester = new Veilingmeester
-                {
-                    GebruikerId = veilingmeesterUser.GebruikerId
-                };
+            var veilingmeester = new Veilingmeester
+            {
+                VeilingmeesterId = veilingmeesterUser.GebruikerId
+            };
                 db.Veilingmeesters.Add(veilingmeester);
                 await db.SaveChangesAsync();
                 Console.WriteLine("✓ Demo Veilingmeester created: demo_veilingmeester / demo123");

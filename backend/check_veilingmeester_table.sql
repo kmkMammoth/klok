@@ -1,0 +1,6 @@
+-- Controleer de kolommen van de Veilingmeester tabel
+SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'Veilingmeester'
+ORDER BY ORDINAL_POSITION;
+

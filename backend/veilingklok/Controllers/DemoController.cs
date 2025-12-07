@@ -45,10 +45,10 @@ public class DemoController : ControllerBase
                 _db.Gebruikers.Add(veilingmeesterUser);
                 await _db.SaveChangesAsync();
 
-                var veilingmeester = new Veilingmeester
-                {
-                    GebruikerId = veilingmeesterUser.GebruikerId
-                };
+            var veilingmeester = new Veilingmeester
+            {
+                VeilingmeesterId = veilingmeesterUser.GebruikerId
+            };
                 _db.Veilingmeesters.Add(veilingmeester);
                 await _db.SaveChangesAsync();
                 createdAccounts.Add("Veilingmeester: demo_veilingmeester / demo123");

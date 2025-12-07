@@ -199,6 +199,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.5rem;
+    align-items: start;
 }
 
 .auction-item {
@@ -287,4 +288,33 @@
 .detail-small strong {
     color: #587D71;
     font-size: 1rem;
+}
+
+/* 圆形倒计时时钟动画 */
+@keyframes pulse-urgent {
+    0%, 100% { 
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% { 
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+@keyframes glow-urgent {
+    0%, 100% {
+        filter: drop-shadow(0 0 3px rgba(231, 76, 60, 0.5));
+    }
+    50% {
+        filter: drop-shadow(0 0 10px rgba(231, 76, 60, 0.8));
+    }
+}
+
+.countdown-clock-urgent {
+    animation: pulse-urgent 1s ease-in-out infinite, glow-urgent 1s ease-in-out infinite;
+}
+
+.countdown-clock-warning {
+    animation: pulse-urgent 2s ease-in-out infinite;
 }

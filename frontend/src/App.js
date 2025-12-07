@@ -49,16 +49,16 @@ function App() {
                     <ProtectedRoute>
                         <div>
                             <DashboardNavbar activePage="/veilingzaal" />
-                            <div className="content">
-                                <div className="welcome-section">
-                                    <h2>Welkom bij Flora Veiling</h2>
-                                    <p>Ontdek de beste bloemen tegen de beste prijzen via ons unieke aflopende veiling systeem</p>
-                                </div>
-                                <Overview auctions={auctions} setAuctions={setAuctions} />
+            <div className="content">
+                            <div className="welcome-section">
+                                <h2>Welkom bij Flora Veiling</h2>
+                                <p>Ontdek de beste bloemen tegen de beste prijzen via ons unieke aflopende veiling systeem</p>
+                            </div>
+                            <Overview auctions={auctions} setAuctions={setAuctions} />
                             </div>
                         </div>
                     </ProtectedRoute>
-                } />
+                    } />
                 <Route path="/create" element={
                     <ProtectedRoute>
                         <div>
@@ -117,7 +117,7 @@ function App() {
                         <h1>Welkom, Veilingmeester! (Accountinformatie)</h1>
                     </div>
                 } />
-            </Routes>
+                </Routes>
         </div>
     );
 }
