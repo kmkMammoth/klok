@@ -274,13 +274,20 @@ namespace veilingklok.Migrations
                         .HasColumnName("steellengte");
 
                     b.Property<int?>("VeilingId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("veiling_id");
+
+                    b.Property<string>("gebruiker_id")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("koper_id");
 
                     b.HasKey("ArtikelId");
 
                     b.HasIndex("Gebruiker_id");
 
                     b.HasIndex("VeilingId");
+
+                    b.HasIndex("gebruiker_id");
 
                     b.ToTable("Product", (string)null);
                 });
@@ -462,12 +469,21 @@ namespace veilingklok.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("veilingklok.Models.Veiling", null)
+                    b.HasOne("veilingklok.Models.Veiling", "Veiling")
                         .WithMany("Producten")
                         .HasForeignKey("VeilingId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("veilingklok.Models.Koper", "Koper")
+                        .WithMany()
+                        .HasForeignKey("gebruiker_id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Aanvoerder");
+
+                    b.Navigation("Koper");
+
+                    b.Navigation("Veiling");
                 });
 
             modelBuilder.Entity("veilingklok.Models.Veiling", b =>

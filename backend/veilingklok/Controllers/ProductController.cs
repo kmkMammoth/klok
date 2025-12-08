@@ -20,6 +20,15 @@ public class CreateProductRequest
     public string? gebruikerId { get; set; }
 }
 
+public class UpdateProductVeiling
+{
+    public int? veilingId { get; set; }
+}
+public class UpdateProductKoper
+{
+    public string? koperId { get; set; }
+}
+
 public class ProductResponse
 {
     public int id { get; set; }
@@ -194,6 +203,57 @@ public class ProductsController : ControllerBase
 
         await _db.SaveChangesAsync();
 
+        return Ok();
+    }
+
+    // Assign a koper (Identity user id) to a product
+    [HttpPut("{id}/assign-koper")]
+    public async Task<ActionResult> AssignKoperToProduct(int id, [FromBody] UpdateProductKoper request)
+    {
+        var product = await _db.Product.Where(p => p.ArtikelId == id).SingleOrDefaultAsync();
+        if (product == null)
+            return NotFound($"Product met ID {id} niet gevonden.");
+
+        if (request == null || string.IsNullOrEmpty(request.koperId))
+            return BadRequest("Ongeldig koper ID.");
+
+        var koper = await _db.Koper.FindAsync(request.koperId);
+        if (koper == null)
+            return BadRequest($"Koper met ID {request.koperId} niet gevonden.");
+
+        // Set koper id (property name in model is 'gebruiker_id' for koper)
+        product.gebruiker_id = request.koperId;
+
+        await _db.SaveChangesAsync();
+        return Ok();
+    }
+
+    // Assign a veiling to a product (or clear by sending null)
+    [HttpPut("{id}/assign-veiling")]
+    public async Task<ActionResult> AssignVeilingToProduct(int id, [FromBody] UpdateProductVeiling request)
+    {
+        var product = await _db.Product.Where(p => p.ArtikelId == id).SingleOrDefaultAsync();
+        if (product == null)
+            return NotFound($"Product met ID {id} niet gevonden.");
+
+        // allow clearing the veiling by sending null
+        if (request == null)
+            return BadRequest("Ongeldige request body.");
+
+        if (request.veilingId.HasValue)
+        {
+            var veiling = await _db.Veiling.FindAsync(request.veilingId.Value);
+            if (veiling == null)
+                return BadRequest($"Veiling met ID {request.veilingId.Value} niet gevonden.");
+
+            product.VeilingId = request.veilingId.Value;
+        }
+        else
+        {
+            product.VeilingId = null;
+        }
+
+        await _db.SaveChangesAsync();
         return Ok();
     }
 

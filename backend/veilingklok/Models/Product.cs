@@ -10,7 +10,7 @@ namespace veilingklok.Models
         public int ArtikelId { get; set; }
 
         [Required, ForeignKey("Aanvoerder")]
-        [Column("gebruiker_id")]
+        [Column("Aanvoerder_id")]
         public string Gebruiker_id { get; set; }
 
         [MaxLength(100)]
@@ -37,6 +37,16 @@ namespace veilingklok.Models
         [Column("afbeelding", TypeName = "nvarchar(max)")]
         public string? Afbeelding { get; set; }
 
+        [ForeignKey("Veiling")]
+        [Column("veiling_id")]
+        public int? VeilingId { get; set; }
+
+        [ForeignKey("Koper")]
+        [Column("koper_id")]
+        public string? gebruiker_id { get; set; }
+
         public Aanvoerder Aanvoerder { get; set; }
+        public Veiling Veiling { get; set; }
+        public Koper Koper { get; set; }
     }
 }
