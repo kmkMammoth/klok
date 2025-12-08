@@ -6,6 +6,8 @@ import ProductOverzicht from './pages/AanvoerderProductenoverzicht';
 import KoperOverview from "./pages/AanvoerderKoperOverview";
 import AanvoerderCreateProduct from './pages/AanvoerderCreateProduct';
 import { NavLink, Routes, Route } from 'react-router-dom';
+import Register from "./pages/Register";
+import Login from "./pages/Login";
 
 function App() {
     const [auctions, setAuctions] = useState([
@@ -69,6 +71,16 @@ function App() {
                             </NavLink>
                         </li>
                         <li>
+                            <NavLink to="/login" className={({isActive}) => isActive ? 'active' : ''}>
+                                Login test
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/register" className={({isActive}) => isActive ? 'active' : ''}>
+                                Register test
+                            </NavLink>
+                        </li>
+                        <li>
                             <NavLink to="/app" className={({isActive}) => isActive ? 'active' : ''}>
                                 Welkom, (actor) !
                             </NavLink>
@@ -92,6 +104,8 @@ function App() {
                     <Route path="/create-product" element={<AanvoerderCreateProduct />} />
                     <Route path="/producten" element={<ProductOverzicht auctions={auctions} />} />
                     <Route path="/kOverview" element={<KoperOverview auctions={auctions} />} />
+                    <Route path="/login" element={<Login auctions={auctions} />} />
+                    <Route path="/register" element={<Register auctions={auctions} />} />
                     <Route path="/app" element={<div><h1>Welkom, Veilingmeester! (Accountinformatie)</h1></div>} />
                 </Routes>
             </div>
