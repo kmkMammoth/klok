@@ -129,19 +129,19 @@
     gap: 1.25rem;
 }
 
-.form-group {
+.login-page .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.form-group label {
+.login-page .form-group label {
     font-size: 0.9rem;
     font-weight: 500;
     color: rgba(245, 243, 238, 0.9);
 }
 
-.form-group input {
+.login-page .form-group input {
     background-color: #f5f3ee;
     border: 2px solid transparent;
     border-radius: 10px;
@@ -152,11 +152,11 @@
     transition: all 0.3s ease;
 }
 
-.form-group input::placeholder {
+.login-page .form-group input::placeholder {
     color: #8a8780;
 }
 
-.form-group input:focus {
+.login-page .form-group input:focus {
     outline: none;
     border-color: #eb5a3c;
     box-shadow: 0 0 0 3px rgba(235, 90, 60, 0.2);
@@ -166,14 +166,14 @@
    Form Options (Remember me & Forgot password)
    ============================================ */
 
-.form-options {
+.login-page .form-options {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-top: 0.5rem;
 }
 
-.checkbox-label {
+.login-page .checkbox-label {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -182,11 +182,11 @@
     color: rgba(245, 243, 238, 0.9);
 }
 
-.checkbox-label input[type="checkbox"] {
+.login-page .checkbox-label input[type="checkbox"] {
     display: none;
 }
 
-.checkbox-custom {
+.login-page .checkbox-custom {
     width: 18px;
     height: 18px;
     border: 2px solid rgba(245, 243, 238, 0.5);
@@ -197,26 +197,26 @@
     transition: all 0.2s ease;
 }
 
-.checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
+.login-page .checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
     background-color: #eb5a3c;
     border-color: #eb5a3c;
 }
 
-.checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
+.login-page .checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
     content: '✓';
     color: white;
     font-size: 12px;
     font-weight: bold;
 }
 
-.forgot-link {
+.login-page .forgot-link {
     font-size: 0.9rem;
     color: #eb5a3c;
     text-decoration: none;
     transition: color 0.2s ease;
 }
 
-.forgot-link:hover {
+.login-page .forgot-link:hover {
     color: #ff7a5c;
     text-decoration: underline;
 }
@@ -225,7 +225,7 @@
    Submit Button
    ============================================ */
 
-.btn-login-submit {
+.login-page .btn-login-submit {
     background-color: #eb5a3c;
     color: white;
     border: none;
@@ -241,13 +241,13 @@
     box-shadow: 0 4px 15px rgba(235, 90, 60, 0.3);
 }
 
-.btn-login-submit:hover {
+.login-page .btn-login-submit:hover {
     background-color: #d94e32;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(235, 90, 60, 0.4);
 }
 
-.btn-login-submit:active {
+.login-page .btn-login-submit:active {
     transform: translateY(0);
 }
 
@@ -255,21 +255,21 @@
    Register Prompt
    ============================================ */
 
-.register-prompt {
+.login-page .register-prompt {
     text-align: center;
     margin-top: 1.5rem;
     font-size: 0.95rem;
     color: rgba(245, 243, 238, 0.7);
 }
 
-.register-link {
+.login-page .register-link {
     color: #eb5a3c;
     text-decoration: none;
     font-weight: 600;
     transition: color 0.2s ease;
 }
 
-.register-link:hover {
+.login-page .register-link:hover {
     color: #ff7a5c;
     text-decoration: underline;
 }
@@ -303,7 +303,7 @@
    Messages
    ============================================ */
 
-.message {
+.login-page .message {
     padding: 1rem;
     border-radius: 10px;
     margin-bottom: 1rem;
@@ -311,13 +311,13 @@
     text-align: center;
 }
 
-.error-message {
+.login-page .error-message {
     background-color: rgba(220, 53, 69, 0.2);
     color: #ff6b6b;
     border: 1px solid rgba(220, 53, 69, 0.3);
 }
 
-.btn-login-submit:disabled {
+.login-page .btn-login-submit:disabled {
     opacity: 0.7;
     cursor: not-allowed;
 }

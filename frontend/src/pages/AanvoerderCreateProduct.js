@@ -16,7 +16,7 @@ function AanvoerderCreateProduct() {
         minimumprijs: '',
         kloklokatie: 'Aalsmeer',
         afbeelding: null,
-        aanvoerderId: 1
+        gebruikerId: ''
     });
 
     useEffect(() => {
@@ -71,8 +71,8 @@ function AanvoerderCreateProduct() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.soort || !formData.aanvoerderId) {
-            setError('Vul minimaal `soort` en `aanvoerderId` in.');
+        if (!formData.soort || !formData.gebruikerId) {
+            setError('Vul minimaal `soort` en `gebruikerId` in.');
             return;
         }
         if (formData.minimumprijs && parseFloat(formData.minimumprijs) < 0) {
@@ -92,7 +92,7 @@ function AanvoerderCreateProduct() {
                 minimumprijs: formData.minimumprijs ? parseFloat(formData.minimumprijs) : null,
                 kloklokatie: formData.kloklokatie,
                 afbeelding: formData.afbeelding,
-                aanvoerderId: parseInt(formData.aanvoerderId)
+                gebruikerId: formData.gebruikerId
             };
 
             console.log('Payload being sent:', JSON.stringify(payload, null, 2));
@@ -127,7 +127,7 @@ function AanvoerderCreateProduct() {
                 minimumprijs: '',
                 kloklokatie: 'Aalsmeer',
                 afbeelding: null,
-                aanvoerderId: formData.aanvoerderId
+                gebruikerId: formData.gebruikerId
             });
             setShowForm(false);
         } catch (err) {
@@ -205,7 +205,7 @@ function AanvoerderCreateProduct() {
 
                                 <div className="form-group">
                                     <label>Aanvoerder ID</label>
-                                    <input placeholder="bijv. 1" type="number" value={formData.aanvoerderId} onChange={(e)=> setFormData({...formData, aanvoerderId: e.target.value})} required disabled={loading} />
+                                    <input placeholder="bijv. 1" type="text" value={formData.gebruikerId} onChange={(e)=> setFormData({...formData, gebruikerId: e.target.value})} required disabled={loading} />
                                 </div>
 
                                 <div className="form-group full-width">
@@ -263,7 +263,7 @@ function AanvoerderCreateProduct() {
                                 <div className="detail-row"><strong>Hoeveelheid:</strong> <span>{selectedProduct.hoeveelheid ?? '-'}</span></div>
                                 <div className="detail-row"><strong>Minimumprijs:</strong> <span>{selectedProduct.minimumprijs ? `€ ${parseFloat(selectedProduct.minimumprijs).toFixed(2)}` : '-'}</span></div>
                                 <div className="detail-row"><strong>Kloklocatie:</strong> <span>{selectedProduct.kloklokatie}</span></div>
-                                <div className="detail-row"><strong>Aanvoerder ID:</strong> <span>{selectedProduct.aanvoerderId ?? '-'}</span></div>
+                                <div className="detail-row"><strong>Aanvoerder ID:</strong> <span>{selectedProduct.gebruikerId ?? '-'}</span></div>
                                 <div className="detail-row"><strong>Artikel ID:</strong> <span>{selectedProduct.id}</span></div>
                             </div>
                         </div>
