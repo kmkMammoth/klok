@@ -30,17 +30,17 @@ function Navbar() {
                                 </NavLink>
                             </li>
                             <li>
-                                <NavLink to="/create" className={({ isActive }) => isActive ? 'active' : ''}>
+                                <NavLink to="/create-auction" className={({ isActive }) => isActive ? 'active' : ''}>
                                     Veiling Aanmaken (VM)
                                 </NavLink>
                             </li>
                             <li>
-                                <NavLink to="/kOverview" className={({ isActive }) => isActive ? 'active' : ''}>
+                                <NavLink to="/koper-overview" className={({ isActive }) => isActive ? 'active' : ''}>
                                     Koper Overview (A)
                                 </NavLink>
                             </li>
                             <li>
-                                <NavLink to="/producten" className={({ isActive }) => isActive ? 'active' : ''}>
+                                <NavLink to="/aanvoerder-producten" className={({ isActive }) => isActive ? 'active' : ''}>
                                     Productenoverzicht (A)
                                 </NavLink>
                             </li>
@@ -60,7 +60,7 @@ function Navbar() {
                                 </NavLink>
                             </li>
                             <li>
-                                <NavLink to="/app" className={({ isActive }) => isActive ? 'active' : ''}>
+                                <NavLink to="/account" className={({ isActive }) => isActive ? 'active' : ''}>
                                     Welkom, (actor) !
                                 </NavLink>
                             </li>

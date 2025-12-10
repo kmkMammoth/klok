@@ -6,7 +6,6 @@
 
 .login-page {
     min-height: 100vh;
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* ============================================
@@ -35,7 +34,6 @@
 
 .login-logo .logo-text {
     color: #f5f3ee;
-    font-family: 'Playfair Display', serif;
     font-size: 1.5rem;
     font-weight: 700;
 }
@@ -104,7 +102,6 @@
    ============================================ */
 
 .login-title {
-    font-family: 'Playfair Display', serif;
     font-size: 2rem;
     font-weight: 700;
     color: #f5f3ee;
@@ -147,7 +144,6 @@
     border-radius: 10px;
     padding: 1rem 1.25rem;
     font-size: 1rem;
-    font-family: inherit;
     color: #2a2825;
     transition: all 0.3s ease;
 }
@@ -233,7 +229,6 @@
     padding: 1rem 2rem;
     font-size: 1rem;
     font-weight: 700;
-    font-family: inherit;
     letter-spacing: 1px;
     cursor: pointer;
     transition: all 0.3s ease;
