@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using veilingklok.Models;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddDataProtection();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<RoleManager<IdentityRole>>();
+builder.Services.AddTransient<IEmailSender<Gebruiker>, DummyEmailSender>();
+
+builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme, options => { 
+    options.BearerTokenExpiration = TimeSpan.FromMinutes(60.0); });
 
 // ---------------- Swagger + JWT ----------------
 builder.Services.AddSwaggerGen(options =>
@@ -57,39 +65,13 @@ builder.Services.AddDbContext<VeilingContext>(options =>
 
 // ---------------- Identity ----------------
 builder.Services.AddIdentity<Gebruiker, IdentityRole>()
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<VeilingContext>();
-
-
-// ---------------- JWT Authentication ----------------
-// var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKey123456!";
-// var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "veilingklok";
-// var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "veilingklok";
-
-// builder.Services.AddAuthentication(options =>
-// {
-//     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-//     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-// })
-// .AddJwtBearer(options =>
-// {
-//     options.TokenValidationParameters = new TokenValidationParameters
-//     {
-//         ValidateIssuer = true,
-//         ValidateAudience = true,
-//         ValidateLifetime = true,
-//         ValidateIssuerSigningKey = true,
-//         ValidIssuer = jwtIssuer,
-//         ValidAudience = jwtAudience,
-//         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-//     };
-// });
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<VeilingContext>();
 
 // ---------------- Dummy Email Sender ----------------
-builder.Services.AddTransient<IEmailSender<Gebruiker>, DummyEmailSender<Gebruiker>>();
+builder.Services.AddTransient<IEmailSender<Gebruiker>, DummyEmailSender>();
 
 // ---------------- JWT Service ----------------
-builder.Services.AddSingleton<JwtService>();
 
 var app = builder.Build();
 
@@ -139,45 +121,80 @@ app.UseAuthorization();
 app.MapIdentityApi<Gebruiker>();
 app.MapControllers();
 
+
 app.Run();
 
 // ---------------- Dummy Email Sender ----------------
-public class DummyEmailSender<TUser> : IEmailSender<TUser> where TUser : IdentityUser
+public class DummyEmailSender : IEmailSender<Gebruiker>
 {
-    public Task SendEmailAsync(TUser user, string subject, string body) => Task.CompletedTask;
-    public Task SendConfirmationLinkAsync(TUser user, string link, string? subject = null) => Task.CompletedTask;
-    public Task SendPasswordResetLinkAsync(TUser user, string link, string? subject = null) => Task.CompletedTask;
-    public Task SendPasswordResetCodeAsync(TUser user, string code, string? subject = null) => Task.CompletedTask;
+    public Task SendConfirmationLinkAsync(Gebruiker user, string email, string confirmationLink)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SendPasswordResetCodeAsync(Gebruiker user, string email, string resetCode)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SendPasswordResetLinkAsync(Gebruiker user, string email, string resetLink)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 // ---------------- JWT Service ----------------
-public class JwtService
-{
-    private readonly IConfiguration _config;
+// public class JwtService
+// {
+//     private readonly IConfiguration _config;
 
-    public JwtService(IConfiguration config) => _config = config;
+//     public JwtService(IConfiguration config) => _config = config;
 
-    public string GenerateToken(string userId, string userName, IList<string> roles)
-    {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? "SuperSecretKey123456!"));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+//     public string GenerateToken(string userId, string userName, IList<string> roles)
+//     {
+//         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? "SuperSecretKey123456!"));
+//         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new List<System.Security.Claims.Claim>
-        {
-            new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub, userId),
-            new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.UniqueName, userName)
-        };
+//         var claims = new List<System.Security.Claims.Claim>
+//         {
+//             new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub, userId),
+//             new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.UniqueName, userName)
+//         };
 
-        claims.AddRange(roles.Select(role => new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role)));
+//         claims.AddRange(roles.Select(role => new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role)));
 
-        var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
-            issuer: _config["Jwt:Issuer"] ?? "veilingklok",
-            audience: _config["Jwt:Audience"] ?? "veilingklok",
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(60),
-            signingCredentials: creds
-        );
+//         var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
+//             issuer: _config["Jwt:Issuer"] ?? "veilingklok",
+//             audience: _config["Jwt:Audience"] ?? "veilingklok",
+//             claims: claims,
+//             expires: DateTime.UtcNow.AddMinutes(60),
+//             signingCredentials: creds
+//         );
 
-        return new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token);
-    }
-}
+//         return new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token);
+//     }
+//}
+
+// ---------------- JWT Authentication ----------------
+// var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKey123456!";
+// var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "veilingklok";
+// var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "veilingklok";
+
+// builder.Services.AddAuthentication(options =>
+// {
+//     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+// })
+// .AddJwtBearer(options =>
+// {
+//     options.TokenValidationParameters = new TokenValidationParameters
+//     {
+//         ValidateIssuer = true,
+//         ValidateAudience = true,
+//         ValidateLifetime = true,
+//         ValidateIssuerSigningKey = true,
+//         ValidIssuer = jwtIssuer,
+//         ValidAudience = jwtAudience,
+//         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+//     };
+// });

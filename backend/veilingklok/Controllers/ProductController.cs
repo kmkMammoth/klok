@@ -76,7 +76,7 @@ public class ProductsController : ControllerBase
         return Ok(responses);
     }
 
-    [Authorize(AuthenticationSchemes = "IdentityBearer", Roles = "Admin, Aanvoerder")]
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Aanvoerder")]
     [HttpGet("{id}")]
     public async Task<ActionResult<ProductResponse>> GetProduct(int id)
     {
