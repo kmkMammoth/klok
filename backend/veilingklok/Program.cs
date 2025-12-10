@@ -1,64 +1,200 @@
 using veilingklok;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using veilingklok.Models;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddDataProtection();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<RoleManager<IdentityRole>>();
+builder.Services.AddTransient<IEmailSender<Gebruiker>, DummyEmailSender>();
 
-// ✅ Voeg CORS toe zodat frontend requests kan doen
+builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme, options => { 
+    options.BearerTokenExpiration = TimeSpan.FromMinutes(60.0); });
+
+// ---------------- Swagger + JWT ----------------
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Description = "Enter 'Bearer {token}'",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            new List<string>()
+        }
+    });
+});
+
+// ---------------- CORS ----------------
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins("http://localhost:3000")
-            .AllowAnyMethod()
-            .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
-// Voeg VeilingContext toe
+// ---------------- Database ----------------
 builder.Services.AddDbContext<VeilingContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-);
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// ---------------- Identity ----------------
+builder.Services.AddIdentity<Gebruiker, IdentityRole>()
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<VeilingContext>();
+
+// ---------------- Dummy Email Sender ----------------
+builder.Services.AddTransient<IEmailSender<Gebruiker>, DummyEmailSender>();
+
+// ---------------- JWT Service ----------------
 
 var app = builder.Build();
-// Test Connection
+
+// ---------------- Seed Roles + Admin ----------------
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<VeilingContext>();
-    try
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Gebruiker>>();
+
+    string[] roles = { "Koper", "Aanvoerder", "Veilingmeester", "Admin" };
+    foreach (var role in roles)
     {
-        var canConnect = await context.Database.CanConnectAsync();
-        Console.WriteLine($"Database connection successful: {canConnect}");
+        if (!await roleManager.RoleExistsAsync(role))
+            await roleManager.CreateAsync(new IdentityRole(role));
     }
-    catch (Exception ex)
+
+    var password = "Test123!";
+    var adminEmail = "admin@example.com";
+    var adminUsername = "adminUser";
+
+    if (await userManager.FindByNameAsync(adminUsername) == null)
     {
-        Console.WriteLine($"Database connection failed: {ex.Message}");
+        var gebruiker = new Gebruiker
+        {
+            Naam = "Admin",
+            UserName = adminUsername,
+            EmailConfirmed = true,
+        };
+
+        if ((await userManager.CreateAsync(gebruiker, password)).Succeeded)
+            await userManager.AddToRoleAsync(gebruiker, "Admin");
     }
 }
 
-// Pipeline
+// ---------------- Middleware ----------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// ✅ Voeg CORS middleware toe VOOR UseHttpsRedirection
 app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapIdentityApi<Gebruiker>();
 app.MapControllers();
 
-// Test database connectie
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<VeilingContext>();
-    var canConnect = await context.Database.CanConnectAsync();
-    Console.WriteLine($"Database connection successful: {canConnect}");
-}
 
 app.Run();
+
+// ---------------- Dummy Email Sender ----------------
+public class DummyEmailSender : IEmailSender<Gebruiker>
+{
+    public Task SendConfirmationLinkAsync(Gebruiker user, string email, string confirmationLink)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SendPasswordResetCodeAsync(Gebruiker user, string email, string resetCode)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SendPasswordResetLinkAsync(Gebruiker user, string email, string resetLink)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+// ---------------- JWT Service ----------------
+// public class JwtService
+// {
+//     private readonly IConfiguration _config;
+
+//     public JwtService(IConfiguration config) => _config = config;
+
+//     public string GenerateToken(string userId, string userName, IList<string> roles)
+//     {
+//         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? "SuperSecretKey123456!"));
+//         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+//         var claims = new List<System.Security.Claims.Claim>
+//         {
+//             new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub, userId),
+//             new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.UniqueName, userName)
+//         };
+
+//         claims.AddRange(roles.Select(role => new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role)));
+
+//         var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
+//             issuer: _config["Jwt:Issuer"] ?? "veilingklok",
+//             audience: _config["Jwt:Audience"] ?? "veilingklok",
+//             claims: claims,
+//             expires: DateTime.UtcNow.AddMinutes(60),
+//             signingCredentials: creds
+//         );
+
+//         return new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token);
+//     }
+//}
+
+// ---------------- JWT Authentication ----------------
+// var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKey123456!";
+// var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "veilingklok";
+// var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "veilingklok";
+
+// builder.Services.AddAuthentication(options =>
+// {
+//     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+// })
+// .AddJwtBearer(options =>
+// {
+//     options.TokenValidationParameters = new TokenValidationParameters
+//     {
+//         ValidateIssuer = true,
+//         ValidateAudience = true,
+//         ValidateLifetime = true,
+//         ValidateIssuerSigningKey = true,
+//         ValidIssuer = jwtIssuer,
+//         ValidAudience = jwtAudience,
+//         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+//     };
+// });
