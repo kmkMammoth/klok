@@ -1,2 +1,5 @@
 veilingklok/obj/
 veilingklok/bin/
+backend/bin/
+backend/obj/
+veilingklok/migrations/
