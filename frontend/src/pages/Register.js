@@ -156,31 +156,50 @@ const RegisterForm = ({ accountType, onBack }) => {
         try {
             // Prepare request data based on account type
             const requestData = {
-                AccountType: accountType,
-                Wachtwoord: formData.wachtwoord
+                Password: formData.wachtwoord
             };
 
             if (accountType === 'veilingmeester') {
-                requestData.Gebruikersnaam = formData.gebruikersnaam;
+                requestData.UserName = formData.gebruikersnaam;
             } else {
-                requestData.Bedrijfsnaam = formData.bedrijfsnaam;
+                requestData.UserName = formData.bedrijfsnaam;
                 requestData.KvkNummer = formData.kvkNummer;
-                requestData.Bedrijfsadres = formData.bedrijfsadres;
+                requestData.Adres = formData.bedrijfsadres;
                 requestData.Email = formData.email;
-                requestData.Iban = formData.iban;
+                requestData.IbanHash = formData.iban;
             }
 
-            const response = await fetch('http://localhost:5102/api/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestData)
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Registratie mislukt');
-            }
+            if (accountType === 'veilingmeester') {
+                const response = await fetch('http://localhost:5102/api/Veilingmeester/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || 'Registratie mislukt');
+                }
+            }else if (accountType === 'koper') {
+                const response = await fetch('http://localhost:5102/api/Koper/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || 'Registratie mislukt');
+                }
+            }else if (accountType === 'aanvoerder') {
+                const response = await fetch('http://localhost:5102/api/Aanvoerder/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || 'Registratie mislukt');
+                }
+            }        
 
             // Redirect to login page after successful registration
             navigate('/login', { state: { message: 'Registratie succesvol! U kunt nu inloggen.' } });
