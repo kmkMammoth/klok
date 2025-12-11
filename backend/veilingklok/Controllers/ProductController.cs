@@ -53,7 +53,7 @@ public class ProductsController : ControllerBase
         _db = db;
     }
 
-    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Aanvoerder, Koper")]
+    // [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Aanvoerder, Koper")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ProductResponse>>> GetAllProducts()
     {
