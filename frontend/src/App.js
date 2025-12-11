@@ -26,13 +26,13 @@ function App() {
                             <Overview/>
                         </>
                     }/>
-                    <Route path="/create" element={<CreateAuction/>}/>
+                    <Route path="/create-auction" element={<CreateAuction/>}/>
                     <Route path="/create-product" element={<AanvoerderCreateProduct/>}/>
-                    <Route path="/producten" element={<ProductOverzicht/>}/>
-                    <Route path="/kOverview" element={<KoperOverview/>}/>
+                    <Route path="/aanvoerder-producten" element={<ProductOverzicht/>}/>
+                    <Route path="/koper-overview" element={<KoperOverview/>}/>
                     <Route path="/login" element={<Login/>}/>
                     <Route path="/register" element={<Register/>}/>
-                    <Route path="/app" element={<div><h1>Welkom, Veilingmeester! (Accountinformatie)</h1></div>}/>
+                    <Route path="/account" element={<div><h1>Welkom, (actor)! (accountinformatie volgt...)</h1></div>}/>
                 </Routes>
             </div>
         </div>

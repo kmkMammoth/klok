@@ -1,5 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 
+import '../styles/Navbar.css';
+
 function Navbar() {
     const location = useLocation();
     const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
@@ -7,7 +9,10 @@ function Navbar() {
     return (
         <nav className="navbar">
             <div className="nav-container">
-                <p className="logo">Flora Veiling</p>
+                <p className="logo">
+                    <img className="logo-img" src="/logo-flora-veiling.png" />
+                </p>
+                
                 <ul className="nav-menu">
                     {isAuthPage ? (
                         <>
@@ -30,17 +35,17 @@ function Navbar() {
                                 </NavLink>
                             </li>
                             <li>
-                                <NavLink to="/create" className={({ isActive }) => isActive ? 'active' : ''}>
+                                <NavLink to="/create-auction" className={({ isActive }) => isActive ? 'active' : ''}>
                                     Veiling Aanmaken (VM)
                                 </NavLink>
                             </li>
                             <li>
-                                <NavLink to="/kOverview" className={({ isActive }) => isActive ? 'active' : ''}>
+                                <NavLink to="/koper-overview" className={({ isActive }) => isActive ? 'active' : ''}>
                                     Koper Overview (A)
                                 </NavLink>
                             </li>
                             <li>
-                                <NavLink to="/producten" className={({ isActive }) => isActive ? 'active' : ''}>
+                                <NavLink to="/aanvoerder-producten" className={({ isActive }) => isActive ? 'active' : ''}>
                                     Productenoverzicht (A)
                                 </NavLink>
                             </li>
@@ -60,7 +65,7 @@ function Navbar() {
                                 </NavLink>
                             </li>
                             <li>
-                                <NavLink to="/app" className={({ isActive }) => isActive ? 'active' : ''}>
+                                <NavLink to="/account" className={({ isActive }) => isActive ? 'active' : ''}>
                                     Welkom, (actor) !
                                 </NavLink>
                             </li>
