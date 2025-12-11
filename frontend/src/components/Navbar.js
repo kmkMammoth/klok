@@ -1,5 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 
+import '../styles/Navbar.css';
+
 function Navbar() {
     const location = useLocation();
     const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
@@ -7,7 +9,10 @@ function Navbar() {
     return (
         <nav className="navbar">
             <div className="nav-container">
-                <p className="logo">Flora Veiling</p>
+                <p className="logo">
+                    <img className="logo-img" src="/logo-flora-veiling.png" />
+                </p>
+                
                 <ul className="nav-menu">
                     {isAuthPage ? (
                         <>
