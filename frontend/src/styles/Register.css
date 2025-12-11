@@ -6,7 +6,6 @@
 
 .register-page {
     min-height: 100vh;
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     display: flex;
     flex-direction: column;
 }
@@ -35,7 +34,6 @@
    ============================================ */
 
 .register-title {
-    font-family: 'Playfair Display', serif;
     font-size: 2rem;
     font-weight: 700;
     color: #f5f3ee;
@@ -69,7 +67,6 @@
     padding: 1.25rem 2rem;
     font-size: 1.1rem;
     font-weight: 600;
-    font-family: inherit;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(235, 90, 60, 0.3);
@@ -95,51 +92,50 @@
     gap: 1.25rem;
 }
 
-.form-group {
+.register-page .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.form-group label {
+.register-page .form-group label {
     font-size: 0.9rem;
     font-weight: 500;
     color: rgba(245, 243, 238, 0.9);
 }
 
-.form-group input {
+.register-page .form-group input {
     background-color: #f5f3ee;
     border: 2px solid transparent;
     border-radius: 10px;
     padding: 1rem 1.25rem;
     font-size: 1rem;
-    font-family: inherit;
     color: #2a2825;
     transition: all 0.3s ease;
 }
 
-.form-group input::placeholder {
+.register-page .form-group input::placeholder {
     color: #8a8780;
 }
 
-.form-group input:focus {
+.register-page .form-group input:focus {
     outline: none;
     border-color: #eb5a3c;
     box-shadow: 0 0 0 3px rgba(235, 90, 60, 0.2);
 }
 
-.form-group input.input-error {
+.register-page .form-group input.input-error {
     border-color: #eb5a3c;
     background-color: #fff5f5;
 }
 
-.form-row {
+.register-page .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
 }
 
-.error-message {
+.register-page .error-message {
     display: block;
     color: #ff6b6b;
     font-size: 0.85rem;
@@ -150,7 +146,7 @@
    Submit Button
    ============================================ */
 
-.btn-register-submit {
+.register-page .btn-register-submit {
     background-color: #eb5a3c;
     color: white;
     border: none;
@@ -158,7 +154,6 @@
     padding: 1rem 2rem;
     font-size: 1rem;
     font-weight: 700;
-    font-family: inherit;
     letter-spacing: 1px;
     text-transform: uppercase;
     cursor: pointer;
@@ -167,17 +162,17 @@
     box-shadow: 0 4px 15px rgba(235, 90, 60, 0.3);
 }
 
-.btn-register-submit:hover:not(:disabled) {
+.register-page .btn-register-submit:hover:not(:disabled) {
     background-color: #d94e32;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(235, 90, 60, 0.4);
 }
 
-.btn-register-submit:active:not(:disabled) {
+.register-page .btn-register-submit:active:not(:disabled) {
     transform: translateY(0);
 }
 
-.btn-register-submit:disabled {
+.register-page .btn-register-submit:disabled {
     opacity: 0.7;
     cursor: not-allowed;
 }
@@ -195,17 +190,17 @@
     border-top: 1px solid rgba(245, 243, 238, 0.2);
 }
 
-.required-note {
+.register-page .required-note {
     font-size: 0.85rem;
     color: rgba(245, 243, 238, 0.7);
 }
 
-.login-prompt {
+.register-page .login-prompt {
     font-size: 0.9rem;
     color: rgba(245, 243, 238, 0.8);
 }
 
-.login-link {
+.register-page .login-link {
     color: #eb5a3c;
     text-decoration: none;
     font-weight: 600;
@@ -213,7 +208,7 @@
     transition: color 0.2s ease;
 }
 
-.login-link:hover {
+.register-page .login-link:hover {
     color: #ff7a5c;
     text-decoration: underline;
 }
@@ -222,7 +217,7 @@
    Back Button
    ============================================ */
 
-.btn-back {
+.register-page .btn-back {
     width: 100%;
     background-color: #5a5a5a;
     color: white;
@@ -231,7 +226,6 @@
     padding: 0.875rem 1.5rem;
     font-size: 0.95rem;
     font-weight: 500;
-    font-family: inherit;
     cursor: pointer;
     transition: all 0.3s ease;
     margin-top: 1.5rem;
@@ -241,12 +235,12 @@
     gap: 0.5rem;
 }
 
-.btn-back:hover {
+.register-page .btn-back:hover {
     background-color: #6a6a6a;
     transform: translateY(-1px);
 }
 
-.btn-back:active {
+.register-page .btn-back:active {
     transform: translateY(0);
 }
 
@@ -254,7 +248,7 @@
    Messages
    ============================================ */
 
-.message {
+.register-page .message {
     padding: 1rem;
     border-radius: 10px;
     margin-bottom: 1rem;
@@ -262,7 +256,7 @@
     text-align: center;
 }
 
-.error-message {
+.register-page .error-message {
     background-color: rgba(220, 53, 69, 0.2);
     color: #ff6b6b;
     border: 1px solid rgba(220, 53, 69, 0.3);

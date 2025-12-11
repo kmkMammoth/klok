@@ -138,7 +138,6 @@
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s ease;
-    font-family: inherit;
 }
 
 .form-group input:focus {

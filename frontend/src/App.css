@@ -32,7 +32,6 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.2rem 2rem;
 }
 
 .logo {

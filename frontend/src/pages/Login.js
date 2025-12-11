@@ -158,7 +158,7 @@ const Login = () => {
                     </form>
 
                     <div className="register-prompt">
-                        <span>Nog geen account?</span>
+                        <span>Nog geen account? </span>
                         <Link to="/register" className="register-link">
                             Registreer nu
                         </Link>
