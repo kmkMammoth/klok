@@ -50,29 +50,25 @@ const Login = () => {
         }
 
         try {
-            // TODO: Replace with actual API call
-            // const response = await fetch('http://localhost:5102/api/auth/login', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({
-            //         emailOrUsername: formData.emailOrUsername,
-            //         password: formData.password,
-            //         rememberMe
-            //     })
-            // });
-
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // For now, just redirect to home page
-            // In production, you would handle the response and store tokens
-            if (rememberMe) {
-                localStorage.setItem('rememberMe', 'true');
+            const response = await fetch('http://localhost:5102/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: formData.emailOrUsername,
+                    password: formData.password
+                })
+            });
+            //controle login
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Login failed');
             }
-            // Store user info to indicate login
+            
+            const token = await response.json();
+        
             localStorage.setItem('user', JSON.stringify({ username: formData.emailOrUsername }));
-
-            navigate('/');
+            
+            navigate('/')
         } catch (error) {
             setErrors({ 
                 general: 'Inloggen mislukt. Controleer uw gegevens en probeer het opnieuw.' 
