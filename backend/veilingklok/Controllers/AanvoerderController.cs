@@ -4,11 +4,10 @@ using veilingklok.Models;
 
 namespace veilingklok;
 
-public class KoperRegistratie
+public class AanvoerderRegistratie
 {
     public string UserName { get; set; }
     public string Password { get; set; }
-
     public string KvkNummer { get; set; }
     public string Adres { get; set; }
     public string Email { get; set; }
@@ -17,28 +16,28 @@ public class KoperRegistratie
 
 [ApiController]
 [Route("api/[controller]")]
-public class KoperController : ControllerBase
+public class AanvoerderController : ControllerBase
 {
     private readonly VeilingContext _db;
     private readonly UserManager<Gebruiker> _userManager;
-    public KoperController(VeilingContext db, UserManager<Gebruiker> userManager)
+    public AanvoerderController(VeilingContext db, UserManager<Gebruiker> userManager)
     {
         _db = db;
         _userManager = userManager;
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register(KoperRegistratie dto)
+    public async Task<IActionResult> Register(AanvoerderRegistratie dto)
     {
         if (string.IsNullOrWhiteSpace(dto.UserName) || string.IsNullOrWhiteSpace(dto.Password))
         {
             return BadRequest(new { message = "Gebruikersnaam en wachtwoord zijn verplicht." });
         }
 
-        var koper = new Koper
+        var aanvoerder = new Aanvoerder
         {
             UserName = dto.UserName,
-            Naam = "Koper",
+            Naam = "Aanvoerder",
             EmailConfirmed = true,
             KvkNummer = dto.KvkNummer,
             Adres = dto.Adres,
@@ -46,7 +45,7 @@ public class KoperController : ControllerBase
             IbanHash = dto.IbanHash
         };
 
-        var createResult = await _userManager.CreateAsync(koper, dto.Password);
+        var createResult = await _userManager.CreateAsync(aanvoerder, dto.Password);
 
         if (!createResult.Succeeded)
         {
@@ -57,7 +56,7 @@ public class KoperController : ControllerBase
             });
         }
 
-        var roleResult = await _userManager.AddToRoleAsync(koper, "Koper");
+        var roleResult = await _userManager.AddToRoleAsync(aanvoerder, "Aanvoerder");
 
         if (!roleResult.Succeeded)
         {
@@ -68,6 +67,6 @@ public class KoperController : ControllerBase
             });
         }
 
-        return Ok(new { message = "Koper succesvol geregistreerd." });
+        return Ok(new { message = "Aanvoerder succesvol geregistreerd." });
     }
 }
