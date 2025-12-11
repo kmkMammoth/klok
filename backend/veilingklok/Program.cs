@@ -12,41 +12,48 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Services
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDataProtection();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<RoleManager<IdentityRole>>();
 builder.Services.AddTransient<IEmailSender<Gebruiker>, DummyEmailSender>();
-
 builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme, options => { 
     options.BearerTokenExpiration = TimeSpan.FromMinutes(60.0); });
-
+builder.Services.AddDbContext<VeilingContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddEndpointsApiExplorer();
 // ---------------- Swagger + JWT ----------------
-builder.Services.AddSwaggerGen(options =>
+if (builder.Environment.IsDevelopment())
 {
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    builder.Services.AddSwaggerGen(options =>
     {
-        Name = "Authorization",
-        Description = "Enter 'Bearer {token}'",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT"
-    });
-
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
+        options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
-            new OpenApiSecurityScheme
+            Name = "Authorization",
+            Description = "Please enter a valid token",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http,
+            Scheme = "Bearer"
+        });
+        options.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
             {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-            },
-            new List<string>()
-        }
+                new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Scheme = "Bearer",
+                    Reference = new OpenApiReference
+                    {
+                        Id = "Bearer",
+                        Type = ReferenceType.SecurityScheme
+                    }
+                },
+                new List<string>()
+            }
+        });
     });
-});
-
+}
 // ---------------- CORS ----------------
 builder.Services.AddCors(options =>
 {
@@ -58,10 +65,6 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
-
-// ---------------- Database ----------------
-builder.Services.AddDbContext<VeilingContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ---------------- Identity ----------------
 builder.Services.AddIdentity<Gebruiker, IdentityRole>()

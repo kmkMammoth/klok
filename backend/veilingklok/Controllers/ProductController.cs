@@ -53,6 +53,7 @@ public class ProductsController : ControllerBase
         _db = db;
     }
 
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Aanvoerder, Koper")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ProductResponse>>> GetAllProducts()
     {
@@ -103,7 +104,7 @@ public class ProductsController : ControllerBase
         return Ok(response);
     }
 
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, Aanvoerder")]
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Koper, Aanvoerder")]
     [HttpPost]
     public async Task<ActionResult<ProductResponse>> AddProduct([FromBody] CreateProductRequest request)
     {
