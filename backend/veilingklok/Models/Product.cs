@@ -29,6 +29,12 @@ namespace veilingklok.Models
         [Column("minimumprijs", TypeName = "decimal(6,2)")]
         public decimal? MinimumPrijs { get; set; }
 
+        [Column("startprijs", TypeName = "decimal(10,2)")]
+        public decimal? StartPrijs { get; set; }
+
+        [Column("increment_per_second", TypeName = "decimal(10,4)")]
+        public decimal? IncrementPerSecond { get; set; }
+
         [MaxLength(100)]
         [Column("kloklocatie")]
         public string? KlokLocatie { get; set; }

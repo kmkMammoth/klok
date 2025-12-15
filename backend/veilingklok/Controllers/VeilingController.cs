@@ -10,6 +10,7 @@ public class CreateAuctionRequest
     public string name { get; set; }
     public int maxTime { get; set; }
     public decimal startingPrice { get; set; }
+    public string veilingmeesterId { get; set; }
 }
 
 // ✅ DTO for auction response
@@ -86,8 +87,13 @@ public class AuctionsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<AuctionResponse>> AddAuction([FromBody] CreateAuctionRequest request)
     {
-        if (request == null || string.IsNullOrEmpty(request.name) || request.maxTime <= 0 || request.startingPrice < 0)
-            return BadRequest("Ongeldige veilinggegevens.");
+        if (request == null || string.IsNullOrEmpty(request.name) || request.maxTime <= 0 || request.startingPrice < 0 || string.IsNullOrEmpty(request.veilingmeesterId))
+            return BadRequest("Ongeldige veilinggegevens. Zorg dat naam, maxTime, startingPrice en veilingmeesterId aanwezig zijn.");
+
+        // validate veilingmeester exists
+        var vm = await _db.Veilingmeester.FindAsync(request.veilingmeesterId);
+        if (vm == null)
+            return BadRequest($"Veilingmeester met ID {request.veilingmeesterId} niet gevonden.");
 
         var veiling = new Veiling
         {
@@ -96,7 +102,7 @@ public class AuctionsController : ControllerBase
             Status = "Idle",
             StartTijd = DateTime.Now,
             EindTijd = DateTime.Now.AddSeconds(request.maxTime),
-            Gebruiker_id = "1", // tijdelijke placeholder — later koppelen aan echte user
+            Gebruiker_id = request.veilingmeesterId,
         };
 
         _db.Veiling.Add(veiling);
@@ -134,7 +140,7 @@ public class AuctionsController : ControllerBase
         return Ok();
     }
 
-    // ✅ DELETE: api/auctions/{id}
+    // DELETE: api/auctions/{id}
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteAuction(int id)
     {
@@ -144,6 +150,17 @@ public class AuctionsController : ControllerBase
 
         if (veiling == null)
             return NotFound($"Veiling met ID {id} niet gevonden.");
+
+        // before deleting, clear veiling reference on products to avoid FK constraint errors
+        var producten = await _db.Product.Where(p => p.VeilingId == id).ToListAsync();
+        foreach (var p in producten)
+        {
+            p.VeilingId = null;
+            p.StartPrijs = null;
+            p.IncrementPerSecond = null;
+        }
+
+        await _db.SaveChangesAsync();
 
         _db.Veiling.Remove(veiling);
         await _db.SaveChangesAsync();

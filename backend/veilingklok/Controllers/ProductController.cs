@@ -18,11 +18,17 @@ public class CreateProductRequest
     public string? kloklokatie { get; set; }
     public string? afbeelding { get; set; }
     public string? gebruikerId { get; set; }
+
+    // optional auction-related fields
+    public decimal? startprijs { get; set; }
+    public decimal? incrementPerSecond { get; set; }
 }
 
 public class UpdateProductVeiling
 {
     public int? veilingId { get; set; }
+    public decimal? startprijs { get; set; }
+    public decimal? incrementPerSecond { get; set; }
 }
 public class UpdateProductKoper
 {
@@ -40,6 +46,10 @@ public class ProductResponse
     public string? kloklokatie { get; set; }
     public string? afbeelding { get; set; }
     public string? gebruiker_id { get; set; }
+
+    // auction-related fields
+    public decimal? startprijs { get; set; }
+    public decimal? incrementPerSecond { get; set; }
 }
 
 [ApiController]
@@ -71,7 +81,9 @@ public class ProductsController : ControllerBase
             minimumprijs = p.MinimumPrijs,
             kloklokatie = p.KlokLocatie,
             afbeelding = p.Afbeelding,
-            gebruiker_id = p.Gebruiker_id
+            gebruiker_id = p.Gebruiker_id,
+            startprijs = p.StartPrijs,
+            incrementPerSecond = p.IncrementPerSecond
         }).ToList();
 
         return Ok(responses);
@@ -98,7 +110,9 @@ public class ProductsController : ControllerBase
             minimumprijs = product.MinimumPrijs,
             kloklokatie = product.KlokLocatie,
             afbeelding = product.Afbeelding,
-            gebruiker_id = product.Gebruiker_id
+            gebruiker_id = product.Gebruiker_id,
+            startprijs = product.StartPrijs,
+            incrementPerSecond = product.IncrementPerSecond
         };
 
         return Ok(response);
@@ -132,6 +146,12 @@ public class ProductsController : ControllerBase
             KlokLocatie = request.kloklokatie,
             Afbeelding = request.afbeelding
         };
+
+        if (request.startprijs.HasValue)
+            product.StartPrijs = request.startprijs.Value;
+
+        if (request.incrementPerSecond.HasValue)
+            product.IncrementPerSecond = request.incrementPerSecond.Value;
 
         _db.Product.Add(product);
         await _db.SaveChangesAsync();
@@ -196,6 +216,12 @@ public class ProductsController : ControllerBase
         if (request.minimumprijs.HasValue)
             product.MinimumPrijs = request.minimumprijs;
 
+        if (request.startprijs.HasValue)
+            product.StartPrijs = request.startprijs;
+
+        if (request.incrementPerSecond.HasValue)
+            product.IncrementPerSecond = request.incrementPerSecond;
+
         if (!string.IsNullOrEmpty(request.kloklokatie))
             product.KlokLocatie = request.kloklokatie;
 
@@ -248,10 +274,19 @@ public class ProductsController : ControllerBase
                 return BadRequest($"Veiling met ID {request.veilingId.Value} niet gevonden.");
 
             product.VeilingId = request.veilingId.Value;
+
+            if (request.startprijs.HasValue)
+                product.StartPrijs = request.startprijs.Value;
+
+            if (request.incrementPerSecond.HasValue)
+                product.IncrementPerSecond = request.incrementPerSecond.Value;
         }
         else
         {
             product.VeilingId = null;
+            // clear auction-specific settings when removing from veiling
+            product.StartPrijs = null;
+            product.IncrementPerSecond = null;
         }
 
         await _db.SaveChangesAsync();
