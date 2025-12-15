@@ -53,7 +53,7 @@ public class ProductsController : ControllerBase
         _db = db;
     }
 
-    // [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Aanvoerder, Koper")]
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Aanvoerder, Koper, Admin, Veilingmeester")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ProductResponse>>> GetAllProducts()
     {
@@ -77,7 +77,7 @@ public class ProductsController : ControllerBase
         return Ok(responses);
     }
 
-    //[Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Aanvoerder")]
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Aanvoerder, Koper, Veilingmeester")]
     [HttpGet("{id}")]
     public async Task<ActionResult<ProductResponse>> GetProduct(int id)
     {
@@ -104,7 +104,7 @@ public class ProductsController : ControllerBase
         return Ok(response);
     }
 
-    //[Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Koper, Aanvoerder")]
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Aanvoerder")]
     [HttpPost]
     public async Task<ActionResult<ProductResponse>> AddProduct([FromBody] CreateProductRequest request)
     {
@@ -153,6 +153,7 @@ public class ProductsController : ControllerBase
         return Ok(response);
     }
 
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Aanvoerder, Koper, Veilingmeester")]
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateProduct(int id, [FromBody] CreateProductRequest request)
     {
@@ -207,7 +208,7 @@ public class ProductsController : ControllerBase
         return Ok();
     }
 
-    // Assign a koper (Identity user id) to a product
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Koper")]
     [HttpPut("{id}/assign-koper")]
     public async Task<ActionResult> AssignKoperToProduct(int id, [FromBody] UpdateProductKoper request)
     {
@@ -229,7 +230,7 @@ public class ProductsController : ControllerBase
         return Ok();
     }
 
-    // Assign a veiling to a product (or clear by sending null)
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Veilingmeester")]
     [HttpPut("{id}/assign-veiling")]
     public async Task<ActionResult> AssignVeilingToProduct(int id, [FromBody] UpdateProductVeiling request)
     {
@@ -258,6 +259,7 @@ public class ProductsController : ControllerBase
         return Ok();
     }
 
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Aanvoerder")]
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteProduct(int id)
     {
