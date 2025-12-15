@@ -1,7 +1,6 @@
 import './App.css';
 import Overview from './pages/VeilingmeesterOverview';
 import CreateAuction from './pages/VeilingmeesterCreateAuction';
-import ProductOverzicht from './pages/AanvoerderProductenoverzicht';
 import KoperOverview from "./pages/AanvoerderKoperOverview";
 import AanvoerderCreateProduct from './pages/AanvoerderCreateProduct';
 import {Routes, Route} from 'react-router-dom';
@@ -28,7 +27,6 @@ function App() {
                     }/>
                     <Route path="/create-auction" element={<CreateAuction/>}/>
                     <Route path="/create-product" element={<AanvoerderCreateProduct/>}/>
-                    <Route path="/aanvoerder-producten" element={<ProductOverzicht/>}/>
                     <Route path="/koper-overview" element={<KoperOverview/>}/>
                     <Route path="/login" element={<Login/>}/>
                     <Route path="/register" element={<Register/>}/>
