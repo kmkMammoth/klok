@@ -7,7 +7,9 @@ function Overview({ auctions, setAuctions }) {
 
     const fetchAuctions = async () => {
         try {
-            const res = await fetch('http://localhost:5102/api/auctions');
+            const res = await fetch('http://localhost:5102/api/auctions',
+                {headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }}
+            );
             if (!res.ok) throw new Error('Fout bij ophalen veilingen');
             const data = await res.json();
             // map to include computed fields placeholder
@@ -67,7 +69,11 @@ function Overview({ auctions, setAuctions }) {
     const handleDelete = async (id) => {
         if (!window.confirm('Weet je zeker dat je deze veiling wilt verwijderen?')) return;
         try {
-            const res = await fetch(`http://localhost:5102/api/auctions/${id}`, { method: 'DELETE' });
+            const res = await fetch(`http://localhost:5102/api/auctions/${id}`, { 
+                method: 'DELETE' ,
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+
+            });
             if (!res.ok) throw new Error('Fout bij verwijderen');
             setLocalAuctions(prev => prev.filter(a => a.id !== id));
             if (selectedAuction?.id === id) setSelectedAuction(null);

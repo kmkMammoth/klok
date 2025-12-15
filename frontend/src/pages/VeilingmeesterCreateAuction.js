@@ -59,7 +59,9 @@ function CreateAuction({ auctions, addAuction }) {
     // fetch all products for selection
     const fetchProducts = async () => {
         try {
-            const res = await fetch('http://localhost:5102/api/products');
+            const res = await fetch('http://localhost:5102/api/products',
+                {headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }}
+            );
             if (!res.ok) throw new Error('Fout bij ophalen producten');
             const data = await res.json();
             setProducts(data);
@@ -70,7 +72,9 @@ function CreateAuction({ auctions, addAuction }) {
 
     const fetchAuctions = async () => {
         try {
-            const response = await fetch('http://localhost:5102/api/auctions');
+            const response = await fetch('http://localhost:5102/api/auctions',
+                {headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}`}}
+            );
             if (!response.ok) {
                 throw new Error('Fout bij het ophalen van veilingen');
             }
@@ -131,8 +135,10 @@ function CreateAuction({ auctions, addAuction }) {
                 },
                 body: JSON.stringify({
                     name: formData.name,
-                    maxTime: parseInt(formData.maxTime),
-                    startingPrice: parseFloat(formData.startingPrice)
+                    // send the computed values instead of nonexistent form fields
+                    maxTime: maxTime,
+                    startingPrice: minStart,
+                    veilingmeesterId: formData.veilingmeesterId
                 })
             });
 
@@ -154,7 +160,7 @@ function CreateAuction({ auctions, addAuction }) {
                 await Promise.all(selectedItems.map(async (item) => {
                     const r = await fetch(`http://localhost:5102/api/products/${item.id}/assign-veiling`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
                         body: JSON.stringify({ veilingId: newAuction.id, startprijs: parseFloat(item.startPrice), incrementPerSecond: parseFloat(item.incrementPerSecond) })
                     });
                     if (!r.ok) {
