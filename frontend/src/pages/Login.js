@@ -64,9 +64,9 @@ const Login = () => {
                 throw new Error(errorText || 'Login failed');
             }
             
-            const token = await response.json();
-        
-            localStorage.setItem('user', JSON.stringify({ username: formData.emailOrUsername }));
+            const data = await response.json();
+            localStorage.setItem('accessToken', data.accessToken);
+    
             
             navigate('/')
         } catch (error) {

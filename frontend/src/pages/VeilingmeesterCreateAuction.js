@@ -88,7 +88,8 @@ function CreateAuction({ auctions, addAuction }) {
 
         try {
             const response = await fetch(`http://localhost:5102/api/auctions/${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
             });
 
             if (!response.ok) {
@@ -124,8 +125,15 @@ function CreateAuction({ auctions, addAuction }) {
 
             const response = await fetch('http://localhost:5102/api/auctions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: formData.name, maxTime: maxTime, startingPrice: minStart, veilingmeesterId: formData.veilingmeesterId })
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+                },
+                body: JSON.stringify({
+                    name: formData.name,
+                    maxTime: parseInt(formData.maxTime),
+                    startingPrice: parseFloat(formData.startingPrice)
+                })
             });
 
             if (!response.ok) throw new Error('Fout bij het aanmaken van de veiling');

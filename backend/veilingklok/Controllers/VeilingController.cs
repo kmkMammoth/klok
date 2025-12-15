@@ -36,7 +36,7 @@ public class AuctionsController : ControllerBase
         _db = db;
     }
 
-    // ✅ GET: api/auctions
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Aanvoerder, Koper, Admin, Veilingmeester")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AuctionResponse>>> GetAllAuctions()
     {
@@ -58,7 +58,7 @@ public class AuctionsController : ControllerBase
         return Ok(responses);
     }
 
-    // ✅ GET: api/auctions/{id}
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Aanvoerder, Koper, Admin, Veilingmeester")]
     [HttpGet("{id}")]
     public async Task<ActionResult<AuctionResponse>> GetAuction(int id)
     {
@@ -83,7 +83,7 @@ public class AuctionsController : ControllerBase
         return Ok(response);
     }
 
-    // ✅ POST: api/auctions
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester, Admin")]
     [HttpPost]
     public async Task<ActionResult<AuctionResponse>> AddAuction([FromBody] CreateAuctionRequest request)
     {
@@ -123,7 +123,7 @@ public class AuctionsController : ControllerBase
         return Ok(response);
     }
 
-    // ✅ PUT: api/auctions/{id}
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester, Admin, Koper")]
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateAuction(int id, string status)
     {
@@ -140,7 +140,7 @@ public class AuctionsController : ControllerBase
         return Ok();
     }
 
-    // DELETE: api/auctions/{id}
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester, Admin")]
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteAuction(int id)
     {
