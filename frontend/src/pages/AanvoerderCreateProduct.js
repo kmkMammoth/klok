@@ -23,6 +23,22 @@ function AanvoerderCreateProduct() {
         fetchProducts();
     }, []);
 
+    useEffect(() => {
+    const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+            if (showDetail) closeDetail();
+            if (showForm) setShowForm(false);
+        }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+    };
+}, [showForm, showDetail]);
+
+
     const fetchProducts = async () => {
         try {
             const response = await fetch('http://localhost:5102/api/products');
@@ -163,7 +179,7 @@ function AanvoerderCreateProduct() {
                             <div className="form-grid">
                                 <div className="form-group">
                                     <label>Soort</label>
-                                    <input placeholder="bijv. Roos" type="text" value={formData.soort} onChange={(e) => setFormData({...formData, soort: e.target.value})} required disabled={loading} />
+                                    <input autoFocus onFocus={(e) => e.target.select()} placeholder="bijv. Roos" type="text" value={formData.soort} onChange={(e) => setFormData({...formData, soort: e.target.value})} required disabled={loading} />
                                 </div>
 
                                 <div className="form-group">
@@ -224,7 +240,7 @@ function AanvoerderCreateProduct() {
                         <div className="no-auctions">Geen producten gevonden.</div>
                     ) : (
                         localProducts.map((product) => (
-                            <div key={product.id} className="auction-item" tabIndex="0" onClick={() => openDetail(product)}>
+                            <div key={product.id} className="auction-item" tabIndex="0" onClick={() => openDetail(product)} onKeyDown={(e) => { if (e.key === 'Enter') openDetail(product); }}>
                                 <div className="auction-item-header">
                                     <h3>{product.soort} (x{product.hoeveelheid})</h3>
                                     <div className="auction-item-actions">
