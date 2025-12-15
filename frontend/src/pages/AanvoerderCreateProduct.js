@@ -224,9 +224,9 @@ function AanvoerderCreateProduct() {
                         <div className="no-auctions">Geen producten gevonden.</div>
                     ) : (
                         localProducts.map((product) => (
-                            <div key={product.id} className="auction-item" onClick={() => openDetail(product)}>
+                            <div key={product.id} className="auction-item" tabIndex="0" onClick={() => openDetail(product)}>
                                 <div className="auction-item-header">
-                                    <h3>{product.soort}</h3>
+                                    <h3>{product.soort} (x{product.hoeveelheid})</h3>
                                     <div className="auction-item-actions">
                                         <span className="auction-badge">#{product.id}</span>
                                         <button className="delete-button" onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }} title="Verwijder product">🗑️</button>
@@ -263,7 +263,7 @@ function AanvoerderCreateProduct() {
                                 <div className="detail-row"><strong>Hoeveelheid:</strong> <span>{selectedProduct.hoeveelheid ?? '-'}</span></div>
                                 <div className="detail-row"><strong>Minimumprijs:</strong> <span>{selectedProduct.minimumprijs ? `€ ${parseFloat(selectedProduct.minimumprijs).toFixed(2)}` : '-'}</span></div>
                                 <div className="detail-row"><strong>Kloklocatie:</strong> <span>{selectedProduct.kloklokatie}</span></div>
-                                <div className="detail-row"><strong>Aanvoerder ID:</strong> <span>{selectedProduct.gebruikerId ?? '-'}</span></div>
+                                <div className="detail-row"><strong>Aanvoerder ID:</strong> <span>{selectedProduct.gebruiker_id ?? selectedProduct.gebruikerId ?? '-'}</span></div>
                                 <div className="detail-row"><strong>Artikel ID:</strong> <span>{selectedProduct.id}</span></div>
                             </div>
                         </div>

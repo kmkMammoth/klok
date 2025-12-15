@@ -45,11 +45,6 @@ function Navbar() {
                                 </NavLink>
                             </li>
                             <li>
-                                <NavLink to="/aanvoerder-producten" className={({ isActive }) => isActive ? 'active' : ''}>
-                                    Productenoverzicht (A)
-                                </NavLink>
-                            </li>
-                            <li>
                                 <NavLink to="/create-product" className={({ isActive }) => isActive ? 'active' : ''}>
                                     Product Aanmaken (A)
                                 </NavLink>
