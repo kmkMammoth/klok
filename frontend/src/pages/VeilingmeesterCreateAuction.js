@@ -6,16 +6,40 @@ function CreateAuction({ auctions, addAuction }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [localAuctions, setLocalAuctions] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [selected, setSelected] = useState({});
     const [formData, setFormData] = useState({
         name: '',
-        maxTime: '',
-        startingPrice: ''
+        endTime: '' // ISO datetime-local string
     });
+
+    // helper to open/close product detail
+    const toggleProductExpanded = (id) => {
+        setSelected(prev => ({ ...prev, [id]: { ...(prev[id] || {}), expanded: !(prev[id]?.expanded) } }));
+    };
+
+    const toggleProductSelected = (id) => {
+        setSelected(prev => {
+            const exists = prev[id];
+            if (exists && exists.selected) {
+                // unselect
+                const copy = { ...prev };
+                delete copy[id];
+                return copy;
+            } else {
+                return { ...prev, [id]: { selected: true, startPrice: products.find(p=>p.id===id)?.startprijs ?? products.find(p=>p.id===id)?.minimumprijs ?? 0, incrementPerSecond: products.find(p=>p.id===id)?.incrementPerSecond ?? 0, expanded: false } };
+            }
+        });
+    };
+
 
     // Load veilingen op pagina load en wanneer de pagina weer zichtbaar wordt
     useEffect(() => {
         // initial load
         fetchAuctions();
+
+        // load products for selection
+        fetchProducts();
 
         // refetch when window/tab regains focus or becomes visible again
         const onFocus = () => fetchAuctions();
@@ -32,9 +56,25 @@ function CreateAuction({ auctions, addAuction }) {
         };
     }, []);
 
+    // fetch all products for selection
+    const fetchProducts = async () => {
+        try {
+            const res = await fetch('http://localhost:5102/api/products',
+                {headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }}
+            );
+            if (!res.ok) throw new Error('Fout bij ophalen producten');
+            const data = await res.json();
+            setProducts(data);
+        } catch (err) {
+            console.error('Error fetching products:', err);
+        }
+    };
+
     const fetchAuctions = async () => {
         try {
-            const response = await fetch('http://localhost:5102/api/auctions');
+            const response = await fetch('http://localhost:5102/api/auctions',
+                {headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}`}}
+            );
             if (!response.ok) {
                 throw new Error('Fout bij het ophalen van veilingen');
             }
@@ -70,15 +110,23 @@ function CreateAuction({ auctions, addAuction }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.name || !formData.maxTime || !formData.startingPrice) {
-            setError('Alle velden zijn verplicht');
+        const selectedIds = Object.keys(selected).filter(k => selected[k].selected);
+        if (!formData.name || !formData.endTime || selectedIds.length === 0) {
+            setError('Vul naam, eindtijd en selecteer minimaal één product');
             return;
         }
-
         setLoading(true);
         setError('');
 
         try {
+            const endMillis = new Date(formData.endTime).getTime();
+            const now = Date.now();
+            const maxTime = Math.max(1, Math.round((endMillis - now)/1000));
+
+            // pick a sensible auction-level starting price (min of per-product start prices)
+            const selectedItems = selectedIds.map(id => ({ id: parseInt(id), ...selected[id] }));
+            const minStart = Math.min(...selectedItems.map(i => parseFloat(i.startPrice || 0)));
+
             const response = await fetch('http://localhost:5102/api/auctions', {
                 method: 'POST',
                 headers: {
@@ -87,20 +135,44 @@ function CreateAuction({ auctions, addAuction }) {
                 },
                 body: JSON.stringify({
                     name: formData.name,
-                    maxTime: parseInt(formData.maxTime),
-                    startingPrice: parseFloat(formData.startingPrice)
+                    // send the computed values instead of nonexistent form fields
+                    maxTime: maxTime,
+                    startingPrice: minStart,
+                    veilingmeesterId: formData.veilingmeesterId
                 })
             });
 
-            if (!response.ok) {
-                throw new Error('Fout bij het aanmaken van de veiling');
-            }
+            if (!response.ok) throw new Error('Fout bij het aanmaken van de veiling');
 
             const newAuction = await response.json();
-            addAuction(newAuction);
-            setLocalAuctions([...localAuctions, newAuction]);
-            setFormData({ name: '', maxTime: '', startingPrice: '' });
+
+            // update UI immediately and close modal even if parent didn't pass `addAuction`
+            if (typeof addAuction === 'function') {
+                try { addAuction(newAuction); } catch (err) { console.warn('addAuction failed:', err); }
+            }
+            setLocalAuctions(prev => [...prev, newAuction]);
+            setFormData({ name: '', endTime: '' });
+            setSelected({});
             setShowForm(false);
+
+            // assign each selected product to the created auction and set per-product start/increment
+            try {
+                await Promise.all(selectedItems.map(async (item) => {
+                    const r = await fetch(`http://localhost:5102/api/products/${item.id}/assign-veiling`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+                        body: JSON.stringify({ veilingId: newAuction.id, startprijs: parseFloat(item.startPrice), incrementPerSecond: parseFloat(item.incrementPerSecond) })
+                    });
+                    if (!r.ok) {
+                        const text = await r.text();
+                        throw new Error(`Kon product ${item.id} niet toewijzen: ${text}`);
+                    }
+                }));
+            } catch (assignErr) {
+                // products assignment failed; inform user but auction exists and modal is closed
+                alert('Een of meerdere producten konden niet worden toegewezen: ' + (assignErr.message || assignErr));
+                console.error('Error assigning products:', assignErr);
+            }
         } catch (err) {
             setError(err.message || 'Er is een fout opgetreden');
             console.error('Error:', err);
@@ -160,29 +232,65 @@ function CreateAuction({ auctions, addAuction }) {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Maximale Tijd (seconden)</label>
+                                <label>Eindtijd</label>
                                 <input
-                                    type="number"
-                                    value={formData.maxTime}
-                                    onChange={(e) => setFormData({...formData, maxTime: e.target.value})}
-                                    placeholder="Bijv. 120"
-                                    min="1"
+                                    type="datetime-local"
+                                    value={formData.endTime}
+                                    onChange={(e) => setFormData({...formData, endTime: e.target.value})}
                                     required
                                     disabled={loading}
                                 />
                             </div>
+
                             <div className="form-group">
-                                <label>Startprijs (€)</label>
+                                <label>Veilingmeester ID</label>
                                 <input
-                                    type="number"
-                                    step="0.01"
-                                    value={formData.startingPrice}
-                                    onChange={(e) => setFormData({...formData, startingPrice: e.target.value})}
-                                    placeholder="Bijv. 100.00"
-                                    min="0.01"
+                                    type="text"
+                                    value={formData.veilingmeesterId || ''}
+                                    onChange={(e) => setFormData({...formData, veilingmeesterId: e.target.value})}
+                                    placeholder="bijv. vm1"
                                     required
                                     disabled={loading}
                                 />
+                            </div>
+
+                            <div className="form-group full-width">
+                                <label>Kies Producten</label>
+                                <div className="products-list">
+                                    {products.length === 0 ? (
+                                        <div>Geen producten gevonden.</div>
+                                    ) : (
+                                        products.map(p => (
+                                            <div key={p.id} className={`product-row ${selected[p.id]?.selected ? 'selected' : ''}`}>
+                                                <div className="product-row-main">
+                                                    <input type="checkbox" checked={!!selected[p.id]?.selected} onChange={() => toggleProductSelected(p.id)} disabled={loading} />
+                                                    <button type="button" className="product-name" onClick={() => toggleProductExpanded(p.id)}>{p.soort} <span className="small">#{p.id}</span></button>
+                                                </div>
+                                                {selected[p.id]?.selected && (
+                                                    <div className="product-settings">
+                                                        <label>Startprijs (€)</label>
+                                                        <input type="number" step="0.01" value={selected[p.id]?.startPrice} onChange={(e) => setSelected(prev => ({ ...prev, [p.id]: { ...prev[p.id], startPrice: e.target.value } }))} disabled={loading} />
+                                                        <label>Increment per seconde (€/s)</label>
+                                                        <input type="number" step="0.0001" value={selected[p.id]?.incrementPerSecond} onChange={(e) => setSelected(prev => ({ ...prev, [p.id]: { ...prev[p.id], incrementPerSecond: e.target.value } }))} disabled={loading} />
+                                                    </div>
+                                                )}
+                                                {selected[p.id]?.expanded && (
+                                                    <div className="product-detail">
+                                                        <div><strong>Artikel ID:</strong> {p.id}</div>
+                                                        <div><strong>Aanvoerder:</strong> {p.gebruiker_id}</div>
+                                                        <div><strong>Soort:</strong> {p.soort}</div>
+                                                        <div><strong>Potmaat:</strong> {p.potmaat ?? '-'}</div>
+                                                        <div><strong>Steellengte:</strong> {p.steellengte ?? '-'}</div>
+                                                        <div><strong>Hoeveelheid:</strong> {p.hoeveelheid ?? '-'}</div>
+                                                        <div><strong>Minimumprijs:</strong> {p.minimumprijs ? `€ ${parseFloat(p.minimumprijs).toFixed(2)}` : '-'}</div>
+                                                        <div><strong>Kloklocatie:</strong> {p.kloklokatie}</div>
+                                                        {p.afbeelding && <div style={{marginTop:8}}><img src={p.afbeelding} alt="product" style={{maxWidth: '100%', maxHeight:150, borderRadius:8}}/></div>}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             </div>
                             <button type="submit" className="submit-button" disabled={loading}>
                                 {loading ? 'Bezig met opslaan...' : 'Bevestigen'}

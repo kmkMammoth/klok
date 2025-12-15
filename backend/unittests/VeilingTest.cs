@@ -7,6 +7,7 @@ namespace unittests
     public class FakeVeilingContextForAuctions
     {
         public List<Veiling> Veiling { get; set; } = new List<Veiling>();
+        public List<Veilingmeester> Veilingmeester { get; set; } = new List<Veilingmeester>();
 
         public Task<int> SaveChangesAsync() => Task.FromResult(1);
     }
@@ -41,7 +42,7 @@ namespace unittests
 
         public Task<ActionResult<AuctionResponse>> GetAuction(int id)
         {
-            var v = _db.Veiling.SingleOrDefault(x => x.VeilingId == id);
+            var v = _db.Veiling.FirstOrDefault(x => x.VeilingId == id);
             if (v == null) return Task.FromResult<ActionResult<AuctionResponse>>(new NotFoundObjectResult($"Veiling {id} niet gevonden"));
 
             var response = new AuctionResponse
@@ -63,6 +64,10 @@ namespace unittests
             if (req == null || string.IsNullOrEmpty(req.name) || req.maxTime <= 0 || req.startingPrice < 0)
                 return Task.FromResult<ActionResult<AuctionResponse>>(new BadRequestObjectResult("Ongeldige veilinggegevens"));
 
+            // validate veilingmeester exists in fake context
+            if (string.IsNullOrEmpty(req.veilingmeesterId) || !_db.Veilingmeester.Any(vm => vm.Id == req.veilingmeesterId))
+                return Task.FromResult<ActionResult<AuctionResponse>>(new BadRequestObjectResult($"Veilingmeester met ID {req.veilingmeesterId} niet gevonden"));
+
             var veiling = new Veiling
             {
                 VeilingId = _db.Veiling.Count > 0 ? _db.Veiling.Max(v => v.VeilingId) + 1 : 1,
@@ -73,6 +78,9 @@ namespace unittests
                 EindTijd = DateTime.Now.AddSeconds(req.maxTime),
                 Gebruiker_id = "1"
             };
+
+            // set the provided veilingmeester id
+            veiling.Gebruiker_id = req.veilingmeesterId;
 
             _db.Veiling.Add(veiling);
 
@@ -92,7 +100,7 @@ namespace unittests
 
         public Task<ActionResult> UpdateAuction(int id, string status)
         {
-            var v = _db.Veiling.SingleOrDefault(x => x.VeilingId == id);
+            var v = _db.Veiling.FirstOrDefault(x => x.VeilingId == id);
             if (v == null) return Task.FromResult<ActionResult>(new NotFoundObjectResult($"Veiling {id} niet gevonden"));
 
             v.Status = status;
@@ -101,7 +109,7 @@ namespace unittests
 
         public Task<ActionResult> DeleteAuction(int id)
         {
-            var v = _db.Veiling.SingleOrDefault(x => x.VeilingId == id);
+            var v = _db.Veiling.FirstOrDefault(x => x.VeilingId == id);
             if (v == null) return Task.FromResult<ActionResult>(new NotFoundObjectResult($"Veiling {id} niet gevonden"));
 
             _db.Veiling.Remove(v);
@@ -115,6 +123,8 @@ namespace unittests
         private FakeVeilingContextForAuctions GetContextWithData()
         {
             var ctx = new FakeVeilingContextForAuctions();
+            // include a veilingmeester in the fake context so fk-constraints can be simulated
+            ctx.Veilingmeester.Add(new Veilingmeester { Id = "vm1" });
             ctx.Veiling.Add(new Veiling
             {
                 VeilingId = 1,
@@ -141,13 +151,16 @@ namespace unittests
         public async Task AddAuction_CreatesAuction()
         {
             var ctx = new FakeVeilingContextForAuctions();
+            // add a veilingmeester so the controller can validate the provided id
+            ctx.Veilingmeester.Add(new Veilingmeester { Id = "vm1" });
             var controller = new AuctionsControllerForTest(ctx);
 
             var req = new CreateAuctionRequest
             {
                 name = "NieuweVeiling",
                 maxTime = 300,
-                startingPrice = 50
+                startingPrice = 50,
+                veilingmeesterId = "vm1"
             };
 
             var result = await controller.AddAuction(req);
@@ -176,9 +189,10 @@ namespace unittests
             var ctx = GetContextWithData();
             var controller = new AuctionsControllerForTest(ctx);
 
+            // call delete and assert the veiling is removed
             await controller.DeleteAuction(1);
 
-            Assert.Empty(ctx.Veiling);
+            Assert.DoesNotContain(ctx.Veiling, v => v.VeilingId == 1);
         }
 
         [Fact]

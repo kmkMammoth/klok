@@ -37,7 +37,9 @@ namespace unittests
                     minimumprijs = p.MinimumPrijs,
                     kloklokatie = p.KlokLocatie,
                     afbeelding = p.Afbeelding,
-                    gebruiker_id = p.Gebruiker_id
+                        gebruiker_id = p.Gebruiker_id,
+                        startprijs = p.StartPrijs,
+                        incrementPerSecond = p.IncrementPerSecond
                 })
                 .ToList();
 
@@ -101,7 +103,9 @@ namespace unittests
                 minimumprijs = product.MinimumPrijs,
                 kloklokatie = product.KlokLocatie,
                 afbeelding = product.Afbeelding,
-                gebruiker_id = product.Gebruiker_id
+                gebruiker_id = product.Gebruiker_id,
+                startprijs = product.StartPrijs,
+                incrementPerSecond = product.IncrementPerSecond
             };
 
             return Task.FromResult<ActionResult<ProductResponse>>(new OkObjectResult(response));
@@ -142,10 +146,16 @@ namespace unittests
                 var veiling = _db.Veiling.SingleOrDefault(v => v.VeilingId == req.veilingId.Value);
                 if (veiling == null) return Task.FromResult<ActionResult>(new BadRequestObjectResult($"Veiling {req.veilingId.Value} niet gevonden"));
                 p.VeilingId = req.veilingId.Value;
+                if (req.startprijs.HasValue)
+                    p.StartPrijs = req.startprijs.Value;
+                if (req.incrementPerSecond.HasValue)
+                    p.IncrementPerSecond = req.incrementPerSecond.Value;
             }
             else
             {
                 p.VeilingId = null;
+                p.StartPrijs = null;
+                p.IncrementPerSecond = null;
             }
 
             return Task.FromResult<ActionResult>(new OkResult());
