@@ -41,7 +41,7 @@ function AanvoerderCreateProduct() {
 
     const fetchProducts = async () => {
         try {
-            const response = await fetch('http://localhost:5102/api/products');
+            const response = await fetch('http://localhost:5102/api/products', {headers: {Authorization: `Bearer ${localStorage.getItem('accessToken')}`}});
             if (!response.ok) throw new Error('Fout bij het ophalen van producten');
             const data = await response.json();
             setLocalProducts(data);
@@ -55,7 +55,8 @@ function AanvoerderCreateProduct() {
 
         try {
             const response = await fetch(`http://localhost:5102/api/products/${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {Authorization: `Bearer ${localStorage.getItem('accessToken')}`}
             });
             if (!response.ok) throw new Error('Fout bij het verwijderen van product');
             setLocalProducts(localProducts.filter(p => p.id !== id));
@@ -116,7 +117,10 @@ function AanvoerderCreateProduct() {
 
             const response = await fetch('http://localhost:5102/api/products', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+                },
                 body: JSON.stringify(payload)
             });
 

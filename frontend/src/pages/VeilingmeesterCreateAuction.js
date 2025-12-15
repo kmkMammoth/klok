@@ -52,7 +52,8 @@ function CreateAuction({ auctions, addAuction }) {
 
         try {
             const response = await fetch(`http://localhost:5102/api/auctions/${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
             });
 
             if (!response.ok) {
@@ -82,6 +83,7 @@ function CreateAuction({ auctions, addAuction }) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`
                 },
                 body: JSON.stringify({
                     name: formData.name,
