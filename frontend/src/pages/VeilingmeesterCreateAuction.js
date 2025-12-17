@@ -57,6 +57,52 @@ function CreateAuction({ auctions, addAuction }) {
         };
     }, []);
 
+    // Close product modal on Escape key for better keyboard accessibility
+    // Use capture-phase listener so we catch Escape even if focus is inside inputs/buttons
+    useEffect(() => {
+        if (!productModal) return;
+        const onKeyDown = (e) => {
+            const isEscape = e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27;
+            if (isEscape) {
+                e.preventDefault();
+                e.stopPropagation();
+                setProductModal(null);
+            }
+        };
+        document.addEventListener('keydown', onKeyDown, true);
+        // focus the modal title so Escape works immediately for keyboard users
+        const el = document.getElementById('product-modal-title');
+        if (el && typeof el.focus === 'function') {
+            el.focus();
+        }
+        return () => document.removeEventListener('keydown', onKeyDown, true);
+    }, [productModal]);
+
+    useEffect(() => {
+        if (!showForm) return;
+        const handleKeyDown = (e) => {
+            const isEscape = e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27;
+            if (isEscape) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (productModal) {
+                    setProductModal(null);
+                    return;
+                }
+                setShowForm(false);
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown, true);
+        // focus the create form title for immediate keyboard interaction
+        const el = document.getElementById('create-form-title');
+        if (el && typeof el.focus === 'function') el.focus();
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown, true);
+        };
+    }, [showForm, productModal]);
+
     // fetch all products for selection
     const fetchProducts = async () => {
         try {
@@ -227,6 +273,7 @@ function CreateAuction({ auctions, addAuction }) {
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                    autoFocus onFocus={(e) => e.target.select()}
                                     placeholder="Bijv. Rode Rozen Boeket"
                                     required
                                     disabled={loading}
@@ -263,14 +310,30 @@ function CreateAuction({ auctions, addAuction }) {
                                     ) : (
                                         <div className="product-grid">
                                             {products.map(p => (
-                                                <div key={p.id} className={`product-card ${selected[p.id]?.selected ? 'selected' : ''}`} onClick={() => toggleProductSelected(p.id)}>
+                                                <div key={p.id} className={`product-card ${selected[p.id]?.selected ? 'selected' : ''}`} role="button" tabindex={0}   aria-pressed={!!selected[p.id]?.selected} onClick={() => toggleProductSelected(p.id)} onKeyDown={(e) => { if (e.key === 'Enter') {e.preventDefault(); toggleProductSelected(p.id) }}}>
                                                     <img className="product-thumbnail" src={p.afbeelding || ''} alt={p.soort} onError={(e)=>{e.target.src=''; e.target.style.backgroundColor='#f3f3f3'}} />
                                                     <div className="product-meta">
                                                         <div className="product-name">{p.soort} <span className="small">#{p.id}</span></div>
                                                         <div className="product-price">{p.minimumprijs ? formatPrice(p.minimumprijs) : '—'}</div>
                                                     </div>
                                                     <div className="product-actions">
-                                                        <button type="button" className="info-button" onClick={(e) => { e.stopPropagation(); setProductModal(p); }}>Info</button>
+                                                        <button
+                                                        type="button"
+                                                        className="info-button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setProductModal(p);
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            e.stopPropagation();
+                                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                            e.preventDefault();
+                                                            setProductModal(p);
+                                                            }
+                                                        }}
+                                                        >
+                                                        Info
+                                                        </button>
                                                         <div className="select-indicator">{selected[p.id]?.selected ? '✓' : ''}</div>
                                                     </div>
 
@@ -289,14 +352,18 @@ function CreateAuction({ auctions, addAuction }) {
                                 </div>
                             </div>
 
-                            {productModal && (
+                            <button type="submit" className="submit-button" disabled={loading}>
+                                {loading ? 'Bezig met opslaan...' : 'Bevestigen'}
+                            </button>
+                        </form>
+                        {productModal && (
                                 <div className="product-modal" onClick={() => setProductModal(null)}>
-                                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                                        <button className="close-button" onClick={() => setProductModal(null)}>×</button>
+                                    <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="product-modal-title" onClick={(e) => e.stopPropagation()}>
+                                        <button className="close-button" onClick={() => setProductModal(null)} aria-label="Sluit productinformatie">×</button>
                                         <div className="product-detail-grid">
                                             <img className="product-image-lg" src={productModal.afbeelding || ''} alt={productModal.soort} onError={(e)=>{e.target.src=''; e.target.style.backgroundColor='#f3f3f3'}} />
                                             <div className="product-detail-info">
-                                                <h3>{productModal.soort} <small>#{productModal.id}</small></h3>
+                                                <h3 id="product-modal-title" tabIndex="-1">{productModal.soort} <small>#{productModal.id}</small></h3>
                                                 <dl>
                                                     <div><dt>Artikel ID</dt><dd>{productModal.id}</dd></div>
                                                     <div><dt>Aanvoerder</dt><dd>{productModal.gebruiker_id ?? '-'}</dd></div>
@@ -313,10 +380,6 @@ function CreateAuction({ auctions, addAuction }) {
                                     </div>
                                 </div>
                             )}
-                            <button type="submit" className="submit-button" disabled={loading}>
-                                {loading ? 'Bezig met opslaan...' : 'Bevestigen'}
-                            </button>
-                        </form>
                     </div>
                 </div>
             )}
