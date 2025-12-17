@@ -50,6 +50,9 @@ public class ProductResponse
     // auction-related fields
     public decimal? startprijs { get; set; }
     public decimal? incrementPerSecond { get; set; }
+
+    // Reference to assigned auction (nullable)
+    public int? veilingId { get; set; }
 }
 
 [ApiController]
@@ -83,7 +86,8 @@ public class ProductsController : ControllerBase
             afbeelding = p.Afbeelding,
             gebruiker_id = p.Gebruiker_id,
             startprijs = p.StartPrijs,
-            incrementPerSecond = p.IncrementPerSecond
+            incrementPerSecond = p.IncrementPerSecond,
+            veilingId = p.VeilingId
         }).ToList();
 
         return Ok(responses);
@@ -112,7 +116,8 @@ public class ProductsController : ControllerBase
             afbeelding = product.Afbeelding,
             gebruiker_id = product.Gebruiker_id,
             startprijs = product.StartPrijs,
-            incrementPerSecond = product.IncrementPerSecond
+            incrementPerSecond = product.IncrementPerSecond,
+            veilingId = product.VeilingId
         };
 
         return Ok(response);
@@ -270,6 +275,10 @@ public class ProductsController : ControllerBase
 
         if (request.veilingId.HasValue)
         {
+            // Prevent assigning if already assigned to a veiling
+            if (product.VeilingId != null)
+                return BadRequest("Product is al toegewezen aan een veiling.");
+
             var veiling = await _db.Veiling.FindAsync(request.veilingId.Value);
             if (veiling == null)
                 return BadRequest($"Veiling met ID {request.veilingId.Value} niet gevonden.");
