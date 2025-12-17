@@ -270,6 +270,8 @@ function CreateAuction({ auctions, addAuction }) {
 
     const getProductsForAuction = (auctionId) => products.filter(p => getProductAuctionId(p) === auctionId);
 
+    const availableProducts = products.filter(p => getProductAuctionId(p) === null);
+
     return (
         <div className="create-container">
             <div className="create-header">
@@ -337,9 +339,11 @@ function CreateAuction({ auctions, addAuction }) {
                                 <div className="product-selection">
                                     {products.length === 0 ? (
                                         <div className="empty-products">Geen producten gevonden.</div>
+                                    ) : availableProducts.length === 0 ? (
+                                        <div className="empty-products">Geen beschikbare producten: alle producten zijn al toegewezen aan een veiling.</div>
                                     ) : (
                                         <div className="product-grid">
-                                            {products.map(p => (
+                                            {availableProducts.map(p => (
                                                 <div key={p.id} className={`product-card ${selected[p.id]?.selected ? 'selected' : ''}`} role="button" tabindex={0}   aria-pressed={!!selected[p.id]?.selected} onClick={() => toggleProductSelected(p.id)} onKeyDown={(e) => { if (e.key === 'Enter') {e.preventDefault(); toggleProductSelected(p.id) }}}>
                                                     <img className="product-thumbnail" src={p.afbeelding || ''} alt={p.soort} onError={(e)=>{e.target.src=''; e.target.style.backgroundColor='#f3f3f3'}} />
                                                     <div className="product-meta">

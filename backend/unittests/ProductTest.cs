@@ -143,6 +143,9 @@ namespace unittests
 
             if (req.veilingId.HasValue)
             {
+                // don't allow assigning if product already has a veiling
+                if (p.VeilingId.HasValue) return Task.FromResult<ActionResult>(new BadRequestObjectResult("Product is al toegewezen aan een veiling"));
+
                 var veiling = _db.Veiling.SingleOrDefault(v => v.VeilingId == req.veilingId.Value);
                 if (veiling == null) return Task.FromResult<ActionResult>(new BadRequestObjectResult($"Veiling {req.veilingId.Value} niet gevonden"));
                 p.VeilingId = req.veilingId.Value;
@@ -241,6 +244,23 @@ namespace unittests
             await controller.AssignVeilingToProduct(1, req);
 
             Assert.Equal(1, ctx.Product.Single().VeilingId);
+        }
+
+        [Fact]
+        public async Task AssignVeilingToProduct_FailsWhenAlreadyAssigned()
+        {
+            var ctx = GetContextWithData();
+            // ensure there is another veiling to attempt assigning
+            ctx.Veiling.Add(new Veiling { VeilingId = 2 });
+            var controller = new ProductsControllerForTest(ctx);
+
+            var req1 = new UpdateProductVeiling { veilingId = 1 };
+            await controller.AssignVeilingToProduct(1, req1);
+
+            var req2 = new UpdateProductVeiling { veilingId = 2 };
+            var result = await controller.AssignVeilingToProduct(1, req2);
+
+            Assert.IsType<BadRequestObjectResult>(result);
         }
     }
 }

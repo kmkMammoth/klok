@@ -275,6 +275,10 @@ public class ProductsController : ControllerBase
 
         if (request.veilingId.HasValue)
         {
+            // Prevent assigning if already assigned to a veiling
+            if (product.VeilingId != null)
+                return BadRequest("Product is al toegewezen aan een veiling.");
+
             var veiling = await _db.Veiling.FindAsync(request.veilingId.Value);
             if (veiling == null)
                 return BadRequest($"Veiling met ID {request.veilingId.Value} niet gevonden.");
