@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
+import { useRole } from '../auth/RoleContext';
 
 const Login = () => {
-    //TODO: rotzooi van li opruimen! dit staat nu nog allemaal zo om het effe werkend te krijgen maar dit moet nog goed gemaakt worden!
-    
     const navigate = useNavigate();
+    const { refresh } = useRole();
+
     const [formData, setFormData] = useState({
         emailOrUsername: '',
         password: ''
@@ -20,7 +21,6 @@ const Login = () => {
             ...prev,
             [name]: value
         }));
-        // Clear error when user starts typing
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -34,7 +34,6 @@ const Login = () => {
         setIsLoading(true);
         setErrors({});
 
-        // Basic validation
         const newErrors = {};
         if (!formData.emailOrUsername.trim()) {
             newErrors.emailOrUsername = 'E-mailadres of gebruikersnaam is verplicht';
@@ -50,28 +49,36 @@ const Login = () => {
         }
 
         try {
+            // Identity minimal API login endpoint (MapIdentityApi<Gebruiker>())
             const response = await fetch('http://localhost:5102/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
                 body: JSON.stringify({
                     email: formData.emailOrUsername,
                     password: formData.password
                 })
             });
-            //controle login
+
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(errorText || 'Login failed');
             }
-            
+
             const data = await response.json();
+
+            if (!data?.accessToken) {
+                throw new Error('Login response bevat geen accessToken.');
+            }
+
             localStorage.setItem('accessToken', data.accessToken);
-    
-            
-            navigate('/')
+
+            // Cruciaal: direct roles ophalen met het nieuwe token
+            await refresh();
+
+            navigate('/overzicht');
         } catch (error) {
-            setErrors({ 
-                general: 'Inloggen mislukt. Controleer uw gegevens en probeer het opnieuw.' 
+            setErrors({
+                general: 'Inloggen mislukt. Controleer uw gegevens en probeer het opnieuw.'
             });
         } finally {
             setIsLoading(false);
@@ -80,10 +87,6 @@ const Login = () => {
 
     return (
         <div className="login-page">
-            {/* Navigation */}
-            {/*<HomeNavbar activePage="/login" hideLoginButton={true} hideRegisterButton={false} />*/}
-
-            {/* Login Form */}
             <div className="login-container">
                 <div className="login-card">
                     <div className="login-avatar">
@@ -148,8 +151,8 @@ const Login = () => {
                             </Link>
                         </div>
 
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             className="btn-login-submit"
                             disabled={isLoading}
                         >
@@ -170,4 +173,3 @@ const Login = () => {
 };
 
 export default Login;
-
