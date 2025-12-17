@@ -461,7 +461,7 @@ function CreateAuction({ auctions, addAuction }) {
                     ) : (
                         localAuctions.map((auction) => {
                             return (
-                                <div key={auction.id} className={`auction-item ${expandedAuctions[auction.id] ? 'expanded' : ''}`} role="button" tabIndex={0} onClick={() => toggleAuction(auction.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleAuction(auction.id); } }}>
+                                <div key={auction.id} className={`auction-item ${expandedAuctions[auction.id] ? 'expanded' : ''}`} role="button" tabIndex={0} onClick={() => toggleAuction(auction.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') {toggleAuction(auction.id); } }}>
                                     <div className="auction-item-header">
                                         <h3>{auction.name}</h3>
                                         <div className="auction-item-actions">
