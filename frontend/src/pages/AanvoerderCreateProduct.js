@@ -187,17 +187,17 @@ function AanvoerderCreateProduct() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Potmaat</label>
+                                    <label>Potmaat (Ø cm)</label>
                                     <input placeholder="bijv. 10" type="number" value={formData.potmaat} onChange={(e) => setFormData({...formData, potmaat: e.target.value})} disabled={loading} />
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Steellengte</label>
+                                    <label>Steellengte (cm)</label>
                                     <input placeholder="bijv. 30.5" type="number" step="0.01" value={formData.steellengte} onChange={(e) => setFormData({...formData, steellengte: e.target.value})} disabled={loading} />
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Hoeveelheid</label>
+                                    <label>Hoeveelheid (stuks)</label>
                                     <input placeholder="bijv. 50" type="number" value={formData.hoeveelheid} onChange={(e) => setFormData({...formData, hoeveelheid: e.target.value})} disabled={loading} />
                                 </div>
 
