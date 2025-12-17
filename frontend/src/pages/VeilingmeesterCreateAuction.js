@@ -339,49 +339,70 @@ function CreateAuction({ auctions, addAuction }) {
                                 <div className="product-selection">
                                     {products.length === 0 ? (
                                         <div className="empty-products">Geen producten gevonden.</div>
-                                    ) : availableProducts.length === 0 ? (
-                                        <div className="empty-products">Geen beschikbare producten: alle producten zijn al toegewezen aan een veiling.</div>
                                     ) : (
-                                        <div className="product-grid">
-                                            {availableProducts.map(p => (
-                                                <div key={p.id} className={`product-card ${selected[p.id]?.selected ? 'selected' : ''}`} role="button" tabindex={0}   aria-pressed={!!selected[p.id]?.selected} onClick={() => toggleProductSelected(p.id)} onKeyDown={(e) => { if (e.key === 'Enter') {e.preventDefault(); toggleProductSelected(p.id) }}}>
-                                                    <img className="product-thumbnail" src={p.afbeelding || ''} alt={p.soort} onError={(e)=>{e.target.src=''; e.target.style.backgroundColor='#f3f3f3'}} />
-                                                    <div className="product-meta">
-                                                        <div className="product-name">{p.soort} <span className="small">#{p.id}</span></div>
-                                                        <div className="product-price">{p.minimumprijs ? formatPrice(p.minimumprijs) : '—'}</div>
-                                                    </div>
-                                                    <div className="product-actions">
-                                                        <button
-                                                        type="button"
-                                                        className="info-button"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            openProductModal(p.id, p);
-                                                        }}
-                                                        onKeyDown={(e) => {
-                                                            e.stopPropagation();
-                                                            if (e.key === 'Enter' || e.key === ' ') {
-                                                            e.preventDefault();
-                                                            openProductModal(p.id, p);
-                                                            }
-                                                        }}
-                                                        >
-                                                        Info
-                                                        </button>
-                                                        <div className="select-indicator">{selected[p.id]?.selected ? '✓' : ''}</div>
-                                                    </div>
+                                        <>
+                                            {availableProducts.length === 0 && (
+                                                <div className="empty-products">Geen beschikbare producten: alle producten zijn al toegewezen aan een veiling.</div>
+                                            )}
 
-                                                    {selected[p.id]?.selected && (
-                                                        <div className="product-settings" onClick={(e)=>e.stopPropagation()}>
-                                                            <label>Startprijs (€)</label>
-                                                            <input type="number" step="0.01" value={selected[p.id]?.startPrice} onChange={(e) => setSelected(prev => ({ ...prev, [p.id]: { ...prev[p.id], startPrice: e.target.value } }))} disabled={loading} />
-                                                            <label>Increment per seconde (€/s)</label>
-                                                            <input type="number" step="0.01" value={selected[p.id]?.incrementPerSecond} onChange={(e) => setSelected(prev => ({ ...prev, [p.id]: { ...prev[p.id], incrementPerSecond: e.target.value } }))} disabled={loading} />
+                                            <div className="product-grid">
+                                                {products.map(p => {
+                                                    const assignedId = getProductAuctionId(p);
+                                                    const isAssigned = assignedId !== null && assignedId !== undefined;
+                                                    return (
+                                                        <div
+                                                            key={p.id}
+                                                            className={`product-card ${selected[p.id]?.selected ? 'selected' : ''} ${isAssigned ? 'disabled' : ''}`}
+                                                            role="button"
+                                                            tabIndex={0}
+                                                            aria-pressed={!!selected[p.id]?.selected}
+                                                            aria-disabled={isAssigned}
+                                                            onClick={() => { if (isAssigned) return; toggleProductSelected(p.id); }}
+                                                            onKeyDown={(e) => {
+                                                                if (isAssigned) {
+                                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                                        e.preventDefault();
+                                                                        openProductModal(p.id, p);
+                                                                    }
+                                                                    return;
+                                                                }
+                                                                if (e.key === 'Enter') { e.preventDefault(); toggleProductSelected(p.id); }
+                                                            }}
+                                                        >
+                                                            <img className="product-thumbnail" src={p.afbeelding || ''} alt={p.soort} onError={(e)=>{e.target.src=''; e.target.style.backgroundColor='#f3f3f3'}} />
+                                                            <div className="product-meta">
+                                                                <div className="product-name">{p.soort} <span className="small">#{p.id}</span></div>
+                                                                <div className="product-price">{p.minimumprijs ? formatPrice(p.minimumprijs) : '—'}</div>
+                                                            </div>
+                                                            <div className="product-actions">
+                                                                <button
+                                                                    type="button"
+                                                                    className="info-button"
+                                                                    onClick={(e) => { e.stopPropagation(); openProductModal(p.id, p); }}
+                                                                    onKeyDown={(e) => { e.stopPropagation(); if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProductModal(p.id, p); } }}
+                                                                >
+                                                                    Info
+                                                                </button>
+                                                                <div className="select-indicator">{selected[p.id]?.selected ? '✓' : ''}</div>
+                                                            </div>
+
+                                                            {isAssigned && (
+                                                                <div className="assigned-badge">Toegevoegd aan veiling #{assignedId}</div>
+                                                            )}
+
+                                                            {selected[p.id]?.selected && (
+                                                                <div className="product-settings" onClick={(e)=>e.stopPropagation()}>
+                                                                    <label>Startprijs (€)</label>
+                                                                    <input type="number" step="0.01" value={selected[p.id]?.startPrice} onChange={(e) => setSelected(prev => ({ ...prev, [p.id]: { ...prev[p.id], startPrice: e.target.value } }))} disabled={loading} />
+                                                                    <label>Increment per seconde (€/s)</label>
+                                                                    <input type="number" step="0.01" value={selected[p.id]?.incrementPerSecond} onChange={(e) => setSelected(prev => ({ ...prev, [p.id]: { ...prev[p.id], incrementPerSecond: e.target.value } }))} disabled={loading} />
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </>
                                     )}
                                 </div>
                             </div>

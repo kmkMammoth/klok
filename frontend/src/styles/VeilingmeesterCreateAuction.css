@@ -359,6 +359,36 @@
     background: linear-gradient(180deg, #FFFFFF 0%, #FBFFFC 100%);
 }
 
+.product-card.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: auto; /* keep children (Info button) clickable; selection prevented in JS */
+    background: #fbfbfb;
+}
+
+.product-card.disabled:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.product-card.disabled .select-indicator {
+    opacity: 0;
+}
+
+.product-card.disabled .info-button {
+    cursor: pointer;
+}
+
+.assigned-badge {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #6b6b6b;
+    background: #f3f3f3;
+    padding: 0.25rem 0.5rem;
+    border-radius: 10px;
+    align-self: flex-start;
+}
+
 /* Per-product settings shown below the main row */
 .product-settings {
     flex-basis: 100%;
