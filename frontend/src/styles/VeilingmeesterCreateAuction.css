@@ -212,6 +212,39 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
+/* compact product card shown inside expanded auction */
+.auction-product-card {
+    padding: 0.8rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    cursor: pointer;
+    background: #fff;
+    transition: all 0.18s ease;
+}
+
+.auction-product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+/* expanded auction state */
+.auction-item.expanded {
+    border: 2px solid #E7F6F0;
+    box-shadow: 0 8px 28px rgba(88, 125, 113, 0.08);
+}
+
+.auction-products {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed #E0DDCF;
+}
+
+.auction-products h4 {
+    margin: 0 0 0.75rem 0;
+    color: #463239;
+    font-size: 1rem;
+}
+
 .auction-item-header {
     display: flex;
     justify-content: space-between;
