@@ -8,6 +8,7 @@ function CreateAuction({ auctions, addAuction }) {
     const [localAuctions, setLocalAuctions] = useState([]);
     const [products, setProducts] = useState([]);
     const [selected, setSelected] = useState({});
+    const [productModal, setProductModal] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
         endTime: '' // ISO datetime-local string
@@ -112,7 +113,7 @@ function CreateAuction({ auctions, addAuction }) {
         e.preventDefault();
         const selectedIds = Object.keys(selected).filter(k => selected[k].selected);
         if (!formData.name || !formData.endTime || selectedIds.length === 0) {
-            setError('Vul naam, eindtijd en selecteer minimaal één product');
+            setError('Vul naam en eindtijd in en selecteer minimaal één product');
             return;
         }
         setLoading(true);
@@ -256,42 +257,62 @@ function CreateAuction({ auctions, addAuction }) {
 
                             <div className="form-group full-width">
                                 <label>Kies Producten</label>
-                                <div className="products-list">
+                                <div className="product-selection">
                                     {products.length === 0 ? (
-                                        <div>Geen producten gevonden.</div>
+                                        <div className="empty-products">Geen producten gevonden.</div>
                                     ) : (
-                                        products.map(p => (
-                                            <div key={p.id} className={`product-row ${selected[p.id]?.selected ? 'selected' : ''}`}>
-                                                <div className="product-row-main">
-                                                    <input type="checkbox" checked={!!selected[p.id]?.selected} onChange={() => toggleProductSelected(p.id)} disabled={loading} />
-                                                    <button type="button" className="product-name" onClick={() => toggleProductExpanded(p.id)}>{p.soort} <span className="small">#{p.id}</span></button>
+                                        <div className="product-grid">
+                                            {products.map(p => (
+                                                <div key={p.id} className={`product-card ${selected[p.id]?.selected ? 'selected' : ''}`} onClick={() => toggleProductSelected(p.id)}>
+                                                    <img className="product-thumbnail" src={p.afbeelding || ''} alt={p.soort} onError={(e)=>{e.target.src=''; e.target.style.backgroundColor='#f3f3f3'}} />
+                                                    <div className="product-meta">
+                                                        <div className="product-name">{p.soort} <span className="small">#{p.id}</span></div>
+                                                        <div className="product-price">{p.minimumprijs ? formatPrice(p.minimumprijs) : '—'}</div>
+                                                    </div>
+                                                    <div className="product-actions">
+                                                        <button type="button" className="info-button" onClick={(e) => { e.stopPropagation(); setProductModal(p); }}>Info</button>
+                                                        <div className="select-indicator">{selected[p.id]?.selected ? '✓' : ''}</div>
+                                                    </div>
+
+                                                    {selected[p.id]?.selected && (
+                                                        <div className="product-settings" onClick={(e)=>e.stopPropagation()}>
+                                                            <label>Startprijs (€)</label>
+                                                            <input type="number" step="0.01" value={selected[p.id]?.startPrice} onChange={(e) => setSelected(prev => ({ ...prev, [p.id]: { ...prev[p.id], startPrice: e.target.value } }))} disabled={loading} />
+                                                            <label>Increment per seconde (€/s)</label>
+                                                            <input type="number" step="0.01" value={selected[p.id]?.incrementPerSecond} onChange={(e) => setSelected(prev => ({ ...prev, [p.id]: { ...prev[p.id], incrementPerSecond: e.target.value } }))} disabled={loading} />
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {selected[p.id]?.selected && (
-                                                    <div className="product-settings">
-                                                        <label>Startprijs (€)</label>
-                                                        <input type="number" step="0.01" value={selected[p.id]?.startPrice} onChange={(e) => setSelected(prev => ({ ...prev, [p.id]: { ...prev[p.id], startPrice: e.target.value } }))} disabled={loading} />
-                                                        <label>Increment per seconde (€/s)</label>
-                                                        <input type="number" step="0.0001" value={selected[p.id]?.incrementPerSecond} onChange={(e) => setSelected(prev => ({ ...prev, [p.id]: { ...prev[p.id], incrementPerSecond: e.target.value } }))} disabled={loading} />
-                                                    </div>
-                                                )}
-                                                {selected[p.id]?.expanded && (
-                                                    <div className="product-detail">
-                                                        <div><strong>Artikel ID:</strong> {p.id}</div>
-                                                        <div><strong>Aanvoerder:</strong> {p.gebruiker_id}</div>
-                                                        <div><strong>Soort:</strong> {p.soort}</div>
-                                                        <div><strong>Potmaat:</strong> {p.potmaat ?? '-'}</div>
-                                                        <div><strong>Steellengte:</strong> {p.steellengte ?? '-'}</div>
-                                                        <div><strong>Hoeveelheid:</strong> {p.hoeveelheid ?? '-'}</div>
-                                                        <div><strong>Minimumprijs:</strong> {p.minimumprijs ? `€ ${parseFloat(p.minimumprijs).toFixed(2)}` : '-'}</div>
-                                                        <div><strong>Kloklocatie:</strong> {p.kloklokatie}</div>
-                                                        {p.afbeelding && <div style={{marginTop:8}}><img src={p.afbeelding} alt="product" style={{maxWidth: '100%', maxHeight:150, borderRadius:8}}/></div>}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
                             </div>
+
+                            {productModal && (
+                                <div className="product-modal" onClick={() => setProductModal(null)}>
+                                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                                        <button className="close-button" onClick={() => setProductModal(null)}>×</button>
+                                        <div className="product-detail-grid">
+                                            <img className="product-image-lg" src={productModal.afbeelding || ''} alt={productModal.soort} onError={(e)=>{e.target.src=''; e.target.style.backgroundColor='#f3f3f3'}} />
+                                            <div className="product-detail-info">
+                                                <h3>{productModal.soort} <small>#{productModal.id}</small></h3>
+                                                <dl>
+                                                    <div><dt>Artikel ID</dt><dd>{productModal.id}</dd></div>
+                                                    <div><dt>Aanvoerder</dt><dd>{productModal.gebruiker_id ?? '-'}</dd></div>
+                                                    <div><dt>Soort</dt><dd>{productModal.soort ?? '-'}</dd></div>
+                                                    <div><dt>Potmaat (Ø cm)</dt><dd>{productModal.potmaat ?? '-'}</dd></div>
+                                                    <div><dt>Steellengte (cm)</dt><dd>{productModal.steellengte ?? '-'}</dd></div>
+                                                    <div><dt>Hoeveelheid (stuks)</dt><dd>{productModal.hoeveelheid ?? '-'}</dd></div>
+                                                    <div><dt>Minimumprijs (€)</dt><dd>{productModal.minimumprijs ? formatPrice(productModal.minimumprijs) : '-'}</dd></div>
+                                                    <div><dt>Kloklocatie</dt><dd>{productModal.kloklokatie ?? '-'}</dd></div>
+                                                </dl>
+                                                {productModal.beschrijving && <p style={{marginTop:8}}>{productModal.beschrijving}</p>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             <button type="submit" className="submit-button" disabled={loading}>
                                 {loading ? 'Bezig met opslaan...' : 'Bevestigen'}
                             </button>
