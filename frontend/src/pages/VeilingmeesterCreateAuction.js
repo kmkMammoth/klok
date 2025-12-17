@@ -412,8 +412,15 @@ function CreateAuction({ auctions, addAuction }) {
                                             <strong>{formatPrice(auction.startingPrice)}</strong>
                                         </div>
                                         <div className="detail-small">
-                                            <span>Max. Tijd:</span>
-                                            <strong>{formatTime(auction.maxTime)}</strong>
+                                            <span>Eindtijd:</span>
+                                            <strong>
+                                            {auction.endTime
+                                                ? new Intl.DateTimeFormat('nl-NL', {
+                                                    dateStyle: 'short',
+                                                    timeStyle: 'short'
+                                                }).format(new Date(auction.endTime))
+                                                : '-'}
+                                            </strong>
                                         </div>
                                     </div>
                                 </div>
