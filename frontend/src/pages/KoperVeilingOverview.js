@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
-import '../styles/VeilingmeesterOverview.css';
+import '../styles/KoperVeilingOverview.css';
 
-function Overview({ auctions, setAuctions }) {
+function Overview({ setAuctions }) {
     const [selectedAuction, setSelectedAuction] = useState(null);
     const [localAuctions, setLocalAuctions] = useState([]);
 
@@ -12,10 +12,8 @@ function Overview({ auctions, setAuctions }) {
             );
             if (!res.ok) throw new Error('Fout bij ophalen veilingen');
             const data = await res.json();
-            // map to include computed fields placeholder
             const mapped = (data || []).map(a => ({
                 ...a,
-                // ensure numeric values
                 startingPrice: a.startingPrice ?? 0,
                 maxTime: a.maxTime ?? 0,
                 startTime: a.startTime ?? Date.now(),
@@ -24,7 +22,6 @@ function Overview({ auctions, setAuctions }) {
                 timeRemaining: a.maxTime ?? 0
             }));
             setLocalAuctions(mapped);
-            // keep shared state in sync if provided
             if (setAuctions) setAuctions(mapped);
         } catch (err) {
             console.error('fetchAuctions error:', err);
@@ -32,7 +29,6 @@ function Overview({ auctions, setAuctions }) {
         }
     };
 
-    // interval to update dynamic price/time
     useEffect(() => {
         const interval = setInterval(() => {
             setLocalAuctions(prev => prev.map(auction => {
@@ -51,7 +47,6 @@ function Overview({ auctions, setAuctions }) {
         return () => clearInterval(interval);
     }, []);
 
-    // fetch on mount and when returning to the tab
     useEffect(() => {
         fetchAuctions();
         const onFocus = () => fetchAuctions();

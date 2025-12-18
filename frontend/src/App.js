@@ -1,5 +1,5 @@
 import './App.css';
-import Overview from './pages/VeilingmeesterOverview';
+import Overview from './pages/KoperVeilingOverview';
 import CreateAuction from './pages/VeilingmeesterCreateAuction';
 import KoperOverview from './pages/AanvoerderKoperOverview';
 import AanvoerderCreateProduct from './pages/AanvoerderCreateProduct';
