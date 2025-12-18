@@ -102,6 +102,43 @@
     border-bottom: 3px solid #E0DDCF;
 }
 
+.auction-details h2 {
+    color: #463239;
+    margin-bottom: 0;
+    font-size: 1.8rem;
+    border-bottom: none;
+}
+
+.details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 3px solid #E0DDCF;
+}
+
+.bid-button {
+    background-color: #EB4511;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.bid-button:hover {
+    background-color: #c93a0e;
+}
+
+.bid-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
 .details-content {
     display: flex;
     flex-direction: column;
