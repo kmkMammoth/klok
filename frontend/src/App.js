@@ -13,17 +13,31 @@ import { RoleProvider } from './auth/RoleContext';
 import RequireRole from './auth/RequireRole';
 
 function App() {
+    const token = localStorage.getItem('accessToken');
+    const isLoggedIn = !!token;
+    console.log('isLoggedIn:', isLoggedIn);
+    
     return (
         <RoleProvider>
             <div className="App">
                 <Navbar />
 
                 <div className="content">
+                    
                     <Routes>
-                        <Route path="/" element={<Login />} />
+                        {!isLoggedIn ? (
+                            
+                            <Route path="/login" element={<Login />} />
+                            
+                        ) : (
+                            
+                            <Route path="/" element={<Overview />} />
+                            
+                        )}
+                        
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
-
+                    
                         <Route
                             path="/overzicht"
                             element={
