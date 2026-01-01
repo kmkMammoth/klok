@@ -35,7 +35,22 @@ public class UserManagementController : ControllerBase
         var roles = await _userManager.GetRolesAsync(user);
         return Ok(roles);
     }
+    
+    // GET: api/UserManagement/id
+    [Authorize(AuthenticationSchemes = "Identity.Bearer")]
+    [HttpGet("id")]
+    public async Task<ActionResult<string>> GetLoggedInUserId()
+    {
+        var user = await _userManager.GetUserAsync(User);
 
+        if (user == null)
+        {
+            return Unauthorized("User is not logged in.");
+        }
+
+        return Ok(user.Id);
+    }
+    
     // GET: api/UserManagement/user
     [Authorize(AuthenticationSchemes = "Identity.Bearer")]
     [HttpGet("user")]

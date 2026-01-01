@@ -38,9 +38,9 @@ function CreateAuction({ auctions, addAuction }) {
         endTime: ''
     });
 
-    const toggleProductExpanded = (id) => {
-        setSelected(prev => ({ ...prev, [id]: { ...(prev[id] || {}), expanded: !(prev[id]?.expanded) } }));
-    };
+    // const toggleProductExpanded = (id) => {
+    //     setSelected(prev => ({ ...prev, [id]: { ...(prev[id] || {}), expanded: !(prev[id]?.expanded) } }));
+    // };
 
     const toggleProductSelected = (id) => {
         setSelected(prev => {
@@ -249,13 +249,6 @@ function CreateAuction({ auctions, addAuction }) {
         return `€ ${parseFloat(price).toFixed(2)}`;
     };
 
-    const formatTime = (seconds) => {
-        if (!seconds && seconds !== 0) return '0:00';
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
-
     const getProductAuctionId = (p) => p.veilingId ?? p.veiling_id ?? (p.veiling && p.veiling.id) ?? null;
 
     const [expandedAuctions, setExpandedAuctions] = useState({});
@@ -322,17 +315,17 @@ function CreateAuction({ auctions, addAuction }) {
                                 />
                             </div>
 
-                            <div className="form-group">
-                                <label>Veilingmeester ID</label>
-                                <input
-                                    type="text"
-                                    value={formData.veilingmeesterId || ''}
-                                    onChange={(e) => setFormData({...formData, veilingmeesterId: e.target.value})}
-                                    placeholder="bijv. vm1"
-                                    required
-                                    disabled={loading}
-                                />
-                            </div>
+                            {/*<div className="form-group">*/}
+                            {/*    <label>Veilingmeester ID</label>*/}
+                            {/*    <input*/}
+                            {/*        type="text"*/}
+                            {/*        value={formData.veilingmeesterId || ''}*/}
+                            {/*        onChange={(e) => setFormData({...formData, veilingmeesterId: e.target.value})}*/}
+                            {/*        placeholder="bijv. vm1"*/}
+                            {/*        required*/}
+                            {/*        disabled={loading}*/}
+                            {/*    />*/}
+                            {/*</div>*/}
 
                             <div className="form-group full-width">
                                 <label>Kies Producten</label>
