@@ -11,6 +11,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { RoleProvider } from './auth/RoleContext';
 import RequireRole from './auth/RequireRole';
+import KoperDashboard from './pages/KoperDashboard';
 
 function App() {
     return (
@@ -23,6 +24,14 @@ function App() {
                         <Route path="/" element={<Login />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
+                        <Route
+                            path="/koper-dashboard"
+                            element={
+                                <RequireRole allow={['Koper', 'Admin']}>
+                                    <KoperDashboard />
+                                </RequireRole>
+                            }
+                        />
 
                         <Route
                             path="/overzicht"

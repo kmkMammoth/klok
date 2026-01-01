@@ -17,6 +17,7 @@ function Navbar() {
     const canSeeCreateAuction = role === 'Veilingmeester' || role === 'Admin';
     const canSeeKoperOverview = role === 'Aanvoerder' || role === 'Admin';
     const canSeeCreateProduct = role === 'Aanvoerder' || role === 'Admin';
+    const canSeeKoperDashboard = role === 'Koper' || role === 'Admin';
 
     const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
     const accountMenuRef = useRef(null);
@@ -80,6 +81,14 @@ function Navbar() {
                                             Overzicht
                                         </NavLink>
                                     </li>
+
+                                    {canSeeKoperDashboard && (
+                                        <li>
+                                            <NavLink to="/koper-dashboard" className={({ isActive }) => isActive ? 'active' : ''}>
+                                                Koper Dashboard
+                                            </NavLink>
+                                        </li>
+                                    )}
 
                                     {canSeeCreateAuction && (
                                         <li>
