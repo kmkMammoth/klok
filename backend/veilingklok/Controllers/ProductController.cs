@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
@@ -17,7 +18,6 @@ public class CreateProductRequest
     public decimal? minimumprijs { get; set; }
     public string? kloklokatie { get; set; }
     public string? afbeelding { get; set; }
-    public string? gebruikerId { get; set; }
 
     // optional auction-related fields
     public decimal? startprijs { get; set; }
@@ -127,22 +127,20 @@ public class ProductsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ProductResponse>> AddProduct([FromBody] CreateProductRequest request)
     {
-        if (request == null || string.IsNullOrEmpty(request.soort) || string.IsNullOrEmpty(request.gebruikerId))
+        if (request == null || string.IsNullOrEmpty(request.soort))
             return BadRequest("Ongeldige productgegevens.");
 
         // Validate minimumprijs is not negative
         if (request.minimumprijs.HasValue && request.minimumprijs < 0)
             return BadRequest("MinimumPrijs kan niet negatief zijn.");
-
-        // Check if Aanvoerder exists (not just any Gebruiker)
-        var aanvoerder = await _db.Aanvoerder.FindAsync(request.gebruikerId);
-
-        if (aanvoerder == null)
-            return BadRequest($"Aanvoerder met ID {request.gebruikerId} niet gevonden. Zorg ervoor dat je een geldig Aanvoerder ID invoert.");
-
+        
+        var aanvoerderId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(aanvoerderId))
+            return Unauthorized();
+        
         var product = new Product
         {
-            Gebruiker_id = request.gebruikerId,
+            Gebruiker_id = aanvoerderId,
             Soort = request.soort,
             Potmaat = request.potmaat,
             Steellengte = request.steellengte,
@@ -195,17 +193,12 @@ public class ProductsController : ControllerBase
         // Validate minimumprijs is not negative
         if (request.minimumprijs.HasValue && request.minimumprijs < 0)
             return BadRequest("MinimumPrijs kan niet negatief zijn.");
-
-        // Check if new Aanvoerder exists (not just any Gebruiker)
-        if (!string.IsNullOrEmpty(request.gebruikerId))
-        {
-            var aanvoerder = await _db.Aanvoerder.FindAsync(request.gebruikerId);
-
-            if (aanvoerder == null)
-                return BadRequest($"Aanvoerder met ID {request.gebruikerId} niet gevonden. Zorg ervoor dat je een geldig Aanvoerder ID invoert.");
-
-            product.Gebruiker_id = request.gebruikerId;
-        }
+        
+        var aanvoerderId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(aanvoerderId))
+            return Unauthorized();
+        
+        product.Gebruiker_id = aanvoerderId;
 
         if (!string.IsNullOrEmpty(request.soort))
             product.Soort = request.soort;
