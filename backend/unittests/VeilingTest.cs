@@ -63,11 +63,7 @@ namespace unittests
         {
             if (req == null || string.IsNullOrEmpty(req.name) || req.maxTime <= 0 || req.startingPrice < 0)
                 return Task.FromResult<ActionResult<AuctionResponse>>(new BadRequestObjectResult("Ongeldige veilinggegevens"));
-
-            // validate veilingmeester exists in fake context
-            if (string.IsNullOrEmpty(req.veilingmeesterId) || !_db.Veilingmeester.Any(vm => vm.Id == req.veilingmeesterId))
-                return Task.FromResult<ActionResult<AuctionResponse>>(new BadRequestObjectResult($"Veilingmeester met ID {req.veilingmeesterId} niet gevonden"));
-
+            
             var veiling = new Veiling
             {
                 VeilingId = _db.Veiling.Count > 0 ? _db.Veiling.Max(v => v.VeilingId) + 1 : 1,
@@ -80,7 +76,6 @@ namespace unittests
             };
 
             // set the provided veilingmeester id
-            veiling.Gebruiker_id = req.veilingmeesterId;
 
             _db.Veiling.Add(veiling);
 
@@ -160,7 +155,6 @@ namespace unittests
                 name = "NieuweVeiling",
                 maxTime = 300,
                 startingPrice = 50,
-                veilingmeesterId = "vm1"
             };
 
             var result = await controller.AddAuction(req);
