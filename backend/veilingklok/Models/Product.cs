@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace veilingklok.Models
@@ -50,6 +50,10 @@ namespace veilingklok.Models
         [ForeignKey("Koper")]
         [Column("koper_id")]
         public string? gebruiker_id { get; set; }
+
+        [MaxLength(50)]
+        [Column("status")]
+        public string? Status { get; set; }
 
         public Aanvoerder Aanvoerder { get; set; }
         public Veiling Veiling { get; set; }

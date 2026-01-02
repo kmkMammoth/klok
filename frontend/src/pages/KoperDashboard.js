@@ -9,6 +9,7 @@ function KoperDashboard() {
     const [price, setPrice] = useState(0);
     const [error, setError] = useState('');
     const [buying, setBuying] = useState(false);
+    const [expired, setExpired] = useState(new Set());
 
     // Refs voor timer logica
     const timerRef = useRef(null);
@@ -24,6 +25,7 @@ function KoperDashboard() {
     // 2. Als een veiling is geselecteerd, haal producten op en update elke paar seconden
     useEffect(() => {
         if (!selectedAuction) return;
+        setExpired(new Set()); // Reset expired bij wisselen veiling
         fetchProducts(selectedAuction.id);
         
         const interval = setInterval(() => {
@@ -40,7 +42,8 @@ function KoperDashboard() {
             // Let op: check zowel camelCase als snake_case voor koperId afhankelijk van je backend
             const unsold = products
                 .filter(p => (p.veilingId === selectedAuction?.id || p.veiling_id === selectedAuction?.id))
-                .filter(p => !p.koperId && !p.koper_id && !p.gebruikerIdKoper);
+                .filter(p => !p.koperId && !p.koper_id && !p.gebruikerIdKoper)
+                .filter(p => !expired.has(p.id));
 
             if (unsold.length > 0) {
                 // Sorteer op ID zodat we de volgorde behouden
@@ -61,7 +64,7 @@ function KoperDashboard() {
         } else {
             setCurrentProduct(null);
         }
-    }, [products, selectedAuction]);
+    }, [products, selectedAuction, expired]);
 
     // 4. De Klok (Prijs daling)
     useEffect(() => {
@@ -82,7 +85,15 @@ function KoperDashboard() {
             let newPrice = startPrice - (elapsedSeconds * increment);
             
             // Niet lager dan minimum
-            if (newPrice < minPrice) newPrice = minPrice;
+            if (newPrice <= minPrice) {
+                newPrice = minPrice;
+                // Markeer als verlopen zodat we naar het volgende product gaan
+                setExpired(prev => {
+                    const next = new Set(prev);
+                    next.add(currentProduct.id);
+                    return next;
+                });
+            }
             
             setPrice(newPrice);
         };
@@ -132,7 +143,10 @@ function KoperDashboard() {
                 }
             });
 
-            if (!response.ok) throw new Error('Kopen mislukt. Mogelijk is iemand je voor.');
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text || 'Kopen mislukt. Mogelijk is iemand je voor.');
+            }
             
             // Direct verversen om naar volgende product te gaan
             await fetchProducts(selectedAuction.id);
@@ -176,7 +190,24 @@ function KoperDashboard() {
                                         {currentProduct.afbeelding ? <img src={currentProduct.afbeelding} alt={currentProduct.soort} /> : <div className="placeholder">Geen afbeelding</div>}
                                     </div>
                                     <h3>{currentProduct.soort}</h3>
-                                    <p>Aantal: {currentProduct.hoeveelheid} | Potmaat: {currentProduct.potmaat}</p>
+                                    
+                                    <div className="product-specs">
+                                        <div className="spec-row">
+                                            <strong>Aantal:</strong> <span>{currentProduct.hoeveelheid}</span>
+                                        </div>
+                                        <div className="spec-row">
+                                            <strong>Potmaat:</strong> <span>{currentProduct.potmaat}</span>
+                                        </div>
+                                        <div className="spec-row">
+                                            <strong>Steellengte:</strong> <span>{currentProduct.steellengte}</span>
+                                        </div>
+                                        <div className="spec-row">
+                                            <strong>Locatie:</strong> <span>{currentProduct.kloklokatie}</span>
+                                        </div>
+                                        <div className="spec-row">
+                                            <strong>Kweker:</strong> <span>{currentProduct.gebruikerId}</span>
+                                        </div>
+                                    </div>
                                 </>
                             ) : (
                                 <div className="waiting">Wachten op volgend product of veiling afgelopen...</div>
