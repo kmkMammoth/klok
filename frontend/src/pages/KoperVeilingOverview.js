@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import '../styles/KoperVeilingOverview.css';
+import { formatTime } from '../components/formatTime';
 
 function Overview({ setAuctions }) {
     const [selectedAuction, setSelectedAuction] = useState(null);
@@ -61,36 +62,29 @@ function Overview({ setAuctions }) {
         };
     }, []);
 
-    const handleDelete = async (id) => {
-        if (!window.confirm('Weet je zeker dat je deze veiling wilt verwijderen?')) return;
-        try {
-            const res = await fetch(`http://localhost:5102/api/auctions/${id}`, { 
-                method: 'DELETE' ,
-                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
-
-            });
-            if (!res.ok) throw new Error('Fout bij verwijderen');
-            setLocalAuctions(prev => prev.filter(a => a.id !== id));
-            if (selectedAuction?.id === id) setSelectedAuction(null);
-            if (setAuctions) setAuctions(prev => prev.filter(a => a.id !== id));
-        } catch (err) {
-            alert('Fout bij verwijderen: ' + err.message);
-            console.error(err);
-        }
-    };
+    // const handleDelete = async (id) => {
+    //     if (!window.confirm('Weet je zeker dat je deze veiling wilt verwijderen?')) return;
+    //     try {
+    //         const res = await fetch(`http://localhost:5102/api/auctions/${id}`, { 
+    //             method: 'DELETE' ,
+    //             headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+    //
+    //         });
+    //         if (!res.ok) throw new Error('Fout bij verwijderen');
+    //         setLocalAuctions(prev => prev.filter(a => a.id !== id));
+    //         if (selectedAuction?.id === id) setSelectedAuction(null);
+    //         if (setAuctions) setAuctions(prev => prev.filter(a => a.id !== id));
+    //     } catch (err) {
+    //         alert('Fout bij verwijderen: ' + err.message);
+    //         console.error(err);
+    //     }
+    // };
 
     const formatPrice = (price) => {
         if (price == null) return '€ 0.00';
         return `€ ${parseFloat(price).toFixed(2)}`;
     };
-
-    const formatTime = (seconds) => {
-        if (!seconds && seconds !== 0) return '0:00';
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
-
+    
     return (
         <div className="overview-container">
             <div className="auctions-grid">
@@ -112,8 +106,7 @@ function Overview({ setAuctions }) {
                                 <div className="auction-card-price">
                                     {formatPrice(auction.currentPrice)}
                                 </div>
-                                <div className="auction-card-time">
-                                    {formatTime(auction.timeRemaining || 0)}
+                                <div className="auction-card-time">Eindigd in {formatTime(auction.timeRemaining || 0)}
                                 </div>
                             </div>
                         ))
@@ -122,7 +115,16 @@ function Overview({ setAuctions }) {
 
                 {selectedAuction && (
                     <div className="auction-details">
-                        <h2 id="auction-details-heading">Veilingdetails</h2>
+                        <div className="details-header">
+                            <h2 id="auction-details-heading">Veilingdetails</h2>
+                            <button
+                                className="bid-button"
+                                onClick={() => alert(`Bod geplaatst op ${selectedAuction.name} voor ${formatPrice(selectedAuction.currentPrice)}`)}
+                                disabled={selectedAuction.timeRemaining <= 0}
+                            >
+                                Bied Nu
+                            </button>
+                        </div>
                         <div className="details-content">
                             <div aria-labelledby="auction-details-heading" className="sr-only">
                                 Details voor {selectedAuction.name} (Veiling ID: {selectedAuction.id})
