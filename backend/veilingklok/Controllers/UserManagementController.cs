@@ -26,11 +26,7 @@ public class UserManagementController : ControllerBase
     public async Task<ActionResult<IList<string>>> GetUserRole()
     {
         var user = await _userManager.GetUserAsync(User);
-        
-        if (user == null)
-        {
-            return Unauthorized("User is not logged in.");
-        }
+        if (user == null) return Unauthorized("User is not logged in.");
 
         var roles = await _userManager.GetRolesAsync(user);
         return Ok(roles);
@@ -57,11 +53,7 @@ public class UserManagementController : ControllerBase
     public async Task<ActionResult<Gebruiker>> GetUser()
     {
         var user = await _userManager.GetUserAsync(User);
-        
-        if (user == null)
-        {
-            return Unauthorized("User is not logged in.");
-        }
+        if (user == null) return Unauthorized("User is not logged in.");
 
         return Ok(user);
     }
