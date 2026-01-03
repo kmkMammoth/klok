@@ -133,7 +133,6 @@ function AanvoerderCreateProduct() {
                     const errorData = JSON.parse(responseText);
                     errorMsg = errorData.message || errorData.title || errorMsg;
                 } catch (e) {
-                    // responseText is niet JSON
                 }
                 throw new Error(errorMsg);
             }
@@ -222,11 +221,6 @@ function AanvoerderCreateProduct() {
                                     <input type="file" accept="image/*" onChange={handleFileChange} disabled={loading} />
                                     {formData.afbeelding && <div style={{marginTop: '0.75rem'}}><img src={formData.afbeelding} alt="preview" style={{maxWidth: '100%', maxHeight: 200, borderRadius: 8}}/></div>}
                                 </div>
-
-                                {/*<div className="form-group">*/}
-                                {/*    <label>Aanvoerder ID</label>*/}
-                                {/*    <input placeholder="bijv. 1" type="text" value={formData.gebruikerId} onChange={(e)=> setFormData({...formData, gebruikerId: e.target.value})} required disabled={loading} />*/}
-                                {/*</div>*/}
 
                                 <div className="form-group full-width">
                                     <button type="submit" className="submit-button" disabled={loading}>{loading ? 'Bezig met opslaan...' : 'Bevestigen'}</button>

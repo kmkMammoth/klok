@@ -56,13 +56,13 @@ function Navbar() {
         <nav className="navbar">
             <div className="nav-container">
                 <div className="logo">
-                    <a href="/">
+                    <NavLink to={isLoggedIn ? '/' : '/login'}>
                         <img
                             className="logo-img"
                             src="/logo-flora-veiling.png"
                             alt="Flora Veiling"
                         />
-                    </a>
+                    </NavLink>
                 </div>
 
                 <ul className="nav-menu">
