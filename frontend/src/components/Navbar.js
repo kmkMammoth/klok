@@ -14,6 +14,7 @@ function Navbar() {
     const canSeeCreateAuction = role === 'Veilingmeester' || role === 'Admin';
     const canSeeKoperOverview = role === 'Aanvoerder' || role === 'Admin';
     const canSeeCreateProduct = role === 'Aanvoerder' || role === 'Admin';
+    const canSeeKoperDashboard = role === 'Koper' || role === 'Admin';
 
     const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
     const accountMenuRef = useRef(null);
@@ -28,14 +29,18 @@ function Navbar() {
         if (!isAccountMenuOpen) return;
 
         const onMouseDown = (e) => {
-            if (!accountMenuRef.current) return;
-            if (!accountMenuRef.current.contains(e.target)) {
+            if (
+                accountMenuRef.current &&
+                !accountMenuRef.current.contains(e.target)
+            ) {
                 setIsAccountMenuOpen(false);
             }
         };
 
         const onKeyDown = (e) => {
-            if (e.key === 'Escape') setIsAccountMenuOpen(false);
+            if (e.key === 'Escape') {
+                setIsAccountMenuOpen(false);
+            }
         };
 
         document.addEventListener('mousedown', onMouseDown);
@@ -51,42 +56,52 @@ function Navbar() {
         <nav className="navbar">
             <div className="nav-container">
                 <div className="logo">
-                    <a href="/overzicht"><img className="logo-img" src="/logo-flora-veiling.png" alt="Flora Veiling" /></a>
+                    <a href="/">
+                        <img
+                            className="logo-img"
+                            src="/logo-flora-veiling.png"
+                            alt="Flora Veiling"
+                        />
+                    </a>
                 </div>
 
                 <ul className="nav-menu">
-                    {!isLoggedIn ? (
+                    {!isLoggedIn && (
                         <>
                             <li>
-                                <NavLink to="/login" className={({ isActive }) => isActive ? 'active' : ''}>
+                                <NavLink to="/login">
                                     Login
                                 </NavLink>
                             </li>
                             <li>
-                                <NavLink to="/register" className={({ isActive }) => isActive ? 'active' : ''}>
+                                <NavLink to="/register">
                                     Register
                                 </NavLink>
                             </li>
                         </>
-                    ) : (
-                        <>
-                            <li>
-                                <NavLink to="/overzicht" className={({ isActive }) => isActive ? 'active' : ''}>
-                                    Overzicht
-                                </NavLink>
-                            </li>
+                    )}
 
+                    {isLoggedIn && (
+                        <>
                             {canSeeCreateAuction && (
                                 <li>
-                                    <NavLink to="/create-auction" className={({ isActive }) => isActive ? 'active' : ''}>
-                                        Veiling Aanmaken
+                                    <NavLink to="/create-auction">
+                                        Veiling Dashboard
+                                    </NavLink>
+                                </li>
+                            )}
+
+                            {canSeeKoperDashboard && (
+                                <li>
+                                    <NavLink to="/koper-dashboard">
+                                        Koper Dashboard
                                     </NavLink>
                                 </li>
                             )}
 
                             {canSeeKoperOverview && (
                                 <li>
-                                    <NavLink to="/koper-overview" className={({ isActive }) => isActive ? 'active' : ''}>
+                                    <NavLink to="/koper-overview">
                                         Koper Overview
                                     </NavLink>
                                 </li>
@@ -94,12 +109,13 @@ function Navbar() {
 
                             {canSeeCreateProduct && (
                                 <li>
-                                    <NavLink to="/create-product" className={({ isActive }) => isActive ? 'active' : ''}>
-                                        Product Aanmaken
+                                    <NavLink to="/create-product">
+                                        Product Dashboard
                                     </NavLink>
                                 </li>
                             )}
 
+                            {/* Account menu */}
                             <li
                                 ref={accountMenuRef}
                                 className={`nav-account ${isAccountMenuOpen ? 'open' : ''}`}
@@ -111,7 +127,6 @@ function Navbar() {
                                     aria-haspopup="menu"
                                     aria-expanded={isAccountMenuOpen}
                                     aria-label="Account menu"
-                                    title="Account"
                                 >
                                     <svg
                                         className="nav-account-icon"
@@ -153,9 +168,7 @@ function Navbar() {
                                         onClick={handleLogout}
                                         role="menuitem"
                                     >
-                                        <span className="nav-account-item-content">
-                                            <span>Uitloggen</span>
-                                        </span>
+                                        Uitloggen
                                     </button>
                                 </div>
                             </li>
