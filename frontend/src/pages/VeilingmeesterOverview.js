@@ -2,8 +2,10 @@
 import '../styles/VeilingmeesterOverview.css';
 
 function Overview({ auctions, setAuctions }) {
-    const [selectedAuction, setSelectedAuction] = useState(null);
+    const [selectedAuctionId, setSelectedAuctionId] = useState(null);
     const [localAuctions, setLocalAuctions] = useState([]);
+
+    const selectedAuction = localAuctions.find(a => a.id === selectedAuctionId) ?? null;
 
     const fetchAuctions = async () => {
         try {
@@ -21,7 +23,6 @@ function Overview({ auctions, setAuctions }) {
                 startTime: a.startTime ?? Date.now(),
                 endTime: a.endTime ?? (a.startTime ?? Date.now()) + ((a.maxTime ?? 0) * 1000),
                 currentPrice: a.startingPrice ?? 0,
-                timeRemaining: a.maxTime ?? 0
             }));
             setLocalAuctions(mapped);
             // keep shared state in sync if provided
@@ -43,7 +44,6 @@ function Overview({ auctions, setAuctions }) {
                 return {
                     ...auction,
                     currentPrice: elapsed >= (auction.maxTime || 0) ? 1 : newPrice,
-                    timeRemaining: Math.max(0, (auction.maxTime || 0) - elapsed)
                 };
             }));
         }, 200);
@@ -69,14 +69,13 @@ function Overview({ auctions, setAuctions }) {
     const handleDelete = async (id) => {
         if (!window.confirm('Weet je zeker dat je deze veiling wilt verwijderen?')) return;
         try {
-            const res = await fetch(`http://localhost:5102/api/auctions/${id}`, { 
+            const res = await fetch(`http://localhost:5102/api/auctions/${id}`, {
                 method: 'DELETE' ,
                 headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
-
             });
             if (!res.ok) throw new Error('Fout bij verwijderen');
             setLocalAuctions(prev => prev.filter(a => a.id !== id));
-            if (selectedAuction?.id === id) setSelectedAuction(null);
+            if (selectedAuctionId === id) setSelectedAuctionId(null);
             if (setAuctions) setAuctions(prev => prev.filter(a => a.id !== id));
         } catch (err) {
             alert('Fout bij verwijderen: ' + err.message);
@@ -105,10 +104,10 @@ function Overview({ auctions, setAuctions }) {
                         <div className="no-auctions">Geen veilingen gevonden.</div>
                     ) : (
                         localAuctions.map(auction => (
-                            <div 
+                            <div
                                 key={auction.id}
-                                className={`auction-card ${selectedAuction?.id === auction.id ? 'selected' : ''}`}
-                                onClick={() => setSelectedAuction(auction)}
+                                className={`auction-card ${selectedAuctionId === auction.id ? 'selected' : ''}`}
+                                onClick={() => setSelectedAuctionId(auction.id)}
                             >
                                 <div className="auction-card-header">
                                     <h3>{auction.name}</h3>
@@ -118,7 +117,14 @@ function Overview({ auctions, setAuctions }) {
                                     {formatPrice(auction.currentPrice)}
                                 </div>
                                 <div className="auction-card-time">
-                                    {formatTime(auction.timeRemaining || 0)}
+                                    <p>
+                                        {auction.endTime
+                                            ? new Intl.DateTimeFormat('nl-NL', {
+                                                dateStyle: 'short',
+                                                timeStyle: 'short'
+                                            }).format(new Date(auction.endTime))
+                                            : '-'}
+                                    </p>
                                 </div>
                             </div>
                         ))
@@ -151,17 +157,20 @@ function Overview({ auctions, setAuctions }) {
                                 </span>
                             </div>
                             <div className="detail-row">
-                                <span className="detail-label">Resterende Tijd:</span>
-                                <span className="detail-value time-highlight">
-                                    {formatTime(selectedAuction.timeRemaining || 0)}
+                                <span className="detail-label">Einddatum:</span>
+                                <span className="detail-value">
+                                    <p>
+                                        {selectedAuction.endTime
+                                            ? new Intl.DateTimeFormat('nl-NL', {
+                                                dateStyle: 'short',
+                                                timeStyle: 'short'
+                                            }).format(new Date(selectedAuction.endTime))
+                                            : '-'}
+                                    </p>
                                 </span>
                             </div>
-                            <div className="detail-row">
-                                <span className="detail-label">Maximale Tijd:</span>
-                                <span className="detail-value">{formatTime(selectedAuction.maxTime)}</span>
-                            </div>
                             <div className="price-bar">
-                                <div 
+                                <div
                                     className="price-progress"
                                     style={{
                                         width: `${((selectedAuction.startingPrice - selectedAuction.currentPrice) / selectedAuction.startingPrice) * 100}%`
