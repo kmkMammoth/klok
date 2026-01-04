@@ -75,7 +75,7 @@ const Login = () => {
             // Cruciaal: direct roles ophalen met het nieuwe token
             await refresh();
 
-            navigate('/overzicht');
+            navigate('/account');
         } catch (error) {
             setErrors({
                 general: 'Inloggen mislukt. Controleer uw gegevens en probeer het opnieuw.'

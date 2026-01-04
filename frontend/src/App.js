@@ -1,5 +1,4 @@
 import './App.css';
-import Overview from './pages/VeilingmeesterOverview';
 import CreateAuction from './pages/VeilingmeesterCreateAuction';
 import KoperOverview from './pages/AanvoerderKoperOverview';
 import AanvoerderCreateProduct from './pages/AanvoerderCreateProduct';
@@ -11,33 +10,39 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { RoleProvider } from './auth/RoleContext';
 import RequireRole from './auth/RequireRole';
+import KoperDashboard from './pages/KoperDashboard';
 
 function App() {
+    const token = localStorage.getItem('accessToken');
+    const isLoggedIn = !!token;
+    console.log('isLoggedIn:', isLoggedIn);
+    
     return (
         <RoleProvider>
             <div className="App">
                 <Navbar />
 
                 <div className="content">
+                    
                     <Routes>
-                        <Route path="/" element={<Login />} />
+                        {!isLoggedIn ? (
+                            
+                            <Route path="/login" element={<Login />} />
+                            
+                        ) : (
+                            
+                            <Route path="/" element={<Account/>} />
+                            
+                        )}
+                        
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
-
+                        
                         <Route
-                            path="/overzicht"
+                            path="/koper-dashboard"
                             element={
-                                <RequireRole allow={['Koper', 'Veilingmeester', 'Aanvoerder', 'Admin']}>
-                                    <>
-                                        <div className="welcome-section">
-                                            <h2>Welkom bij Flora Veiling</h2>
-                                            <p>
-                                                Ontdek de beste bloemen tegen de beste prijzen via ons unieke aflopende veiling
-                                                systeem
-                                            </p>
-                                        </div>
-                                        <Overview />
-                                    </>
+                                <RequireRole allow={['Koper', 'Admin']}>
+                                    <KoperDashboard />
                                 </RequireRole>
                             }
                         />
@@ -79,7 +84,7 @@ function App() {
                         />
                     </Routes>
                 </div>
-
+                
                 <Footer />
             </div>
         </RoleProvider>

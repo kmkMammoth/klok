@@ -11,7 +11,6 @@ function CreateAuction({ auctions, addAuction }) {
     const [productModal, setProductModal] = useState(null);
     const [productLoading, setProductLoading] = useState(false);
 
-    // fetch and show product details in modal
     const openProductModal = async (id, initialProduct = null) => {
         try {
             if (initialProduct) setProductModal(initialProduct);
@@ -38,10 +37,6 @@ function CreateAuction({ auctions, addAuction }) {
         endTime: ''
     });
 
-    const toggleProductExpanded = (id) => {
-        setSelected(prev => ({ ...prev, [id]: { ...(prev[id] || {}), expanded: !(prev[id]?.expanded) } }));
-    };
-
     const toggleProductSelected = (id) => {
         setSelected(prev => {
             const exists = prev[id];
@@ -55,8 +50,6 @@ function CreateAuction({ auctions, addAuction }) {
         });
     };
 
-
-    // Load veilingen op pagina en load wanneer de pagina weer zichtbaar wordt
     useEffect(() => {
         fetchAuctions();
 
@@ -217,7 +210,6 @@ function CreateAuction({ auctions, addAuction }) {
             setSelected({});
             setShowForm(false);
 
-            // assign each selected product to the created auction and set per-product start/increment
             try {
                 await Promise.all(selectedItems.map(async (item) => {
                     const r = await fetch(`http://localhost:5102/api/products/${item.id}/assign-veiling`, {
@@ -247,13 +239,6 @@ function CreateAuction({ auctions, addAuction }) {
     const formatPrice = (price) => {
         if (!price && price !== 0) return '€ 0.00';
         return `€ ${parseFloat(price).toFixed(2)}`;
-    };
-
-    const formatTime = (seconds) => {
-        if (!seconds && seconds !== 0) return '0:00';
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
     const getProductAuctionId = (p) => p.veilingId ?? p.veiling_id ?? (p.veiling && p.veiling.id) ?? null;
@@ -317,18 +302,6 @@ function CreateAuction({ auctions, addAuction }) {
                                     type="datetime-local"
                                     value={formData.endTime}
                                     onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                                    required
-                                    disabled={loading}
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label>Veilingmeester ID</label>
-                                <input
-                                    type="text"
-                                    value={formData.veilingmeesterId || ''}
-                                    onChange={(e) => setFormData({...formData, veilingmeesterId: e.target.value})}
-                                    placeholder="bijv. vm1"
                                     required
                                     disabled={loading}
                                 />

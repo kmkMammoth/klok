@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using veilingklok;
 using veilingklok.Models;
 
@@ -68,20 +69,15 @@ namespace unittests
 
         public Task<ActionResult<ProductResponse>> AddProduct(CreateProductRequest req)
         {
-            if (req == null || string.IsNullOrEmpty(req.soort) || string.IsNullOrEmpty(req.gebruikerId))
+            if (req == null || string.IsNullOrEmpty(req.soort))
                 return Task.FromResult<ActionResult<ProductResponse>>(new BadRequestObjectResult("Ongeldige productgegevens"));
 
             if (req.minimumprijs.HasValue && req.minimumprijs < 0)
                 return Task.FromResult<ActionResult<ProductResponse>>(new BadRequestObjectResult("MinimumPrijs kan niet negatief zijn"));
 
-            var aanvoerder = _db.Aanvoerder.SingleOrDefault(a => a.Id == req.gebruikerId);
-            if (aanvoerder == null)
-                return Task.FromResult<ActionResult<ProductResponse>>(new BadRequestObjectResult($"Aanvoerder {req.gebruikerId} niet gevonden"));
-
             var product = new Product
             {
                 ArtikelId = _db.Product.Count > 0 ? _db.Product.Max(p => p.ArtikelId) + 1 : 1,
-                Gebruiker_id = req.gebruikerId,
                 Soort = req.soort,
                 Potmaat = req.potmaat,
                 Steellengte = req.steellengte,
@@ -103,7 +99,6 @@ namespace unittests
                 minimumprijs = product.MinimumPrijs,
                 kloklokatie = product.KlokLocatie,
                 afbeelding = product.Afbeelding,
-                gebruiker_id = product.Gebruiker_id,
                 startprijs = product.StartPrijs,
                 incrementPerSecond = product.IncrementPerSecond
             };
@@ -197,7 +192,6 @@ namespace unittests
             var req = new CreateProductRequest
             {
                 soort = "Plant",
-                gebruikerId = "a1",
                 minimumprijs = 10
             };
 
@@ -206,7 +200,6 @@ namespace unittests
             var response = Assert.IsType<ProductResponse>(okResult.Value);
 
             Assert.Equal("Plant", response.soort);
-            Assert.Equal("a1", response.gebruiker_id);
             Assert.Equal(2, response.id); // auto increment
         }
 
