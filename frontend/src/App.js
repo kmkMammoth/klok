@@ -2,7 +2,7 @@ import './App.css';
 import CreateAuction from './pages/VeilingmeesterCreateAuction';
 import KoperOverview from './pages/AanvoerderKoperOverview';
 import AanvoerderCreateProduct from './pages/AanvoerderCreateProduct';
-import { Routes, Route } from 'react-router-dom';
+import {Routes, Route, Navigate} from 'react-router-dom';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Account from './pages/VeilingmeesterAccount';
@@ -23,18 +23,13 @@ function App() {
                 <Navbar />
 
                 <div className="content">
-                    
+
                     <Routes>
-                        {!isLoggedIn ? (
-                            
-                            <Route path="/login" element={<Login />} />
-                            
-                        ) : (
-                            
-                            <Route path="/" element={<Account/>} />
-                            
-                        )}
-                        
+                        <Route
+                            path="/"
+                            element={isLoggedIn ? <Account /> : <Navigate to="/login" />}
+                        />
+
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         
