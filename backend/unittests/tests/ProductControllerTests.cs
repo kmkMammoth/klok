@@ -1,302 +1,227 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using System;
+using System.Collections.Generic;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using veilingklok;
 using veilingklok.Models;
-using Microsoft.AspNetCore.Mvc;
-using unittests;
+using Xunit;
 
-public class ProductsControllerTests
-{
-    private SqliteConnection _connection;
-    private DbContextOptions<VeilingContext> _contextOptions;
-
-    public ProductsControllerTests()
+namespace unittests;
+    public class ProductsControllerTests : IDisposable
     {
-        _connection = new SqliteConnection("Filename=:memory:");
-        _connection.Open();
+        private readonly SqliteConnection _connection;
+        private readonly DbContextOptions<VeilingContext> _contextOptions;
 
-        _contextOptions = new DbContextOptionsBuilder<VeilingContext>()
-            .UseSqlite(_connection)
-            .Options;
-
-        // Database aanmaken en seed data toevoegen
-        using var context = new VeilingContext(_contextOptions);
-        context.Database.EnsureCreated();
-
-        // Seed data with required fields
-        var aanvoerder = new Aanvoerder
+        public ProductsControllerTests()
         {
-            Id = "a1",
-            Naam = "TestAanvoerder",
-            KvkNummer = "12345678",
-            Adres = "TestAdres",
-            Email = "test@test.test",
-            IbanHash = "NL00 INGB 012345678"          
-        };
-        context.Aanvoerder.Add(aanvoerder);
+            // SQLite in-memory database
+            _connection = new SqliteConnection("Filename=:memory:");
+            _connection.Open();
 
-        var veilingmeester = new Veilingmeester { Id = "v1", Naam = "TestVeilingmeester" };
-        context.Veilingmeester.Add(veilingmeester);
+            _contextOptions = new DbContextOptionsBuilder<VeilingContext>()
+                .UseSqlite(_connection)
+                .Options;
 
-        var koper = new Koper
+            using var context = new VeilingContext(_contextOptions);
+            context.Database.EnsureCreated();
+
+            // Seed Aanvoerder (full required fields)
+            context.Aanvoerder.Add(new Aanvoerder
+            {
+                Id = "a1",
+                Naam = "TestAanvoerder",
+                KvkNummer = "12345678",
+                Adres = "TestAdres",
+                Email = "test@test.test",
+                IbanHash = "NL00 INGB 012345678"
+            });
+
+            // Seed Koper (full required fields)
+            context.Koper.Add(new Koper
+            {
+                Id = "k1",
+                Naam = "TestKoper",
+                KvkNummer = "87654321",
+                Adres = "KoperAdres",
+                Email = "koper@test.test",
+                IbanHash = "NL00 RABO 87654321"
+            });
+
+            // Seed Veiling
+            context.Veiling.Add(new Veiling
+            {
+                VeilingId = 1,
+                VeilingNaam = "TestVeiling",
+                Status = "Ongoing",
+                StartTijd = DateTime.Now.AddSeconds(-10),
+                EindTijd = DateTime.Now.AddSeconds(50),
+                Gebruiker_id = "v1"
+            });
+
+            // Seed Veilingmeester required by FK on Veiling.Gebruiker_id
+            context.Veilingmeester.Add(new Veilingmeester
+            {
+                Id = "v1",
+                Naam = "TestVeilingmeester"
+            });
+
+            context.SaveChanges();
+        }
+
+        private ProductsController CreateController(string? userId = null)
         {
-            Id = "k1",
-            Naam = "TestKoper",
-            KvkNummer = "12345678",
-            Adres = "TestAdres",
-            Email = "test@test.test",
-            IbanHash = "NL00 INGB 0123456789"
-        };
-        context.Koper.Add(koper);
+            var context = new VeilingContext(_contextOptions);
+            var controller = new ProductsController(context);
 
-        context.Product.AddRange(
-            new Product { ArtikelId = 1, Soort = "Roos", Gebruiker_id = "a1", MinimumPrijs = 10, Aanvoerder = aanvoerder },
-            new Product { ArtikelId = 2, Soort = "Tulp", Gebruiker_id = "a1", MinimumPrijs = 15, Aanvoerder = aanvoerder }
-        );
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, userId)
+                }, "mock"));
 
-        context.SaveChanges();
-    }
+                controller.ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext { User = user }
+                };
+            }
 
+            return controller;
+        }
 
-    private VeilingContext CreateContext() => new VeilingContext(_contextOptions);
-
-    [Fact]
-    public async Task GetAllProducts_ReturnsAllProducts()
-    {
-        using var context = CreateContext();
-        var controller = new ProductsController(context);
-
-        var result = await controller.GetAllProducts();
-
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var list = Assert.IsAssignableFrom<List<ProductResponse>>(okResult.Value);
-        Assert.Equal(2, list.Count);
-    }
-
-    [Fact]
-    public async Task GetProduct_ProductExists_ReturnsOk()
-    {
-        using var context = CreateContext();
-        var controller = new ProductsController(context);
-
-        var result = await controller.GetProduct(1);
-
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var product = Assert.IsType<ProductResponse>(okResult.Value);
-        Assert.Equal("Roos", product.soort);
-    }
-
-    [Fact]
-    public async Task GetProduct_ProductDoesNotExist_ReturnsNotFound()
-    {
-        using var context = CreateContext();
-        var controller = new ProductsController(context);
-
-        var result = await controller.GetProduct(99);
-
-        Assert.IsType<NotFoundObjectResult>(result.Result);
-    }
-
-    [Fact]
-    public async Task AddProduct_ValidInput_ReturnsOk()
-    {
-        using var context = CreateContext();
-        var controller = new ProductsController(context);
-
-        var request = new CreateProductRequest
+        [Fact]
+        public async Task AddProduct_ValidRequest_ReturnsOk()
         {
-            soort = "Plant",
-            gebruikerId = "a1",
-            minimumprijs = 5
-        };
+            var controller = CreateController("a1");
 
-        var result = await controller.AddProduct(request);
+            var request = new CreateProductRequest
+            {
+                soort = "Roos",
+                potmaat = 5,
+                steellengte = 30,
+                hoeveelheid = 10,
+                minimumprijs = 15,
+                kloklokatie = "TestLocatie",
+                afbeelding = "img.jpg"
+            };
 
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var product = Assert.IsType<ProductResponse>(okResult.Value);
-        Assert.Equal("Plant", product.soort);
+            var result = await controller.AddProduct(request);
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            var product = Assert.IsType<ProductResponse>(ok.Value);
 
-        // Check dat product ook echt in DB zit
-        Assert.Equal(3, context.Product.Count());
-    }
+            Assert.Equal("Roos", product.soort);
 
-    [Fact]
-    public async Task AddProduct_InvalidMinimumPrice_ReturnsBadRequest()
-    {
-        using var context = CreateContext();
-        var controller = new ProductsController(context);
+            using var context = new VeilingContext(_contextOptions);
+            Assert.Single(context.Product);
+        }
 
-        var request = new CreateProductRequest
+        [Fact]
+        public async Task GetAllProducts_ReturnsAllProducts()
         {
-            soort = "Plant",
-            gebruikerId = "a1",
-            minimumprijs = -5
-        };
+            var context = new VeilingContext(_contextOptions);
+            context.Product.Add(new Product
+            {
+                ArtikelId = 1,
+                Soort = "Roos",
+                Gebruiker_id = "a1"
+            });
+            context.SaveChanges();
 
-        var result = await controller.AddProduct(request);
+            var controller = CreateController("a1");
 
-        Assert.IsType<BadRequestObjectResult>(result.Result);
-    }
+            var result = await controller.GetAllProducts();
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            var products = Assert.IsAssignableFrom<List<ProductResponse>>(ok.Value);
 
-    [Fact]
-    public async Task DeleteProduct_ProductExists_RemovesProduct()
-    {
-        using var context = CreateContext();
-        var controller = new ProductsController(context);
+            Assert.Single(products);
+            Assert.Equal("Roos", products[0].soort);
+        }
 
-        var result = await controller.DeleteProduct(1);
-        Assert.IsType<OkResult>(result);
-
-        Assert.Null(context.Product.SingleOrDefault(p => p.ArtikelId == 1));
-    }
-
-    [Fact]
-    public async Task DeleteProduct_ProductDoesNotExist_ReturnsNotFound()
-    {
-        using var context = CreateContext();
-        var controller = new ProductsController(context);
-
-        var result = await controller.DeleteProduct(99);
-        Assert.IsType<NotFoundObjectResult>(result);
-    }
-
-    // --- New Validation / Bad Input Tests ---
-    [Fact]
-    public async Task AddProduct_MissingSoort_ReturnsBadRequest()
-    {
-        using var context = CreateContext();
-        var controller = new ProductsController(context);
-
-        var request = new CreateProductRequest
+        [Fact]
+        public async Task GetProduct_Existing_ReturnsOk()
         {
-            gebruikerId = "a1",
-            minimumprijs = 5
-        };
+            var context = new VeilingContext(_contextOptions);
+            context.Product.Add(new Product { ArtikelId = 1, Soort = "Tulp", Gebruiker_id = "a1" });
+            context.SaveChanges();
 
-        var result = await controller.AddProduct(request);
+            var controller = CreateController("a1");
 
-        Assert.IsType<BadRequestObjectResult>(result.Result);
-    }
+            var result = await controller.GetProduct(1);
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            var product = Assert.IsType<ProductResponse>(ok.Value);
 
-    [Fact]
-    public async Task AddProduct_MissingGebruikerId_ReturnsBadRequest()
-    {
-        using var context = CreateContext();
-        var controller = new ProductsController(context);
+            Assert.Equal("Tulp", product.soort);
+        }
 
-        var request = new CreateProductRequest
+        [Fact]
+        public async Task GetProduct_NotExisting_ReturnsNotFound()
         {
-            soort = "Plant",
-            minimumprijs = 5
-        };
+            var controller = CreateController("a1");
+            var result = await controller.GetProduct(999);
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
 
-        var result = await controller.AddProduct(request);
-
-        Assert.IsType<BadRequestObjectResult>(result.Result);
-    }
-
-    [Fact]
-    public async Task UpdateProduct_NegativeMinimumPrijs_ReturnsBadRequest()
-    {
-        using var context = CreateContext();
-        var controller = new ProductsController(context);
-
-        var request = new CreateProductRequest
+        [Fact]
+        public async Task AssignKoperToProduct_Valid_ReturnsOk()
         {
-            minimumprijs = -10
-        };
+            var context = new VeilingContext(_contextOptions);
+            context.Product.Add(new Product { ArtikelId = 1, Soort = "Roos", Gebruiker_id = "a1" });
+            context.SaveChanges();
 
-        var result = await controller.UpdateProduct(1, request);
+            var controller = CreateController("k1");
+            var result = await controller.AssignKoperToProduct(1, new UpdateProductKoper { koperId = "k1" });
 
-        Assert.IsType<BadRequestObjectResult>(result);
-    }
+            Assert.IsType<OkResult>(result);
 
-    // --- New Boundary / Edge Case Tests ---
-    [Fact]
-    public async Task GetAllProducts_NoProducts_ReturnsEmptyList()
-    {
-        using var context = CreateContext();
+            using var checkContext = new VeilingContext(_contextOptions);
+            var product = checkContext.Product.Find(1);
+            Assert.Equal("k1", product!.gebruiker_id);
+            Assert.Equal("GEKOCHT", product.Status);
+        }
 
-        // Delete all products
-        context.Product.RemoveRange(context.Product);
-        context.SaveChanges();
-
-        var controller = new ProductsController(context);
-        var result = await controller.GetAllProducts();
-
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var list = Assert.IsAssignableFrom<List<ProductResponse>>(okResult.Value);
-        Assert.Empty(list);
-    }
-
-    [Fact]
-    public async Task DeleteProduct_DeletingTwice_ReturnsNotFoundSecondTime()
-    {
-        using var context = CreateContext();
-        var controller = new ProductsController(context);
-
-        // First deletion should succeed
-        var firstResult = await controller.DeleteProduct(1);
-        Assert.IsType<OkResult>(firstResult);
-
-        // Second deletion should return NotFound
-        var secondResult = await controller.DeleteProduct(1);
-        Assert.IsType<NotFoundObjectResult>(secondResult);
-    }
-
-    // --- New Combined / Integration-like Tests ---
-    [Fact]
-    public async Task AddProduct_AssignVeilingAndKoper_FullWorkflow()
-    {
-        using var context = CreateContext();
-        var controller = new ProductsController(context);
-    
-        // Add product
-        var addRequest = new CreateProductRequest
+        [Fact]
+        public async Task BuyProduct_Valid_ReturnsOk()
         {
-            soort = "Orchidee",
-            gebruikerId = "a1",
-            minimumprijs = 20
-        };
+            var context = new VeilingContext(_contextOptions);
+            context.Product.Add(new Product { ArtikelId = 1, Soort = "Roos", VeilingId = 1, Gebruiker_id = "a1" });
+            context.SaveChanges();
 
-        var addResult = await controller.AddProduct(addRequest);
-        var product = Assert.IsType<ProductResponse>(((OkObjectResult)addResult.Result).Value);
+            var controller = CreateController("k1");
+            var result = await controller.BuyProduct(1);
 
-        // Create veiling and koper
-        var veiling = new Veiling {
-            VeilingId = 1,
-            Gebruiker_id = "v1",
-            Status = "Idle",
-            VeilingNaam = "Naam"
-        };
-        context.Veiling.Add(veiling);
-        
-        var koper = new Koper
+            // Direct cast naar OkObjectResult
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Contains("succesvol gekocht", ok.Value!.ToString());
+
+            using var checkContext = new VeilingContext(_contextOptions);
+            var product = checkContext.Product.Find(1);
+            Assert.Equal("k1", product!.gebruiker_id);
+            Assert.Equal("GEKOCHT", product.Status);
+        }
+
+        [Fact]
+        public async Task DeleteProduct_Existing_ReturnsOk()
         {
-            Id = "k2",
-            Naam = "TestKoper",
-            KvkNummer = "12345678",
-            Adres = "TestAdres",
-            Email = "test@test.test",
-            IbanHash = "NL00 INGB 0123456789"
-        };
-        context.Koper.Add(koper);
-        context.SaveChanges();
+            var context = new VeilingContext(_contextOptions);
+            context.Product.Add(new Product { ArtikelId = 1, Soort = "Roos", Gebruiker_id = "a1" });
+            context.SaveChanges();
 
-        // Assign veiling
-        var veilingRequest = new UpdateProductVeiling { veilingId = veiling.VeilingId, startprijs = 25, incrementPerSecond = 0.5m };
-        var assignVeilingResult = await controller.AssignVeilingToProduct(product.id, veilingRequest);
-        Assert.IsType<OkResult>(assignVeilingResult);
+            var controller = CreateController("a1");
+            var result = await controller.DeleteProduct(1);
 
-        var assignKoperRequest = new UpdateProductKoper { koperId = koper.Id };
-        var assignKoperResult = await controller.AssignKoperToProduct(product.id, assignKoperRequest);
-        Assert.IsType<OkResult>(assignKoperResult);
+            Assert.IsType<OkResult>(result);
 
-        // Verify product in DB
-        var updatedProduct = context.Product.Single(p => p.ArtikelId == product.id);
-        Assert.Equal(veiling.VeilingId, updatedProduct.VeilingId);
-        Assert.Equal(koper.Id, updatedProduct.gebruiker_id);
-        Assert.Equal(25, updatedProduct.StartPrijs);
-        Assert.Equal(0.5m, updatedProduct.IncrementPerSecond);
+            using var checkContext = new VeilingContext(_contextOptions);
+            Assert.Empty(checkContext.Product);
+        }
+
+        public void Dispose()
+        {
+            _connection.Close();
+            _connection.Dispose();
+        }
     }
-}

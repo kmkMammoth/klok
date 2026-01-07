@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using veilingklok;
@@ -84,7 +86,7 @@ public class VeilingControllerTests
         var result = await controller.GetAllAuctions();
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
-        var list = Assert.IsAssignableFrom<List<AuctionResponse>>(ok.Value);
+        var list = Assert.IsAssignableFrom<IEnumerable<AuctionResponse>>(ok.Value);
         Assert.Single(list);
     }
 
@@ -109,7 +111,7 @@ public class VeilingControllerTests
 
         var result = await controller.GetAuction(999);
 
-        Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.IsType<NotFoundResult>(result.Result);
     }
 
     [Fact]
@@ -118,12 +120,20 @@ public class VeilingControllerTests
         using var context = CreateContext();
         var controller = new AuctionsController(context);
 
+        // simulate authenticated veilingmeester
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, "v1") }, "TestAuth"))
+            }
+        };
+
         var request = new CreateAuctionRequest
         {
             name = "NieuweVeiling",
             maxTime = 120,
-            startingPrice = 25,
-            veilingmeesterId = "v1"
+            startingPrice = 25
         };
 
         var result = await controller.AddAuction(request);
@@ -144,8 +154,7 @@ public class VeilingControllerTests
         {
             name = "",
             maxTime = -1,
-            startingPrice = -5,
-            veilingmeesterId = ""
+            startingPrice = -5
         };
 
         var result = await controller.AddAuction(request);
@@ -159,17 +168,25 @@ public class VeilingControllerTests
         using var context = CreateContext();
         var controller = new AuctionsController(context);
 
+        // No authenticated user -> expect Unauthorized
+        // provide an empty principal (no NameIdentifier claim) so FindFirstValue doesn't throw
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity())
+            }
+        };
+
         var request = new CreateAuctionRequest
         {
             name = "VeilingX",
             maxTime = 60,
-            startingPrice = 10,
-            veilingmeesterId = "bestaat-niet"
+            startingPrice = 10
         };
 
         var result = await controller.AddAuction(request);
-
-        Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.IsType<UnauthorizedResult>(result.Result);
     }
 
     [Fact]
@@ -192,7 +209,7 @@ public class VeilingControllerTests
 
         var result = await controller.UpdateAuction(999, "Running");
 
-        Assert.IsType<NotFoundObjectResult>(result);
+        Assert.IsType<NotFoundResult>(result);
     }
 
     [Fact]
@@ -221,6 +238,6 @@ public class VeilingControllerTests
 
         var result = await controller.DeleteAuction(999);
 
-        Assert.IsType<NotFoundObjectResult>(result);
+        Assert.IsType<NotFoundResult>(result);
     }
 }

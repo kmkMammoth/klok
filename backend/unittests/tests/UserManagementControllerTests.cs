@@ -1,114 +1,191 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Collections.Generic;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using veilingklok;
 using veilingklok.Models;
 using Xunit;
 
-public class UserManagementControllerTests : IDisposable
+namespace unittests
 {
-    private readonly SqliteConnection _connection;
-    private readonly DbContextOptions<VeilingContext> _contextOptions;
-
-    public UserManagementControllerTests()
+    public class UserManagementControllerTests : IDisposable
     {
-        _connection = new SqliteConnection("Filename=:memory:");
-        _connection.Open();
+        private readonly SqliteConnection _connection;
+        private readonly DbContextOptions<VeilingContext> _contextOptions;
+        private readonly Mock<UserManager<Gebruiker>> _userManagerMock;
 
-        _contextOptions = new DbContextOptionsBuilder<VeilingContext>()
-            .UseSqlite(_connection)
-            .Options;
-
-        using var context = new VeilingContext(_contextOptions);
-        context.Database.EnsureCreated();
-
-        // Seed gebruiker
-        context.Gebruiker.Add(new Gebruiker
+        public UserManagementControllerTests()
         {
-            Id = "u1",
-            Naam = "TestGebruiker"
-        });
+            // SQLite in-memory database
+            _connection = new SqliteConnection("Filename=:memory:");
+            _connection.Open();
 
-        context.SaveChanges();
-    }
+            _contextOptions = new DbContextOptionsBuilder<VeilingContext>()
+                .UseSqlite(_connection)
+                .Options;
 
-    private UserManagementController CreateController()
-    {
-        var context = new VeilingContext(_contextOptions);
-        return new UserManagementController(context);
-    }
+            using var context = new VeilingContext(_contextOptions);
+            context.Database.EnsureCreated();
 
-    [Fact]
-    public async Task GetUser_ExistingUser_ReturnsUser()
-    {
-        var controller = CreateController();
+            // Seed gebruiker
+            context.Gebruiker.Add(new Gebruiker
+            {
+                Id = "u1",
+                Naam = "TestGebruiker"
+            });
 
-        var result = await controller.GetUser("u1");
+            context.SaveChanges();
 
-        var ok = Assert.IsType<OkObjectResult>(result.Result);
-        var users = Assert.IsAssignableFrom<IEnumerable<Gebruiker>>(ok.Value);
+            // Mock UserManager
+            var store = new Mock<IUserStore<Gebruiker>>();
+            _userManagerMock = new Mock<UserManager<Gebruiker>>(
+                store.Object, null, null, null, null, null, null, null, null
+            );
+        }
 
-        Assert.Single(users);
-        Assert.Equal("TestGebruiker", users.First().Naam);
-    }
+        private UserManagementController CreateController(ClaimsPrincipal? user = null)
+        {
+            var context = new VeilingContext(_contextOptions);
+            var controller = new UserManagementController(context, _userManagerMock.Object);
 
-    [Fact]
-    public async Task GetUser_NotExisting_ReturnsEmptyList()
-    {
-        var controller = CreateController();
+            if (user != null)
+            {
+                controller.ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext
+                    {
+                        User = user
+                    }
+                };
+            }
 
-        var result = await controller.GetUser("unknown");
+            return controller;
+        }
 
-        var ok = Assert.IsType<OkObjectResult>(result.Result);
-        var users = Assert.IsAssignableFrom<IEnumerable<Gebruiker>>(ok.Value);
+        [Fact]
+        public async Task GetUserRole_UserExists_ReturnsRoles()
+        {
+            // Arrange
+            var testUser = new Gebruiker { Id = "u1", Naam = "TestGebruiker" };
 
-        Assert.Empty(users);
-    }
+            var claimsUser = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, "u1")
+            }, "mock"));
 
-    [Fact]
-    public async Task AddUser_ValidName_AddsUser()
-    {
-        var controller = CreateController();
+            _userManagerMock
+                .Setup(m => m.GetUserAsync(claimsUser))
+                .ReturnsAsync(testUser);
 
-        var result = await controller.AddUser("NieuweGebruiker");
+            _userManagerMock
+                .Setup(m => m.GetRolesAsync(testUser))
+                .ReturnsAsync(new List<string> { "Admin", "Koper" });
 
-        Assert.IsType<OkResult>(result.Result);
+            var controller = CreateController(claimsUser);
 
-        using var context = new VeilingContext(_contextOptions);
-        Assert.Equal(2, context.Gebruiker.Count());
-    }
+            // Act
+            var result = await controller.GetUserRole();
 
-    [Fact]
-    public async Task ChangeUser_ExistingUser_UpdatesName()
-    {
-        var controller = CreateController();
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            var roles = Assert.IsAssignableFrom<IList<string>>(ok.Value);
+            Assert.Contains("Admin", roles);
+            Assert.Contains("Koper", roles);
+        }
 
-        var result = await controller.ChangeUser("u1", "GewijzigdeNaam");
+        [Fact]
+        public async Task GetLoggedInUserId_UserExists_ReturnsId()
+        {
+            var testUser = new Gebruiker { Id = "u1", Naam = "TestGebruiker" };
 
-        Assert.IsType<OkResult>(result.Result);
+            var claimsUser = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, "u1")
+            }, "mock"));
 
-        using var context = new VeilingContext(_contextOptions);
-        var user = context.Gebruiker.Single(u => u.Id == "u1");
+            _userManagerMock.Setup(m => m.GetUserAsync(claimsUser))
+                .ReturnsAsync(testUser);
 
-        Assert.Equal("GewijzigdeNaam", user.Naam);
-    }
+            var controller = CreateController(claimsUser);
 
-    [Fact]
-    public async Task DeleteUser_ExistingUser_RemovesUser()
-    {
-        var controller = CreateController();
+            var result = await controller.GetLoggedInUserId();
 
-        var result = await controller.DeleteUser("u1");
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal("u1", ok.Value);
+        }
 
-        Assert.IsType<OkResult>(result.Result);
+        [Fact]
+        public async Task GetUser_UserExists_ReturnsUser()
+        {
+            var testUser = new Gebruiker { Id = "u1", Naam = "TestGebruiker" };
 
-        using var context = new VeilingContext(_contextOptions);
-        Assert.Empty(context.Gebruiker);
-    }
+            var claimsUser = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, "u1")
+            }, "mock"));
 
-    public void Dispose()
-    {
-        _connection.Close();
-        _connection.Dispose();
+            _userManagerMock.Setup(m => m.GetUserAsync(claimsUser))
+                .ReturnsAsync(testUser);
+
+            var controller = CreateController(claimsUser);
+
+            var result = await controller.GetUser();
+
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            var user = Assert.IsType<Gebruiker>(ok.Value);
+            Assert.Equal("TestGebruiker", user.Naam);
+        }
+
+        [Fact]
+        public async Task AddUser_ValidName_AddsUser()
+        {
+            var controller = CreateController();
+
+            var result = await controller.AddUser("NieuweGebruiker");
+
+            Assert.IsType<OkResult>(result);
+
+            using var context = new VeilingContext(_contextOptions);
+            Assert.Equal(2, context.Gebruiker.Count());
+        }
+
+        [Fact]
+        public async Task ChangeUser_ExistingUser_UpdatesName()
+        {
+            var controller = CreateController();
+
+            var result = await controller.ChangeUser("u1", "GewijzigdeNaam");
+
+            Assert.IsType<OkResult>(result);
+
+            using var context = new VeilingContext(_contextOptions);
+            var user = context.Gebruiker.Single(u => u.Id == "u1");
+            Assert.Equal("GewijzigdeNaam", user.Naam);
+        }
+
+        [Fact]
+        public async Task DeleteUser_ExistingUser_RemovesUser()
+        {
+            var controller = CreateController();
+
+            var result = await controller.DeleteUser("u1");
+
+            Assert.IsType<OkResult>(result);
+
+            using var context = new VeilingContext(_contextOptions);
+            Assert.Empty(context.Gebruiker);
+        }
+
+        public void Dispose()
+        {
+            _connection.Close();
+            _connection.Dispose();
+        }
     }
 }

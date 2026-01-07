@@ -161,7 +161,7 @@ namespace unittests
     }
 
     // --- Tests ---
-    public class ProductsControllerTests
+    public class ProductTests
     {
         private FakeVeilingContextForProducts GetContextWithData()
         {

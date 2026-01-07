@@ -7,6 +7,7 @@ using veilingklok;
 using veilingklok.Models;
 using Xunit;
 
+namespace unittests;
 public class KoperControllerTests : IDisposable
 {
     private readonly SqliteConnection _connection;
