@@ -1,4 +1,4 @@
-﻿import '../styles/VeilingmeesterAccount.css';
+﻿import '../styles/ActorAccount.css';
 import { useEffect, useState } from 'react';
 
 const Account = () => {
@@ -24,7 +24,6 @@ const Account = () => {
             }
 
             const data = await res.json();
-            console.log('ROL:', data);
             const list = Array.isArray(data) ? data : [];
 
             setRole(list[0] ?? '-');

@@ -5,7 +5,7 @@ import AanvoerderCreateProduct from './pages/AanvoerderCreateProduct';
 import {Routes, Route, Navigate} from 'react-router-dom';
 import Register from './pages/Register';
 import Login from './pages/Login';
-import Account from './pages/VeilingmeesterAccount';
+import Account from './pages/ActorAccount';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { RoleProvider } from './auth/RoleContext';
