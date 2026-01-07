@@ -165,13 +165,26 @@ function KoperDashboard() {
                 <div className="dashboard-section">
                     <h1>Beschikbare Veilingen</h1>
                     <div className="auctions-grid">
-                        {auctions.map(auction => (
-                            <div key={auction.id} className="auction-card" onClick={() => setSelectedAuction(auction)}>
-                                <h3>{auction.name}</h3>
-                                <p>Starttijd: {new Date(auction.startTime || Date.now()).toLocaleTimeString()}</p>
-                                <button className="enter-button">Deelnemen</button>
-                            </div>
-                        ))}
+                        {auctions.map(auction => {
+                            const isActive = auction.status === 'Ongoing';
+                            return (
+                                <div
+                                    key={auction.id}
+                                    className={`auction-card ${isActive ? '' : 'disabled-auction'}`}
+                                    onClick={() => { if (isActive) setSelectedAuction(auction); }}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && isActive) { e.preventDefault(); setSelectedAuction(auction); } }}
+                                >
+                                    <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                                        <h3 style={{margin:0}}>{auction.name}</h3>
+                                        {!isActive && <span className="status-badge">NIET GESTART</span>}
+                                    </div>
+                                    <p>Starttijd: {new Date(auction.startTime || Date.now()).toLocaleTimeString()}</p>
+                                    <button className="enter-button" disabled={!isActive}>{isActive ? 'Deelnemen' : 'Niet gestart'}</button>
+                                </div>
+                            );
+                        })}
                         {auctions.length === 0 && <p>Geen actieve veilingen.</p>}
                     </div>
                 </div>

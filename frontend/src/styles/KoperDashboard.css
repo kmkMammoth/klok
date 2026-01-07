@@ -39,6 +39,24 @@
     width: 100%;
 }
 
+/* Disabled auction styling */
+.auction-card.disabled-auction {
+    opacity: 0.5;
+    filter: grayscale(70%);
+    cursor: default;
+}
+.auction-card.disabled-auction:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: #ddd;
+}
+
+.enter-button:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+    color: #666;
+}
+
 /* Live View */
 .live-auction-view {
     background: #f9f9f9;
@@ -152,4 +170,13 @@
     0% { opacity: 1; }
     50% { opacity: 0.5; }
     100% { opacity: 1; }
+}
+
+.status-badge {
+    background: #f1c40f;
+    color: #5d3a00;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
 }

@@ -345,6 +345,17 @@ public class ProductsController : ControllerBase
         if (!string.IsNullOrEmpty(product.gebruiker_id))
             return BadRequest("Dit product is al verkocht.");
 
+        // If this product belongs to an auction, ensure that auction has started
+        if (product.VeilingId.HasValue)
+        {
+            var veiling = await _db.Veiling.FindAsync(product.VeilingId.Value);
+            if (veiling == null) return BadRequest("Gerelateerde veiling niet gevonden.");
+            if (veiling.Status != "Ongoing") return BadRequest("Deze veiling is nog niet gestart.");
+
+            // Also ensure auction hasn't already ended
+            if (DateTime.Now > veiling.EindTijd) return BadRequest("Deze veiling is afgelopen.");
+        }
+
         // Update status en koppel koper
         product.gebruiker_id = userId;
         product.Status = "GEKOCHT";

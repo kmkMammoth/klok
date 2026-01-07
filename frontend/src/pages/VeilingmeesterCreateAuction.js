@@ -166,6 +166,29 @@ function CreateAuction({ auctions, addAuction }) {
         }
     };
 
+    const handleStart = async (id) => {
+        if (!window.confirm('Wil je deze veiling starten?')) return;
+
+        try {
+            const response = await fetch(`http://localhost:5102/api/auctions/${id}?status=Ongoing`, {
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text || 'Kon veiling niet starten');
+            }
+
+            // Ververs lijst en producten om nieuwe status en tijden te tonen
+            await fetchAuctions();
+            await fetchProducts();
+        } catch (err) {
+            alert('Kon veiling niet starten: ' + (err.message || err));
+            console.error('Error starting auction:', err);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         const selectedIds = Object.keys(selected).filter(k => selected[k].selected);
@@ -435,10 +458,21 @@ function CreateAuction({ auctions, addAuction }) {
                         localAuctions.map((auction) => {
                             return (
                                 <div key={auction.id} className={`auction-item ${expandedAuctions[auction.id] ? 'expanded' : ''}`} role="button" tabIndex={0} onClick={() => toggleAuction(auction.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') {toggleAuction(auction.id); } }}>
-                                    <div className="auction-item-header">
-                                        <h3>{auction.name}</h3>
-                                        <div className="auction-item-actions">
+                                    <div className="auction-item-header stacked">
+                                        <div className="auction-item-actions top">
                                             <span className="auction-badge">#{auction.id}</span>
+
+                                            {/* Start knop: alleen zichtbaar wanneer veiling nog niet gestart is */}
+                                            {auction.status === 'Idle' && (
+                                                <button
+                                                    className="start-button"
+                                                    onClick={(e) => { e.stopPropagation(); handleStart(auction.id); }}
+                                                    title="Start veiling"
+                                                >
+                                                    ▶️
+                                                </button>
+                                            )}
+
                                             <button 
                                                 className="delete-button"
                                                 onClick={(e) => { e.stopPropagation(); handleDelete(auction.id); }}
@@ -446,6 +480,13 @@ function CreateAuction({ auctions, addAuction }) {
                                             >
                                                 🗑️
                                             </button>
+                                        </div>
+
+                                        <div className="auction-item-title">
+                                            <h3 style={{margin:'0.25rem 0 0 0'}}>{auction.name}</h3>
+                                            <div style={{marginTop:6}}>
+                                                {auction.status !== 'Ongoing' ? <span className="status-badge">NIET GESTART</span> : <span className="live-badge">LIVE</span>}
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="auction-item-details">
