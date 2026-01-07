@@ -240,59 +240,174 @@
     border-top: 1px dashed #E0DDCF;
 }
 
+/* Start button for veilingmeester */
+.start-button {
+    background: #587D71;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    cursor: pointer;
+    min-width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.25rem;
+    font-size: 1rem;
+}
+.start-button:hover { background: #496d62; transform: translateY(-1px); }
+.start-button[title] { font-weight: 700; }
+
+.status-badge {
+    background: #f1c40f;
+    color: #5d3a00;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
 .auction-products h4 {
     margin: 0 0 0.75rem 0;
     color: #463239;
     font-size: 1rem;
 }
 
-.auction-item-header {
+/* --- VEILING KAART STYLING --- */
+.auction-item {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    margin-bottom: 15px;
+    border: 1px solid #f0f0f0;
+    cursor: pointer; /* whole card feels clickable */
+}
+
+.auction-item-header.stacked {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    margin-bottom: 12px;
+    border-bottom: 2px solid #E0DDCF;
+    padding-bottom: 10px;
+}
+
+/* De bovenste rij met iconen en ID (centred but clickable) */
+.auction-item-actions.top {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+/* De container voor Naam en Status - remove duplicate border */
+.auction-item-title {
+    width: 100%;
+    text-align: left; /* Dwingt tekst naar links */
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.auction-item-title h3 {
+    margin: 0 0 6px 0 !important;
+    font-size: 1.25rem;
+    color: #333;
+}
+
+.status-container {
+    text-align: left;
+}
+
+/* --- PRODUCT KAART BINNEN VEILING --- */
+.auction-product-card {
+    background: #fafafa;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 10px;
+    cursor: pointer;
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Badge in het midden */
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.product-card-header .auction-badge {
+    margin-bottom: 8px;
+}
+
+.product-card-header h3 {
+    align-self: flex-start; /* Naam naar links */
+    margin: 0;
+    font-size: 1.1rem;
+    color: #444;
+}
+
+/* Algemene Detail styling (Startprijs/Eindtijd rijen) */
+.auction-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.detail-small {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #E0DDCF;
+    font-size: 0.95rem;
 }
 
-.auction-item-header h3 {
-    color: #463239;
-    font-size: 1.2rem;
-    font-weight: 600;
-    flex: 1;
-}
-
-.auction-item-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+.detail-small span {
+    color: #666;
 }
 
 .auction-badge {
-    background-color: #EB4511;
+    background: #EB4511; /* Oranje-rood */
     color: white;
-    padding: 0.3rem 0.8rem;
+    padding: 4px 12px;
     border-radius: 20px;
+    font-weight: bold;
     font-size: 0.85rem;
-    font-weight: 600;
+}
+
+.status-badge {
+    background: #fdd835; /* Geel */
+    color: #333;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.75rem;
 }
 
 .delete-button {
     background: none;
     border: none;
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     cursor: pointer;
-    padding: 0.3rem 0.5rem;
+    padding: 0.3rem;
     border-radius: 6px;
     transition: all 0.2s ease;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    min-width: 36px;
+    height: 36px;
 }
 
 .delete-button:hover {
     background-color: #fee;
-    transform: scale(1.1);
+    transform: scale(1.08);
 }
 
 .delete-button:active {

@@ -130,6 +130,15 @@ public class AuctionsController : ControllerBase
         var veiling = await _db.Veiling.SingleOrDefaultAsync(v => v.VeilingId == id);
         if (veiling == null) return NotFound();
 
+        // If we're starting the auction, reset its start and end times based on the stored duration
+        if (!string.IsNullOrWhiteSpace(status) && status == "Ongoing")
+        {
+            // Preserve the configured duration and start now
+            var duration = veiling.EindTijd - veiling.StartTijd;
+            veiling.StartTijd = DateTime.Now;
+            veiling.EindTijd = veiling.StartTijd.Add(duration);
+        }
+
         veiling.Status = status;
         await _db.SaveChangesAsync();
         return Ok();
