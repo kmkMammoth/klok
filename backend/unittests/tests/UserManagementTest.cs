@@ -56,7 +56,7 @@ namespace unittests
     }
 
     // --- Tests ---
-    public class UserManagementControllerTests
+    public class UserManagementTests
     {
         private FakeVeilingContextForUsers GetContextWithData()
         {

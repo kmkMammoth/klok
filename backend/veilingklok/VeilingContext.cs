@@ -30,10 +30,6 @@ public class VeilingContext : IdentityDbContext<Gebruiker>
         modelBuilder.Entity<Product>().ToTable("Product");
         modelBuilder.Entity<Veiling>().ToTable("Veiling");
 
-        // Check constraint voor Veiling status
-        modelBuilder.Entity<Veiling>()
-            .HasCheckConstraint("CK_Veiling_Status", "status IN ('Idle', 'Ongoing', 'Done')");
-
         // Alle foreign keys op restrict zetten
         foreach (var foreignKey in modelBuilder.Model
                     .GetEntityTypes()

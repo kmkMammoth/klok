@@ -50,7 +50,7 @@ namespace unittests
     }
 
     // --- Tests ---
-    public class KoperControllerTests
+    public class KoperTests
     {
         private TestVeilingContext GetContextWithData()
         {

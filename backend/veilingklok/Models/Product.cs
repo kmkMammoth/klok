@@ -40,7 +40,7 @@ namespace veilingklok.Models
         public string? KlokLocatie { get; set; }
 
         [MaxLength(-1)]
-        [Column("afbeelding", TypeName = "nvarchar(max)")]
+        [Column("afbeelding")]
         public string? Afbeelding { get; set; }
 
         [ForeignKey("Veiling")]
