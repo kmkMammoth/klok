@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/Register.css';
 
 const Register = () => {
-    //TODO: rotzooi van li opruimen! dit staat nu nog allemaal zo om het effe werkend te krijgen maar dit moet nog goed gemaakt worden!
 
     const navigate = useNavigate();
     const [selectedType, setSelectedType] = useState(null);
@@ -24,8 +23,6 @@ const Register = () => {
 
     return (
         <div className="register-page">
-            {/*<HomeNavbar activePage="/register" hideLoginButton={false} hideRegisterButton={true} />*/}
-            
             <div className="register-container">
                 {!selectedType ? (
                     <div className="register-card">
@@ -60,8 +57,6 @@ const Register = () => {
     );
 };
 
-//TODO: rotzooi van li opruimen! dit staat nu nog allemaal zo om het effe werkend te krijgen maar dit moet nog goed gemaakt worden!
-
 const RegisterForm = ({ accountType, onBack }) => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -72,7 +67,7 @@ const RegisterForm = ({ accountType, onBack }) => {
         iban: '',
         wachtwoord: '',
         bevestigWachtwoord: '',
-        gebruikersnaam: '' // Only for Veilingmeester
+        gebruikersnaam: ''
     });
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
@@ -154,7 +149,6 @@ const RegisterForm = ({ accountType, onBack }) => {
         }
 
         try {
-            // Prepare request data based on account type
             const requestData = {
                 Password: formData.wachtwoord
             };
@@ -201,7 +195,6 @@ const RegisterForm = ({ accountType, onBack }) => {
                 }
             }        
 
-            // Redirect to login page after successful registration
             navigate('/login', { state: { message: 'Registratie succesvol! U kunt nu inloggen.' } });
         } catch (error) {
             setErrors({ 

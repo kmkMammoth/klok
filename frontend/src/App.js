@@ -1,39 +1,88 @@
 import './App.css';
-import Overview from './pages/VeilingmeesterOverview';
 import CreateAuction from './pages/VeilingmeesterCreateAuction';
-import KoperOverview from "./pages/AanvoerderKoperOverview";
+import KoperOverview from './pages/AanvoerderKoperOverview';
 import AanvoerderCreateProduct from './pages/AanvoerderCreateProduct';
-import {Routes, Route} from 'react-router-dom';
-import Register from "./pages/Register";
-import Login from "./pages/Login";
-import Navbar from "./components/Navbar";
+import {Routes, Route, Navigate} from 'react-router-dom';
+import Register from './pages/Register';
+import Login from './pages/Login';
+import Account from './pages/ActorAccount';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import { RoleProvider } from './auth/RoleContext';
+import RequireRole from './auth/RequireRole';
+import KoperDashboard from './pages/KoperDashboard';
 
 function App() {
+    const token = localStorage.getItem('accessToken');
+    const isLoggedIn = !!token;
+    console.log('isLoggedIn:', isLoggedIn);
+    
     return (
-        <div className="App">
-            <Navbar />
+        <RoleProvider>
+            <div className="App">
+                <Navbar />
 
-            <div className="content">
-                <Routes>
-                    <Route path="/" element={
-                        <>
-                            <div className="welcome-section">
-                                <h2>Welkom bij Flora Veiling</h2>
-                                <p>Ontdek de beste bloemen tegen de beste prijzen via ons unieke aflopende veiling
-                                    systeem</p>
-                            </div>
-                            <Overview/>
-                        </>
-                    }/>
-                    <Route path="/create-auction" element={<CreateAuction/>}/>
-                    <Route path="/create-product" element={<AanvoerderCreateProduct/>}/>
-                    <Route path="/koper-overview" element={<KoperOverview/>}/>
-                    <Route path="/login" element={<Login/>}/>
-                    <Route path="/register" element={<Register/>}/>
-                    <Route path="/account" element={<div><h1>Welkom, (actor)! (accountinformatie volgt...)</h1></div>}/>
-                </Routes>
+                <div className="content">
+
+                    <Routes>
+                        <Route
+                            path="/"
+                            element={isLoggedIn ? <Account /> : <Navigate to="/login" />}
+                        />
+
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        
+                        <Route
+                            path="/koper-dashboard"
+                            element={
+                                <RequireRole allow={['Koper', 'Admin']}>
+                                    <KoperDashboard />
+                                </RequireRole>
+                            }
+                        />
+
+                        <Route
+                            path="/create-auction"
+                            element={
+                                <RequireRole allow={['Veilingmeester', 'Admin']}>
+                                    <CreateAuction />
+                                </RequireRole>
+                            }
+                        />
+
+                        <Route
+                            path="/create-product"
+                            element={
+                                <RequireRole allow={['Aanvoerder', 'Admin']}>
+                                    <AanvoerderCreateProduct />
+                                </RequireRole>
+                            }
+                        />
+
+                        <Route
+                            path="/koper-overview"
+                            element={
+                                <RequireRole allow={['Aanvoerder', 'Admin']}>
+                                    <KoperOverview />
+                                </RequireRole>
+                            }
+                        />
+
+                        <Route
+                            path="/account"
+                            element={
+                                <RequireRole allow={['Koper', 'Veilingmeester', 'Aanvoerder', 'Admin']}>
+                                    <Account />
+                                </RequireRole>
+                            }
+                        />
+                    </Routes>
+                </div>
+                
+                <Footer />
             </div>
-        </div>
+        </RoleProvider>
     );
 }
 

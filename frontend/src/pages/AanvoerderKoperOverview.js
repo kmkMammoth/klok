@@ -1,5 +1,4 @@
 import '../styles/AanvoerderKoperOverview.css';
-
 function KoperOverview() {
   const koper = {
     naam: 'Piets plantpaleis',

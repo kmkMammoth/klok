@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,6 @@ public class CreateAuctionRequest
     public string name { get; set; }
     public int maxTime { get; set; }
     public decimal startingPrice { get; set; }
-    public string veilingmeesterId { get; set; }
 }
 
 // ✅ DTO for auction response
@@ -37,7 +37,8 @@ public class AuctionsController : ControllerBase
         _db = db;
     }
 
-    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Aanvoerder, Koper, Admin, Veilingmeester")]
+    // GET: api/Auctions
+    [Authorize(AuthenticationSchemes = "Identity.Bearer")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AuctionResponse>>> GetAllAuctions()
     {
@@ -54,23 +55,20 @@ public class AuctionsController : ControllerBase
             status = v.Status,
             startTime = new DateTimeOffset(v.StartTijd).ToUnixTimeMilliseconds(),
             endTime = new DateTimeOffset(v.EindTijd).ToUnixTimeMilliseconds()
-        }).ToList();
+        });
 
         return Ok(responses);
     }
 
-    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Aanvoerder, Koper, Admin, Veilingmeester")]
+    // GET: api/Auctions/{id}
+    [Authorize(AuthenticationSchemes = "Identity.Bearer")]
     [HttpGet("{id}")]
     public async Task<ActionResult<AuctionResponse>> GetAuction(int id)
     {
-        var veiling = await _db.Veiling
-            .Where(v => v.VeilingId == id)
-            .SingleOrDefaultAsync();
+        var veiling = await _db.Veiling.SingleOrDefaultAsync(v => v.VeilingId == id);
+        if (veiling == null) return NotFound();
 
-        if (veiling == null)
-            return NotFound($"Veiling met ID {id} niet gevonden.");
-
-        var response = new AuctionResponse
+        return Ok(new AuctionResponse
         {
             id = veiling.VeilingId,
             name = veiling.VeilingNaam,
@@ -79,22 +77,25 @@ public class AuctionsController : ControllerBase
             status = veiling.Status,
             startTime = new DateTimeOffset(veiling.StartTijd).ToUnixTimeMilliseconds(),
             endTime = new DateTimeOffset(veiling.EindTijd).ToUnixTimeMilliseconds()
-        };
-
-        return Ok(response);
+        });
     }
 
+    // POST: api/Auctions
     [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester, Admin")]
     [HttpPost]
     public async Task<ActionResult<AuctionResponse>> AddAuction([FromBody] CreateAuctionRequest request)
     {
-        if (request == null || string.IsNullOrEmpty(request.name) || request.maxTime <= 0 || request.startingPrice < 0 || string.IsNullOrEmpty(request.veilingmeesterId))
-            return BadRequest("Ongeldige veilinggegevens. Zorg dat naam, maxTime, startingPrice en veilingmeesterId aanwezig zijn.");
+        if (request == null ||
+            string.IsNullOrWhiteSpace(request.name) ||
+            request.maxTime <= 0 ||
+            request.startingPrice < 0)
+        {
+            return BadRequest("Ongeldige veilinggegevens.");
+        }
 
-        // validate veilingmeester exists
-        var vm = await _db.Veilingmeester.FindAsync(request.veilingmeesterId);
-        if (vm == null)
-            return BadRequest($"Veilingmeester met ID {request.veilingmeesterId} niet gevonden.");
+        var veilingmeesterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(veilingmeesterId))
+            return Unauthorized();
 
         var veiling = new Veiling
         {
@@ -103,14 +104,13 @@ public class AuctionsController : ControllerBase
             Status = "Idle",
             StartTijd = DateTime.Now,
             EindTijd = DateTime.Now.AddSeconds(request.maxTime),
-            Gebruiker_id = request.veilingmeesterId,
+            Gebruiker_id = veilingmeesterId
         };
 
         _db.Veiling.Add(veiling);
         await _db.SaveChangesAsync();
 
-        // Return de gegevens in het frontend-format
-        var response = new AuctionResponse
+        return Ok(new AuctionResponse
         {
             id = veiling.VeilingId,
             name = veiling.VeilingNaam,
@@ -119,40 +119,39 @@ public class AuctionsController : ControllerBase
             status = veiling.Status,
             startTime = new DateTimeOffset(veiling.StartTijd).ToUnixTimeMilliseconds(),
             endTime = new DateTimeOffset(veiling.EindTijd).ToUnixTimeMilliseconds()
-        };
-
-        return Ok(response);
+        });
     }
 
-    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester, Admin, Koper")]
+    // PUT: api/Auctions/{id}
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester,Admin")]
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateAuction(int id, string status)
     {
-        var veiling = await _db.Veiling
-            .Where(v => v.VeilingId == id)
-            .SingleOrDefaultAsync();
+        var veiling = await _db.Veiling.SingleOrDefaultAsync(v => v.VeilingId == id);
+        if (veiling == null) return NotFound();
 
-        if (veiling == null)
-            return NotFound($"Veiling met ID {id} niet gevonden.");
+        // If we're starting the auction, reset its start and end times based on the stored duration
+        if (!string.IsNullOrWhiteSpace(status) && status == "Ongoing")
+        {
+            // Preserve the configured duration and start now
+            var duration = veiling.EindTijd - veiling.StartTijd;
+            veiling.StartTijd = DateTime.Now;
+            veiling.EindTijd = veiling.StartTijd.Add(duration);
+        }
 
         veiling.Status = status;
         await _db.SaveChangesAsync();
-
         return Ok();
     }
 
-    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester, Admin")]
+    // DELETE: api/Auctions/{id}
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester,Admin")]
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteAuction(int id)
     {
-        var veiling = await _db.Veiling
-            .Where(v => v.VeilingId == id)
-            .SingleOrDefaultAsync();
+        var veiling = await _db.Veiling.SingleOrDefaultAsync(v => v.VeilingId == id);
+        if (veiling == null) return NotFound();
 
-        if (veiling == null)
-            return NotFound($"Veiling met ID {id} niet gevonden.");
-
-        // before deleting, clear veiling reference on products to avoid FK constraint errors
         var producten = await _db.Product.Where(p => p.VeilingId == id).ToListAsync();
         foreach (var p in producten)
         {
@@ -162,7 +161,6 @@ public class AuctionsController : ControllerBase
         }
 
         await _db.SaveChangesAsync();
-
         _db.Veiling.Remove(veiling);
         await _db.SaveChangesAsync();
 

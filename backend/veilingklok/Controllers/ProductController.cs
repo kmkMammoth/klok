@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using veilingklok.Models;
+using System.Security.Claims;
 
 namespace veilingklok;
 
@@ -17,7 +19,6 @@ public class CreateProductRequest
     public decimal? minimumprijs { get; set; }
     public string? kloklokatie { get; set; }
     public string? afbeelding { get; set; }
-    public string? gebruikerId { get; set; }
 
     // optional auction-related fields
     public decimal? startprijs { get; set; }
@@ -50,6 +51,11 @@ public class ProductResponse
     // auction-related fields
     public decimal? startprijs { get; set; }
     public decimal? incrementPerSecond { get; set; }
+
+    // Reference to assigned auction (nullable)
+    public int? veilingId { get; set; }
+    public string? koperId { get; set; }
+    public string? status { get; set; }
 }
 
 [ApiController]
@@ -83,7 +89,10 @@ public class ProductsController : ControllerBase
             afbeelding = p.Afbeelding,
             gebruiker_id = p.Gebruiker_id,
             startprijs = p.StartPrijs,
-            incrementPerSecond = p.IncrementPerSecond
+            incrementPerSecond = p.IncrementPerSecond,
+            veilingId = p.VeilingId,
+            koperId = p.gebruiker_id,
+            status = p.Status
         }).ToList();
 
         return Ok(responses);
@@ -112,7 +121,10 @@ public class ProductsController : ControllerBase
             afbeelding = product.Afbeelding,
             gebruiker_id = product.Gebruiker_id,
             startprijs = product.StartPrijs,
-            incrementPerSecond = product.IncrementPerSecond
+            incrementPerSecond = product.IncrementPerSecond,
+            veilingId = product.VeilingId,
+            koperId = product.gebruiker_id,
+            status = product.Status
         };
 
         return Ok(response);
@@ -122,29 +134,28 @@ public class ProductsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ProductResponse>> AddProduct([FromBody] CreateProductRequest request)
     {
-        if (request == null || string.IsNullOrEmpty(request.soort) || string.IsNullOrEmpty(request.gebruikerId))
+        if (request == null || string.IsNullOrEmpty(request.soort))
             return BadRequest("Ongeldige productgegevens.");
 
         // Validate minimumprijs is not negative
         if (request.minimumprijs.HasValue && request.minimumprijs < 0)
             return BadRequest("MinimumPrijs kan niet negatief zijn.");
-
-        // Check if Aanvoerder exists (not just any Gebruiker)
-        var aanvoerder = await _db.Aanvoerder.FindAsync(request.gebruikerId);
-
-        if (aanvoerder == null)
-            return BadRequest($"Aanvoerder met ID {request.gebruikerId} niet gevonden. Zorg ervoor dat je een geldig Aanvoerder ID invoert.");
-
+        
+        var aanvoerderId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(aanvoerderId))
+            return Unauthorized();
+        
         var product = new Product
         {
-            Gebruiker_id = request.gebruikerId,
+            Gebruiker_id = aanvoerderId,
             Soort = request.soort,
             Potmaat = request.potmaat,
             Steellengte = request.steellengte,
             Hoeveelheid = request.hoeveelheid,
             MinimumPrijs = request.minimumprijs,
             KlokLocatie = request.kloklokatie,
-            Afbeelding = request.afbeelding
+            Afbeelding = request.afbeelding,
+            Status = "BESCHIKBAAR"
         };
 
         if (request.startprijs.HasValue)
@@ -167,7 +178,9 @@ public class ProductsController : ControllerBase
             minimumprijs = product.MinimumPrijs,
             kloklokatie = product.KlokLocatie,
             afbeelding = product.Afbeelding,
-            gebruiker_id = product.Gebruiker_id
+            gebruiker_id = product.Gebruiker_id,
+            status = product.Status,
+            koperId = product.gebruiker_id
         };
 
         return Ok(response);
@@ -190,17 +203,12 @@ public class ProductsController : ControllerBase
         // Validate minimumprijs is not negative
         if (request.minimumprijs.HasValue && request.minimumprijs < 0)
             return BadRequest("MinimumPrijs kan niet negatief zijn.");
-
-        // Check if new Aanvoerder exists (not just any Gebruiker)
-        if (!string.IsNullOrEmpty(request.gebruikerId))
-        {
-            var aanvoerder = await _db.Aanvoerder.FindAsync(request.gebruikerId);
-
-            if (aanvoerder == null)
-                return BadRequest($"Aanvoerder met ID {request.gebruikerId} niet gevonden. Zorg ervoor dat je een geldig Aanvoerder ID invoert.");
-
-            product.Gebruiker_id = request.gebruikerId;
-        }
+        
+        var aanvoerderId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(aanvoerderId))
+            return Unauthorized();
+        
+        product.Gebruiker_id = aanvoerderId;
 
         if (!string.IsNullOrEmpty(request.soort))
             product.Soort = request.soort;
@@ -251,6 +259,7 @@ public class ProductsController : ControllerBase
 
         // Set koper id (property name in model is 'gebruiker_id' for koper)
         product.gebruiker_id = request.koperId;
+        product.Status = "GEKOCHT";
 
         await _db.SaveChangesAsync();
         return Ok();
@@ -270,6 +279,10 @@ public class ProductsController : ControllerBase
 
         if (request.veilingId.HasValue)
         {
+            // Prevent assigning if already assigned to a veiling
+            if (product.VeilingId != null)
+                return BadRequest("Product is al toegewezen aan een veiling.");
+
             var veiling = await _db.Veiling.FindAsync(request.veilingId.Value);
             if (veiling == null)
                 return BadRequest($"Veiling met ID {request.veilingId.Value} niet gevonden.");
@@ -309,5 +322,45 @@ public class ProductsController : ControllerBase
         await _db.SaveChangesAsync();
 
         return Ok();
+    }
+
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Koper, Admin")]
+    [HttpPost("{id}/buy")]
+    public async Task<ActionResult> BuyProduct(int id)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("Gebruiker niet herkend.");
+
+        // Controleer of de gebruiker bestaat in de Koper tabel om FK constraint errors te voorkomen
+        var koper = await _db.Koper.FindAsync(userId);
+        if (koper == null)
+            return BadRequest("Uw account is niet geregistreerd als koper. Alleen kopers kunnen bieden.");
+
+        var product = await _db.Product.FindAsync(id);
+
+        if (product == null)
+            return NotFound($"Product met ID {id} niet gevonden.");
+
+        if (!string.IsNullOrEmpty(product.gebruiker_id))
+            return BadRequest("Dit product is al verkocht.");
+
+        // If this product belongs to an auction, ensure that auction has started
+        if (product.VeilingId.HasValue)
+        {
+            var veiling = await _db.Veiling.FindAsync(product.VeilingId.Value);
+            if (veiling == null) return BadRequest("Gerelateerde veiling niet gevonden.");
+            if (veiling.Status != "Ongoing") return BadRequest("Deze veiling is nog niet gestart.");
+
+            // Also ensure auction hasn't already ended
+            if (DateTime.Now > veiling.EindTijd) return BadRequest("Deze veiling is afgelopen.");
+        }
+
+        // Update status en koppel koper
+        product.gebruiker_id = userId;
+        product.Status = "GEKOCHT";
+
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "Product succesvol gekocht!" });
     }
 }

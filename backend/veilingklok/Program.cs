@@ -16,6 +16,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddDataProtection();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<RoleManager<IdentityRole>>();
+builder.Services.AddScoped<SignInManager<Gebruiker>>();
 builder.Services.AddTransient<IEmailSender<Gebruiker>, DummyEmailSender>();
 builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme, options => { 
     options.BearerTokenExpiration = TimeSpan.FromMinutes(60.0); });
