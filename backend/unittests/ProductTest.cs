@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using veilingklok;
 using veilingklok.Models;
 
@@ -169,7 +170,7 @@ namespace unittests
             ctx.Aanvoerder.Add(new Aanvoerder { Id = "a1" });
             ctx.Koper.Add(new Koper { Id = "k1" });
             ctx.Product.Add(new Product { ArtikelId = 1, Soort = "Plant", Gebruiker_id = "a1" });
-            ctx.Veiling.Add(new Veiling { VeilingId = 1 });
+            ctx.Veiling.Add(new Veiling { VeilingId = 1, Gebruiker_id = "vm1", VeilingNaam = "ProductTest 1", Status = "Idle", StartTijd = DateTime.UtcNow, EindTijd = DateTime.UtcNow.AddHours(1) });
             return ctx;
         }
 
@@ -181,6 +182,31 @@ namespace unittests
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             var list = Assert.IsType<List<ProductResponse>>(okResult.Value);
             Assert.Single(list);
+        }
+
+        [Fact]
+        public async Task GetAllProducts_FilterByVeiling_ReturnsOnlyMatching()
+        {
+            var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<VeilingContext>()
+                .UseInMemoryDatabase("product_filter_test")
+                .Options;
+            var ctx = new VeilingContext(options);
+
+            ctx.Veiling.Add(new Veiling { VeilingId = 1, Gebruiker_id = "vm1", VeilingNaam = "V1", Status = "Ongoing", StartTijd = DateTime.UtcNow, EindTijd = DateTime.UtcNow.AddHours(1) });
+            ctx.Veiling.Add(new Veiling { VeilingId = 2, Gebruiker_id = "vm1", VeilingNaam = "V2", Status = "Ongoing", StartTijd = DateTime.UtcNow, EindTijd = DateTime.UtcNow.AddHours(1) });
+            ctx.Product.Add(new Product { ArtikelId = 10, Soort = "A", VeilingId = 1, Gebruiker_id = "a1" });
+            ctx.Product.Add(new Product { ArtikelId = 11, Soort = "B", VeilingId = 2, Gebruiker_id = "a1" });
+            ctx.Product.Add(new Product { ArtikelId = 12, Soort = "C", VeilingId = null, Gebruiker_id = "a1" });
+            await ctx.SaveChangesAsync();
+
+            var mockMgr = new Moq.Mock<veilingklok.Services.IAuctionManager>();
+            var controller = new veilingklok.ProductsController(ctx, mockMgr.Object);
+
+            var result = await controller.GetAllProducts(1);
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            var list = Assert.IsType<List<ProductResponse>>(ok.Value);
+            Assert.Single(list);
+            Assert.Equal(10, list[0].id);
         }
 
         [Fact]
@@ -244,7 +270,7 @@ namespace unittests
         {
             var ctx = GetContextWithData();
             // ensure there is another veiling to attempt assigning
-            ctx.Veiling.Add(new Veiling { VeilingId = 2 });
+            ctx.Veiling.Add(new Veiling { VeilingId = 2, Gebruiker_id = "vm1", VeilingNaam = "ProductTest 2", Status = "Idle", StartTijd = DateTime.UtcNow, EindTijd = DateTime.UtcNow.AddHours(1) });
             var controller = new ProductsControllerForTest(ctx);
 
             var req1 = new UpdateProductVeiling { veilingId = 1 };

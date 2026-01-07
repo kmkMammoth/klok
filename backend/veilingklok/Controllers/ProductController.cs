@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using veilingklok.Models;
+using veilingklok.Services;
 using System.Security.Claims;
 
 namespace veilingklok;
@@ -51,6 +52,8 @@ public class ProductResponse
     // auction-related fields
     public decimal? startprijs { get; set; }
     public decimal? incrementPerSecond { get; set; }
+    public string? startedAtUtc { get; set; }
+    public decimal? koopprijs { get; set; }
 
     // Reference to assigned auction (nullable)
     public int? veilingId { get; set; }
@@ -63,17 +66,25 @@ public class ProductResponse
 public class ProductsController : ControllerBase
 {
     private readonly VeilingContext _db;
+    private readonly IAuctionManager _auctionManager;
 
-    public ProductsController(VeilingContext db)
+    public ProductsController(VeilingContext db, IAuctionManager auctionManager)
     {
         _db = db;
+        _auctionManager = auctionManager;
     }
 
     [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Aanvoerder, Koper, Admin, Veilingmeester")]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductResponse>>> GetAllProducts()
+    public async Task<ActionResult<IEnumerable<ProductResponse>>> GetAllProducts([FromQuery] int? veilingId)
     {
-        var producten = await _db.Product
+        var query = _db.Product.AsQueryable();
+        if (veilingId.HasValue)
+        {
+            query = query.Where(p => p.VeilingId == veilingId.Value);
+        }
+
+        var producten = await query
             .OrderBy(p => p.ArtikelId)
             .ToListAsync();
 
@@ -90,6 +101,8 @@ public class ProductsController : ControllerBase
             gebruiker_id = p.Gebruiker_id,
             startprijs = p.StartPrijs,
             incrementPerSecond = p.IncrementPerSecond,
+            startedAtUtc = p.StartedAtUtc.HasValue ? p.StartedAtUtc.Value.ToString("o") : null,
+            koopprijs = p.KoopPrijs,
             veilingId = p.VeilingId,
             koperId = p.gebruiker_id,
             status = p.Status
@@ -122,6 +135,8 @@ public class ProductsController : ControllerBase
             gebruiker_id = product.Gebruiker_id,
             startprijs = product.StartPrijs,
             incrementPerSecond = product.IncrementPerSecond,
+            startedAtUtc = product.StartedAtUtc.HasValue ? product.StartedAtUtc.Value.ToString("o") : null,
+            koopprijs = product.KoopPrijs,
             veilingId = product.VeilingId,
             koperId = product.gebruiker_id,
             status = product.Status
@@ -294,6 +309,12 @@ public class ProductsController : ControllerBase
 
             if (request.incrementPerSecond.HasValue)
                 product.IncrementPerSecond = request.incrementPerSecond.Value;
+
+            // When adding to a new veiling ensure any previous runtime auction state is cleared
+            product.StartedAtUtc = null;
+            product.KoopPrijs = null;
+            product.gebruiker_id = null;
+            product.Status = "BESCHIKBAAR";
         }
         else
         {
@@ -301,6 +322,13 @@ public class ProductsController : ControllerBase
             // clear auction-specific settings when removing from veiling
             product.StartPrijs = null;
             product.IncrementPerSecond = null;
+
+            // Also clear any runtime auction state so the product can be reused cleanly
+            product.StartedAtUtc = null;
+            product.KoopPrijs = null;
+            if (product.Status != "GEKOCHT")
+                product.Status = "BESCHIKBAAR";
+            product.gebruiker_id = null;
         }
 
         await _db.SaveChangesAsync();
@@ -337,30 +365,11 @@ public class ProductsController : ControllerBase
         if (koper == null)
             return BadRequest("Uw account is niet geregistreerd als koper. Alleen kopers kunnen bieden.");
 
-        var product = await _db.Product.FindAsync(id);
+        // Delegate buy operation to AuctionManager which enforces concurrency and broadcasts
+        var success = await _auctionManager.TryBuyProductAsync(id, userId);
+        if (success)
+            return Ok(new { message = "Product succesvol gekocht!" });
 
-        if (product == null)
-            return NotFound($"Product met ID {id} niet gevonden.");
-
-        if (!string.IsNullOrEmpty(product.gebruiker_id))
-            return BadRequest("Dit product is al verkocht.");
-
-        // If this product belongs to an auction, ensure that auction has started
-        if (product.VeilingId.HasValue)
-        {
-            var veiling = await _db.Veiling.FindAsync(product.VeilingId.Value);
-            if (veiling == null) return BadRequest("Gerelateerde veiling niet gevonden.");
-            if (veiling.Status != "Ongoing") return BadRequest("Deze veiling is nog niet gestart.");
-
-            // Also ensure auction hasn't already ended
-            if (DateTime.Now > veiling.EindTijd) return BadRequest("Deze veiling is afgelopen.");
-        }
-
-        // Update status en koppel koper
-        product.gebruiker_id = userId;
-        product.Status = "GEKOCHT";
-
-        await _db.SaveChangesAsync();
-        return Ok(new { message = "Product succesvol gekocht!" });
+        return Conflict(new { message = "Kon product niet kopen. Het is mogelijk al verkocht of de veiling is gesloten." });
     }
 }

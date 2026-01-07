@@ -55,6 +55,17 @@ namespace veilingklok.Models
         [Column("status")]
         public string? Status { get; set; }
 
+        // Auction runtime fields
+        [Column("started_at_utc")]
+        public DateTime? StartedAtUtc { get; set; }
+
+        [Column("koopprijs", TypeName = "decimal(10,2)")]
+        public decimal? KoopPrijs { get; set; }
+
+        [Timestamp]
+        [Column("row_version")]
+        public byte[]? RowVersion { get; set; }
+
         public Aanvoerder Aanvoerder { get; set; }
         public Veiling Veiling { get; set; }
         public Koper Koper { get; set; }
