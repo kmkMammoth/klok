@@ -374,21 +374,6 @@ function KoperDashboard() {
             });
 
             setCurrentProduct(null);
-            setSoldMessage('U heeft dit product gekocht. De veiling is beëindigd.');
-            setRedirectTimer(10); // Start timer op 10
-
-            // Start aftellen
-            const countdown = setInterval(() => {
-                setRedirectTimer(prev => {
-                    if (prev <= 1) {
-                        clearInterval(countdown);
-                        setSelectedAuction(null);
-                        refreshOverviewData();
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
 
             // Ververs server data
             fetchAuctions();
@@ -409,6 +394,11 @@ function KoperDashboard() {
         );
     };
 
+    const isAuctionRejected = (auctionId) => { 
+        const auctionProducts = products.filter(p => p.veilingId === auctionId); 
+        return auctionProducts.some(p => p.status === 'VERWORPEN'); 
+    };
+
     const formatPrice = (amount) => new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount);
 
     return (
@@ -418,11 +408,13 @@ function KoperDashboard() {
                     <h1>Beschikbare Veilingen</h1>
                     <div className="auctions-grid">
                         {auctions.map(auction => {
+                            const rejected = isAuctionRejected(auction.id);
                             const soldOut = isAuctionSoldOut(auction.id);
                             const isOngoing = auction.status === 'Ongoing';
-                            const canJoin = isOngoing && !soldOut;
+                            const canJoin = isOngoing && !soldOut && !rejected;
 
                             let buttonText = 'Niet gestart';
+                            if (rejected) buttonText = 'VERWORPEN';
                             if (soldOut) buttonText = 'VERKOCHT';
                             else if (isOngoing) buttonText = 'Deelnemen';
 
@@ -445,7 +437,7 @@ function KoperDashboard() {
                                     <h3>{auction.name}</h3>
 
                                     <button
-                                        className={`enter-button ${soldOut ? 'sold-button' : ''}`}
+                                        className={`enter-button ${rejected ? 'rejected-button' : soldOut ? 'sold-button' : ''}`}
                                         disabled={!canJoin}
                                     >
                                         {buttonText}
@@ -462,13 +454,11 @@ function KoperDashboard() {
             ) : (
                 <div className="live-auction-view">
                     <button className="back-btn" onClick={() => setSelectedAuction(null)}>← Terug</button>
-                    <h2>
-                        {selectedAuction.name}{' '}
-                        {isAuctionSoldOut(selectedAuction.id) ? (
-                            <span className="sold-badge">VERKOCHT</span>
-                        ) : (
-                            <span className="live-badge">LIVE</span>
-                        )}
+                    <h2> {isAuctionRejected(selectedAuction.id) ? 
+                        ( <span className="rejected-badge">VERWORPEN</span> ) 
+                        : isAuctionSoldOut(selectedAuction.id) 
+                            ? ( <span className="sold-badge">VERKOCHT</span> ) 
+                            : ( <span className="live-badge">LIVE</span> )} 
                     </h2>
 
                     {error && <div className="error-banner">{error}</div>}
@@ -496,7 +486,7 @@ function KoperDashboard() {
                                             <strong>Locatie:</strong> <span>{currentProduct.kloklokatie}</span>
                                         </div>
                                         <div className="spec-row">
-                                            <strong>Kweker:</strong> <span>{currentProduct.gebruikerId}</span>
+                                            <strong>Aanvoerder:</strong> <span>{currentProduct.gebruiker_id}</span>
                                         </div>
                                     </div>
                                 </>
