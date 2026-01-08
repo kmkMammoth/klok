@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using veilingklok;
 using veilingklok.Models;
+using veilingklok.Services;
 using Xunit;
 
 namespace unittests;
@@ -13,9 +15,11 @@ public class VeilingControllerTests
 {
     private readonly SqliteConnection _connection;
     private readonly DbContextOptions<VeilingContext> _contextOptions;
+    private readonly Mock<IAuctionManager> _auctionManagerMock;
 
     public VeilingControllerTests()
     {
+        _auctionManagerMock = new Mock<IAuctionManager>();
         _connection = new SqliteConnection("Filename=:memory:");
         _connection.Open();
 
@@ -73,15 +77,14 @@ public class VeilingControllerTests
 
         context.SaveChanges();
     }
-
-
+    
     private VeilingContext CreateContext() => new VeilingContext(_contextOptions);
 
     [Fact]
     public async Task GetAllAuctions_ReturnsAllAuctions()
     {
         using var context = CreateContext();
-        var controller = new AuctionsController(context);
+        var controller = new AuctionsController(context, _auctionManagerMock.Object);
 
         var result = await controller.GetAllAuctions();
 
@@ -94,7 +97,7 @@ public class VeilingControllerTests
     public async Task GetAuction_ExistingAuction_ReturnsOk()
     {
         using var context = CreateContext();
-        var controller = new AuctionsController(context);
+        var controller = new AuctionsController(context, _auctionManagerMock.Object);
 
         var result = await controller.GetAuction(1);
 
@@ -107,7 +110,7 @@ public class VeilingControllerTests
     public async Task GetAuction_NotExisting_ReturnsNotFound()
     {
         using var context = CreateContext();
-        var controller = new AuctionsController(context);
+        var controller = new AuctionsController(context, _auctionManagerMock.Object);
 
         var result = await controller.GetAuction(999);
 
@@ -118,7 +121,7 @@ public class VeilingControllerTests
     public async Task AddAuction_ValidInput_ReturnsOk()
     {
         using var context = CreateContext();
-        var controller = new AuctionsController(context);
+        var controller = new AuctionsController(context, _auctionManagerMock.Object);
 
         // simulate authenticated veilingmeester
         controller.ControllerContext = new ControllerContext
@@ -148,7 +151,7 @@ public class VeilingControllerTests
     public async Task AddAuction_InvalidInput_ReturnsBadRequest()
     {
         using var context = CreateContext();
-        var controller = new AuctionsController(context);
+        var controller = new AuctionsController(context, _auctionManagerMock.Object);
 
         var request = new CreateAuctionRequest
         {
@@ -166,7 +169,7 @@ public class VeilingControllerTests
     public async Task AddAuction_NonExistingVeilingmeester_ReturnsBadRequest()
     {
         using var context = CreateContext();
-        var controller = new AuctionsController(context);
+        var controller = new AuctionsController(context, _auctionManagerMock.Object);
 
         // No authenticated user -> expect Unauthorized
         // provide an empty principal (no NameIdentifier claim) so FindFirstValue doesn't throw
@@ -193,7 +196,7 @@ public class VeilingControllerTests
     public async Task UpdateAuction_ExistingAuction_UpdatesStatus()
     {
         using var context = CreateContext();
-        var controller = new AuctionsController(context);
+        var controller = new AuctionsController(context, _auctionManagerMock.Object);
 
         var result = await controller.UpdateAuction(1, "Running");
 
@@ -205,7 +208,7 @@ public class VeilingControllerTests
     public async Task UpdateAuction_NotExisting_ReturnsNotFound()
     {
         using var context = CreateContext();
-        var controller = new AuctionsController(context);
+        var controller = new AuctionsController(context, _auctionManagerMock.Object);
 
         var result = await controller.UpdateAuction(999, "Running");
 
@@ -216,7 +219,7 @@ public class VeilingControllerTests
     public async Task DeleteAuction_ExistingAuction_RemovesAuctionAndClearsProducts()
     {
         using var context = CreateContext();
-        var controller = new AuctionsController(context);
+        var controller = new AuctionsController(context, _auctionManagerMock.Object);
 
         var result = await controller.DeleteAuction(1);
 
@@ -234,7 +237,7 @@ public class VeilingControllerTests
     public async Task DeleteAuction_NotExisting_ReturnsNotFound()
     {
         using var context = CreateContext();
-        var controller = new AuctionsController(context);
+        var controller = new AuctionsController(context, _auctionManagerMock.Object);
 
         var result = await controller.DeleteAuction(999);
 

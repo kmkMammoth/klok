@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using veilingklok;
 using veilingklok.Models;
+using veilingklok.Services;
 using Xunit;
 
 namespace unittests;
@@ -15,10 +17,12 @@ namespace unittests;
     {
         private readonly SqliteConnection _connection;
         private readonly DbContextOptions<VeilingContext> _contextOptions;
+        private readonly Mock<IAuctionManager> _auctionManagerMock;
 
         public ProductsControllerTests()
         {
             // SQLite in-memory database
+            _auctionManagerMock = new Mock<IAuctionManager>();
             _connection = new SqliteConnection("Filename=:memory:");
             _connection.Open();
 
@@ -71,11 +75,12 @@ namespace unittests;
 
             context.SaveChanges();
         }
+        private VeilingContext CreateContext() => new VeilingContext(_contextOptions);
 
         private ProductsController CreateController(string? userId = null)
         {
             var context = new VeilingContext(_contextOptions);
-            var controller = new ProductsController(context);
+            var controller = new ProductsController(context, _auctionManagerMock.Object);
 
             if (!string.IsNullOrEmpty(userId))
             {
@@ -133,7 +138,7 @@ namespace unittests;
 
             var controller = CreateController("a1");
 
-            var result = await controller.GetAllProducts();
+            var result = await controller.GetAllProducts(null);
             var ok = Assert.IsType<OkObjectResult>(result.Result);
             var products = Assert.IsAssignableFrom<List<ProductResponse>>(ok.Value);
 
@@ -190,17 +195,14 @@ namespace unittests;
             context.Product.Add(new Product { ArtikelId = 1, Soort = "Roos", VeilingId = 1, Gebruiker_id = "a1" });
             context.SaveChanges();
 
+            _auctionManagerMock.Setup(m => m.TryBuyProductAsync(1, "k1")).ReturnsAsync(true);
+
             var controller = CreateController("k1");
             var result = await controller.BuyProduct(1);
 
             // Direct cast naar OkObjectResult
             var ok = Assert.IsType<OkObjectResult>(result);
             Assert.Contains("succesvol gekocht", ok.Value!.ToString());
-
-            using var checkContext = new VeilingContext(_contextOptions);
-            var product = checkContext.Product.Find(1);
-            Assert.Equal("k1", product!.gebruiker_id);
-            Assert.Equal("GEKOCHT", product.Status);
         }
 
         [Fact]
