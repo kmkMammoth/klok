@@ -7,6 +7,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using veilingklok.Models;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.SignalR;
+using veilingklok.Hubs;
+using veilingklok.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +26,10 @@ builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerSche
 builder.Services.AddDbContext<VeilingContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddEndpointsApiExplorer();
+
+// SignalR and auction services
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IAuctionManager, AuctionManager>();
 // ---------------- Swagger + JWT ----------------
 if (builder.Environment.IsDevelopment())
 {
@@ -125,6 +132,7 @@ app.UseAuthorization();
 app.MapIdentityApi<Gebruiker>();
 app.MapControllers();
 
+app.MapHub<AuctionHub>("/hubs/auction");
 
 app.Run();
 

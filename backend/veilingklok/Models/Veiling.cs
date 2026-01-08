@@ -45,6 +45,6 @@ namespace veilingklok.Models
 
         public Veilingmeester Veilingmeester { get; set; }
         public Koper Koper { get; set; }
-        public List<Product> Producten { get; set; }
+        public List<Product> Producten { get; set; } = new List<Product>();
     }
 }

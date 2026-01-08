@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using veilingklok.Models;
+using veilingklok.Services;
 
 namespace veilingklok;
 
@@ -31,10 +32,12 @@ public class AuctionResponse
 public class AuctionsController : ControllerBase
 {
     private readonly VeilingContext _db;
+    private readonly IAuctionManager _auctionManager;
 
-    public AuctionsController(VeilingContext db)
+    public AuctionsController(VeilingContext db, IAuctionManager auctionManager)
     {
         _db = db;
+        _auctionManager = auctionManager;
     }
 
     // GET: api/Auctions
@@ -97,13 +100,14 @@ public class AuctionsController : ControllerBase
         if (string.IsNullOrEmpty(veilingmeesterId))
             return Unauthorized();
 
+        var now = DateTime.UtcNow;
         var veiling = new Veiling
         {
             VeilingNaam = request.name,
             MinimumPrijs = request.startingPrice,
             Status = "Idle",
-            StartTijd = DateTime.Now,
-            EindTijd = DateTime.Now.AddSeconds(request.maxTime),
+            StartTijd = now,
+            EindTijd = now.AddSeconds(request.maxTime),
             Gebruiker_id = veilingmeesterId
         };
 
@@ -123,20 +127,18 @@ public class AuctionsController : ControllerBase
     }
 
     // PUT: api/Auctions/{id}
-    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester,Admin")]
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester, Admin")]
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateAuction(int id, string status)
     {
         var veiling = await _db.Veiling.SingleOrDefaultAsync(v => v.VeilingId == id);
         if (veiling == null) return NotFound();
 
-        // If we're starting the auction, reset its start and end times based on the stored duration
+        // If we're starting the auction, let auction manager handle start and broadcasting
         if (!string.IsNullOrWhiteSpace(status) && status == "Ongoing")
         {
-            // Preserve the configured duration and start now
-            var duration = veiling.EindTijd - veiling.StartTijd;
-            veiling.StartTijd = DateTime.Now;
-            veiling.EindTijd = veiling.StartTijd.Add(duration);
+            await _auctionManager.StartAuctionAsync(id);
+            return Ok();
         }
 
         veiling.Status = status;
@@ -145,7 +147,7 @@ public class AuctionsController : ControllerBase
     }
 
     // DELETE: api/Auctions/{id}
-    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester,Admin")]
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester, Admin")]
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteAuction(int id)
     {
@@ -158,6 +160,15 @@ public class AuctionsController : ControllerBase
             p.VeilingId = null;
             p.StartPrijs = null;
             p.IncrementPerSecond = null;
+
+            // Reset runtime auction fields for products that were not sold
+            if (p.Status != "GEKOCHT")
+            {
+                p.StartedAtUtc = null;
+                p.KoopPrijs = null;
+                p.gebruiker_id = null;
+                p.Status = "BESCHIKBAAR";
+            }
         }
 
         await _db.SaveChangesAsync();
