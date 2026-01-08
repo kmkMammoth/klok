@@ -479,11 +479,13 @@ function KoperDashboard() {
             ) : (
                 <div className="live-auction-view">
                     <button className="back-btn" onClick={() => setSelectedAuction(null)}>← Terug</button>
-                    <h2> {isAuctionRejected(selectedAuction.id) ? 
-                        ( <span className="rejected-badge">VERWORPEN</span> ) 
-                        : isAuctionSoldOut(selectedAuction.id) 
-                            ? ( <span className="sold-badge">VERKOCHT</span> ) 
-                            : ( <span className="live-badge">LIVE</span> )} 
+                    <h2>
+                        {selectedAuction.name}{' '}
+                        {isAuctionSoldOut(selectedAuction.id) ? (
+                            <span className="sold-badge">VERKOCHT</span>
+                        ) : (
+                            <span className="live-badge">LIVE</span>
+                        )}
                     </h2>
 
                     {error && <div className="error-banner">{error}</div>}
