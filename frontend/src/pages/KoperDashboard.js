@@ -433,15 +433,20 @@ function KoperDashboard() {
                     <h1>Beschikbare Veilingen</h1>
                     <div className="auctions-grid">
                         {auctions.map(auction => {
-                            const rejected = isAuctionRejected(auction.id);
                             const soldOut = isAuctionSoldOut(auction.id);
                             const isOngoing = auction.status === 'Ongoing';
-                            const canJoin = isOngoing && !soldOut && !rejected;
+                            const canJoin = isOngoing && !soldOut && !auction.status;
 
                             let buttonText = 'Niet gestart';
-                            if (rejected) buttonText = 'VERWORPEN';
-                            if (soldOut) buttonText = 'VERKOCHT';
-                            else if (isOngoing) buttonText = 'Deelnemen';
+                            
+                            if (auction.status === 'Done') {
+                                buttonText = 'GEEÏNDIGD';
+                            }
+                            if (soldOut) {
+                                buttonText = 'VERKOCHT';
+                            } else if (isOngoing) {
+                                buttonText = 'Deelnemen';
+                            }
 
                             return (
                                 <div
@@ -462,7 +467,7 @@ function KoperDashboard() {
                                     <h3>{auction.name}</h3>
 
                                     <button
-                                        className={`enter-button ${rejected ? 'rejected-button' : soldOut ? 'sold-button' : ''}`}
+                                        className={`enter-button ${auction.status === 'Done' ? 'rejected-button' : soldOut ? 'sold-button' : ''}`}
                                         disabled={!canJoin}
                                     >
                                         {buttonText}
