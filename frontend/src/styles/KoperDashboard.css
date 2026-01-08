@@ -27,6 +27,27 @@
     font-weight: 700;
 }
 
+.rejected-badge {
+    background: #7f8c8d;
+    color: white;
+    font-size: 0.7em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+    font-weight: 700;
+}
+
+/* VERKOCHT knop */
+.rejected-button {
+    background-color: #e53935 !important;
+    color: white !important;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: not-allowed;
+    box-shadow: 0 4px 10px rgba(229, 57, 53, 0.4);
+    opacity: 1 !important;
+}
 
 /* Veilingen Lijst */
 .auctions-grid {

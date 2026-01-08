@@ -14,6 +14,10 @@ function KoperDashboard() {
     const [soldMessage, setSoldMessage] = useState('');
     const [redirectTimer, setRedirectTimer] = useState(null);
 
+    // Development debug state (commented out). Used to surface price calc anomalies.
+    // To enable: uncomment the state below and the setDebugInfo / console calls throughout this file.
+    /* const [debugInfo, setDebugInfo] = useState(null); // dev-only visible debug info */
+
     // Refs / state voor realtime
     const timerRef = useRef(null);
     const connectionRef = useRef(null);
@@ -22,36 +26,34 @@ function KoperDashboard() {
     const lastStartedPayloadRef = useRef({});
     const [serverOffsetMs, setServerOffsetMs] = useState(0); // serverUtc - clientNow
 
-    const [refreshingOverview, setRefreshingOverview] = useState(false);
+    // const [refreshingOverview, setRefreshingOverview] = useState(false);
 
-    const refreshOverviewData = async () => {
-        setRefreshingOverview(true);
-        try {
-            const token = localStorage.getItem('accessToken');
-
-            const [auctionsData, productsData] = await Promise.all([
-                fetch('http://localhost:5102/api/auctions', {
-                    headers: { Authorization: `Bearer ${token}` }
-                }).then(r => r.json()),
-                fetch('http://localhost:5102/api/products', {
-                    headers: { Authorization: `Bearer ${token}` }
-                }).then(r => r.json())
-            ]);
-
-            setAuctions(auctionsData);
-            setProducts(productsData);
-        } catch (e) {
-            console.error('Overview refresh failed', e);
-        } finally {
-            setRefreshingOverview(false);
-        }
-    };
+    // const refreshOverviewData = async () => {
+    //     setRefreshingOverview(true);
+    //     try {
+    //         const token = localStorage.getItem('accessToken');
+    //
+    //         const [auctionsData, productsData] = await Promise.all([
+    //             fetch('http://localhost:5102/api/auctions', {
+    //                 headers: { Authorization: `Bearer ${token}` }
+    //             }).then(r => r.json()),
+    //             fetch('http://localhost:5102/api/products', {
+    //                 headers: { Authorization: `Bearer ${token}` }
+    //             }).then(r => r.json())
+    //         ]);
+    //
+    //         setAuctions(auctionsData);
+    //         setProducts(productsData);
+    //     } catch (e) {
+    //         console.error('Overview refresh failed', e);
+    //     } finally {
+    //         setRefreshingOverview(false);
+    //     }
+    // };
 
     // 1. Haal veilingen op bij laden en zet SignalR connection + haal servertijd op
     useEffect(() => {
-        refreshOverviewData();
         fetchAuctions();
-        fetchProducts(); // Haal direct producten op voor de afbeeldingen in het overzicht
         const interval = setInterval(fetchAuctions, 5000); // Poll elke 5 sec voor nieuwe veilingen
 
         const initRealtime = async () => {
@@ -85,6 +87,8 @@ function KoperDashboard() {
                     .build();
 
                 conn.on('AuctionStarted', (payload) => {
+                    // payload: { auctionId, startedAtUtc }
+                    // refresh auctions list and products
                     fetchAuctions();
                     if (selectedAuction && selectedAuction.id === payload.auctionId) {
                         fetchProducts(selectedAuction.id);
@@ -92,46 +96,57 @@ function KoperDashboard() {
                 });
 
                 conn.on('ProductStarted', async (payload) => {
-                    lastStartedPayloadRef.current[payload.productId] = payload;
-                    setSoldMessage(''); // Reset melding als er een nieuw product start
-                    setRedirectTimer(null);
+                    // payload contains productId, startedAtUtc and other details
+                    // Debug: ProductStarted payload received (disabled in production)
+                    /* console.error('ProductStarted payload received', payload); */
 
+                    // cache payload so price calculation can use it if product record is stale
+                    lastStartedPayloadRef.current[payload.productId] = payload;
+
+                    // Only fetch the single product details if this client is viewing that auction
                     if (selectedAuctionRef.current && selectedAuctionRef.current.id === payload.auctionId) {
                         const prod = await fetchProductById(payload.productId);
+                        /* console.error('ProductStarted: fetched product', prod); */
                         if (prod) {
                             setCurrentProduct({ ...prod, status: 'RUNNING' });
+
+                            // If product record lacks proper startprijs (<= minimum), surface debug info immediately (disabled)
+                            const prodStart = parseFloat(prod.startprijs ?? prod.startPrice ?? 0);
+                            const prodMin = parseFloat(prod.minimumprijs ?? 0);
+                            if (prodStart <= prodMin) {
+                                const info = { time: new Date().toISOString(), productId: prod.id, startPrice: prodStart, minPrice: prodMin, increment: prod.incrementPerSecond ?? prod.IncrementPerSecond, elapsedSeconds: 0, payload: payload };
+                                /* setDebugInfo(info);
+                                console.error('ProductStarted: product record has start<=min', info); */
+                            }
+
                             return;
                         }
                     }
 
+                    // fallback to payload if fetching failed
                     setCurrentProduct(prev => (prev && prev.id === payload.productId) ? { ...prev, startedAtUtc: payload.startedAtUtc, startprijs: payload.startPrice, incrementPerSecond: payload.incrementPerSecond, minimumprijs: payload.minimumPrice, status: 'RUNNING' } : (selectedAuctionRef.current && selectedAuctionRef.current.id === payload.auctionId ? { id: payload.productId, startedAtUtc: payload.startedAtUtc, startprijs: payload.startPrice, incrementPerSecond: payload.incrementPerSecond, minimumprijs: payload.minimumPrice, status: 'RUNNING' } : prev));
                 });
 
                 conn.on('ProductSold', (payload) => {
+                    // payload: { productId, buyerId, price, soldAtUtc }
+                    // If this was the current product, mark it expired and clear current product immediately
                     setExpired(prev => {
                         const next = new Set(prev);
                         next.add(payload.productId);
                         return next;
                     });
-
-                    // Toon melding in de klok als het huidige veiling betreft
-                    if (selectedAuctionRef.current && selectedAuctionRef.current.id === payload.auctionId) {
-                        setSoldMessage('De veiling van dit product is beëindigd door een bieder.');
-                    }
-
                     setCurrentProduct(prev => (prev && prev.id === payload.productId) ? null : prev);
+                    // refresh product list to show updated ownership and upcoming product
                     fetchProducts(selectedAuctionRef.current?.id);
                 });
 
                 conn.on('AuctionEnded', (payload) => {
-                    fetchAuctions(); // Ververs lijst om status 'Finished' te zien
-                    if (selectedAuctionRef.current?.id === payload.auctionId) {
-                        setCurrentProduct(null);
-                        setSoldMessage('De veiling is afgelopen.');
-                    }
+                    fetchAuctions();
+                    fetchProducts(selectedAuction?.id);
                 });
 
                 await conn.start();
+                // If an auction is already selected, join its group
                 if (selectedAuctionRef.current) {
                     conn.invoke('JoinAuction', selectedAuctionRef.current.id.toString()).catch(err => console.error('JoinAuction failed', err));
                 }
@@ -164,18 +179,20 @@ function KoperDashboard() {
 
     // 2. Als een veiling is geselecteerd, haal producten op en join de SignalR groep
     useEffect(() => {
+        // keep ref in sync so SignalR handlers can access the latest selection
         selectedAuctionRef.current = selectedAuction;
         if (!selectedAuction) return;
-        setExpired(new Set());
-        setSoldMessage('');
-        setRedirectTimer(null);
-
+        setExpired(new Set()); // Reset expired bij wisselen veiling
         (async () => {
             const data = await fetchProducts(selectedAuction.id);
             if (data) {
-                const running = data.find(p => (p.status === 'RUNNING' || p.startedAtUtc) && !expired.has(p.id));
+                // If server already started a product, prefer explicit RUNNING one and fetch its details
+                const running = data.find(p => (p.status === 'RUNNING' || p.Status === 'RUNNING' || p.startedAtUtc) && !expired.has(p.id));
                 if (running) {
+                    // Debug: running product found (logging disabled). Uncomment for development troubleshooting.
+                    /* console.error('Selection effect: found running product in list', running); */
                     const prod = await fetchProductById(running.id);
+                    /* console.error('Selection effect: fetched product details', prod); */
                     if (prod) {
                         setCurrentProduct({ ...prod, status: 'RUNNING' });
                         return;
@@ -184,16 +201,19 @@ function KoperDashboard() {
             }
         })();
 
+        // Join SignalR group for realtime updates
         const conn = connectionRef.current;
         if (conn && conn.state === signalR.HubConnectionState.Connected) {
             conn.invoke('JoinAuction', selectedAuction.id.toString()).catch(err => console.error(err));
         }
 
+        // Periodiek fallback refresh (langzamer)
         const interval = setInterval(() => {
             fetchProducts(selectedAuction.id);
-        }, 10000);
+        }, 10000); // Poll 10s als fallback
 
         return () => {
+            // leave group
             if (conn && conn.state === signalR.HubConnectionState.Connected) {
                 conn.invoke('LeaveAuction', selectedAuction.id.toString()).catch(err => console.error(err));
             }
@@ -201,7 +221,8 @@ function KoperDashboard() {
         };
     }, [selectedAuction]);
 
-    // 3. Bepaal wat het huidige product is
+    // 3. Bepaal wat het huidige product is (voorkeur voor een RUNNING product met startedAtUtc)
+    // We voorkomen dat een recent ProductStarted event overschreven wordt door een latere products refresh.
     useEffect(() => {
         if (products.length === 0) {
             setCurrentProduct(null);
@@ -209,18 +230,30 @@ function KoperDashboard() {
         }
 
         const auctionProducts = products
-            .filter(p => (p.veilingId === selectedAuction?.id));
+            .filter(p => (p.veilingId === selectedAuction?.id || p.veiling_id === selectedAuction?.id));
 
+        // Prefer products that are RUNNING (server started) and not expired
         const running = auctionProducts
-            .filter(p => (p.status === 'RUNNING' && !expired.has(p.id)));
+            .filter(p => (p.status === 'RUNNING' || p.Status === 'RUNNING') && !expired.has(p.id));
 
         if (running.length > 0) {
             running.sort((a, b) => a.id - b.id);
             const nextRunning = running[0];
 
+            // Only set/replace if it's a different product or if we don't already have a valid startedAtUtc
             if (currentProduct?.id !== nextRunning.id || !currentProduct?.startedAtUtc) {
                 setCurrentProduct({ ...nextRunning, startedAtUtc: nextRunning.startedAtUtc, status: 'RUNNING' });
+
+                // If the selected running product has invalid start price, surface debug info (disabled)
+                const sr = parseFloat(nextRunning.startprijs ?? nextRunning.startPrice ?? 0);
+                const mn = parseFloat(nextRunning.minimumprijs ?? 0);
+                if (sr <= mn) {
+                    const info = { time: new Date().toISOString(), productId: nextRunning.id, startPrice: sr, minPrice: mn, increment: nextRunning.incrementPerSecond ?? nextRunning.IncrementPerSecond, elapsedSeconds: 0, payload: lastStartedPayloadRef.current[nextRunning.id] };
+                    /* setDebugInfo(info);
+                    console.error('Selected running product has start<=min', info); */
+                }
             }
+            // running product takes precedence
             return;
         }
 
@@ -241,14 +274,17 @@ function KoperDashboard() {
         }
     }, [products, selectedAuction, expired, currentProduct]);
 
-    // 4. De Klok (Prijs daling)
+    // 4. De Klok (Prijs daling) — bereken op basis van server-starttijd + client offset
     const fetchedProductDetailsRef = useRef(new Set());
 
+    // Helper: parse ISO-like timestamp from server as UTC even if timezone designator is missing
     const parseStartedAtMs = (s) => {
         if (!s) return null;
         try {
             if (typeof s !== 'string') return new Date(s).getTime();
+            // If the string ends with Z or contains an offset like +02:00, let Date parse it.
             if (/[zZ]$|[+\-]\d{2}:?\d{2}$/.test(s)) return new Date(s).getTime();
+            // Otherwise assume it's UTC and append 'Z'
             return new Date(s + 'Z').getTime();
         } catch (e) {
             console.error('parseStartedAtMs failed', s, e);
@@ -270,36 +306,53 @@ function KoperDashboard() {
 
             const startedAt = currentProduct.startedAtUtc ? parseStartedAtMs(currentProduct.startedAtUtc) : null;
             if (!startedAt) {
+                // If no server-start time available, fallback to server offset-based "now" and assume it just started
                 setPrice(startPrice);
                 return;
             }
 
+            // Compute elapsed seconds using server offset
             const nowClient = Date.now();
             const serverNow = nowClient + serverOffsetMs;
             const elapsedSeconds = (serverNow - startedAt) / 1000;
 
+            // If the product has a startedAtUtc but no distinct startPrice (or startPrice equals min), try to refresh product details once
             if ((startPrice <= minPrice) && elapsedSeconds < 3 && !fetchedProductDetailsRef.current.has(currentProduct.id)) {
                 fetchedProductDetailsRef.current.add(currentProduct.id);
                 const refreshed = await fetchProductById(currentProduct.id);
                 if (refreshed) {
                     setCurrentProduct(prev => (prev && prev.id === refreshed.id) ? { ...refreshed, status: 'RUNNING' } : prev);
+                    // update startPrice from refreshed record if available
                     if (refreshed.startprijs && parseFloat(refreshed.startprijs) > minPrice) {
                         startPrice = parseFloat(refreshed.startprijs);
                     }
                 }
             }
 
+            // Use payload startPrice if we have it cached and current startPrice appears invalid
             const payload = lastStartedPayloadRef.current[currentProduct.id];
             if ((startPrice <= minPrice) && payload && payload.startPrice && parseFloat(payload.startPrice) > minPrice) {
                 startPrice = parseFloat(payload.startPrice);
             }
 
             let newPrice = startPrice - (elapsedSeconds * increment);
-            if (newPrice <= minPrice) newPrice = minPrice;
+
+            // If computed price already below minimum, log full debug so we can trace elapsed/serverOffset
+            if (newPrice <= minPrice) {
+                const info = { time: new Date().toISOString(), productId: currentProduct?.id, startPrice, minPrice, increment, elapsedSeconds, startedAt, serverNow, computedPrice: newPrice, payload };
+                /* setDebugInfo(info);
+                console.error('Computed price below minimum:', info); */
+                newPrice = minPrice;
+            } else {
+                // clear previous debug info when values look normal
+                /* if (debugInfo) setDebugInfo(null); */
+            }
+
             setPrice(newPrice);
         };
 
-        timerRef.current = setInterval(() => { updatePrice().catch(() => {}); }, 200);
+        timerRef.current = setInterval(() => { updatePrice().catch(() => {}); }, 200); // update 5x/sec
+        // run once immediately to avoid initial blank
         updatePrice().catch(() => {});
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }, [currentProduct, serverOffsetMs]);
@@ -352,6 +405,7 @@ function KoperDashboard() {
         setError('');
 
         try {
+            // POST request om te kopen. De backend haalt de Koper ID uit het token.
             const response = await fetch(`http://localhost:5102/api/products/${currentProduct.id}/buy`, {
                 method: 'POST',
                 headers: {
@@ -365,20 +419,16 @@ function KoperDashboard() {
                 throw new Error(text || 'Kopen mislukt. Mogelijk is iemand je voor.');
             }
 
-            setAuctions(prev => prev.map(a => a.id === selectedAuction.id ? { ...a, status: 'Finished' } : a));
-
+            // Optimistically update UI: mark current product as expired and clear current product
             setExpired(prev => {
                 const next = new Set(prev);
                 next.add(currentProduct.id);
                 return next;
             });
-
             setCurrentProduct(null);
 
-            // Ververs server data
-            fetchAuctions();
+            // Trigger background refresh but don't block UI on it
             fetchProducts(selectedAuction.id).catch(() => {});
-
         } catch (err) {
             setError(err.message);
         } finally {
