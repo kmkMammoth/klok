@@ -190,10 +190,16 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
                 // Start next product (outside of critical section would be preferable, but we can call it now asynchronously)
                 if (product.VeilingId.HasValue)
                 {
-                    // Start next product without blocking the caller for long - run asynchronously
+                    // Start next product without blocking the caller for long - run asynchronously using a new scope so we don't access a disposed DbContext
                     _ = Task.Run(async () =>
                     {
-                        try { await StartNextProductAsync(product.VeilingId.Value); } catch { /* swallow */ }
+                        try
+                        {
+                            using var scope = _scopeFactory.CreateScope();
+                            var mgr = scope.ServiceProvider.GetRequiredService<IAuctionManager>();
+                            await mgr.StartNextProductAsync(product.VeilingId.Value);
+                        }
+                        catch { /* swallow */ }
                     });
                 }
 
