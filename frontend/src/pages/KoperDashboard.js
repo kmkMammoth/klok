@@ -22,9 +22,34 @@ function KoperDashboard() {
     const lastStartedPayloadRef = useRef({});
     const [serverOffsetMs, setServerOffsetMs] = useState(0); // serverUtc - clientNow
 
+    const [refreshingOverview, setRefreshingOverview] = useState(false);
+
+    const refreshOverviewData = async () => {
+        setRefreshingOverview(true);
+        try {
+            const token = localStorage.getItem('accessToken');
+
+            const [auctionsData, productsData] = await Promise.all([
+                fetch('http://localhost:5102/api/auctions', {
+                    headers: { Authorization: `Bearer ${token}` }
+                }).then(r => r.json()),
+                fetch('http://localhost:5102/api/products', {
+                    headers: { Authorization: `Bearer ${token}` }
+                }).then(r => r.json())
+            ]);
+
+            setAuctions(auctionsData);
+            setProducts(productsData);
+        } catch (e) {
+            console.error('Overview refresh failed', e);
+        } finally {
+            setRefreshingOverview(false);
+        }
+    };
 
     // 1. Haal veilingen op bij laden en zet SignalR connection + haal servertijd op
     useEffect(() => {
+        refreshOverviewData();
         fetchAuctions();
         fetchProducts(); // Haal direct producten op voor de afbeeldingen in het overzicht
         const interval = setInterval(fetchAuctions, 5000); // Poll elke 5 sec voor nieuwe veilingen
@@ -340,7 +365,6 @@ function KoperDashboard() {
                 throw new Error(text || 'Kopen mislukt. Mogelijk is iemand je voor.');
             }
 
-            // Lokale update om lijst direct visueel bij te werken
             setAuctions(prev => prev.map(a => a.id === selectedAuction.id ? { ...a, status: 'Finished' } : a));
 
             setExpired(prev => {
@@ -359,6 +383,7 @@ function KoperDashboard() {
                     if (prev <= 1) {
                         clearInterval(countdown);
                         setSelectedAuction(null);
+                        refreshOverviewData();
                         return 0;
                     }
                     return prev - 1;
@@ -376,6 +401,14 @@ function KoperDashboard() {
         }
     };
 
+    const isAuctionSoldOut = (auctionId) => {
+        const auctionProducts = products.filter(p => p.veilingId === auctionId);
+        return (
+            auctionProducts.length > 0 &&
+            auctionProducts.every(p => p.status === 'GEKOCHT')
+        );
+    };
+
     const formatPrice = (amount) => new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount);
 
     return (
@@ -385,33 +418,58 @@ function KoperDashboard() {
                     <h1>Beschikbare Veilingen</h1>
                     <div className="auctions-grid">
                         {auctions.map(auction => {
-                            // Enkel veilingen met status 'Ongoing' zijn actief
-                            const isActive = auction.status === 'Ongoing';
-                            const isFinished = auction.status === 'Finished';
+                            const soldOut = isAuctionSoldOut(auction.id);
+                            const isOngoing = auction.status === 'Ongoing';
+                            const canJoin = isOngoing && !soldOut;
+
+                            let buttonText = 'Niet gestart';
+                            if (soldOut) buttonText = 'VERKOCHT';
+                            else if (isOngoing) buttonText = 'Deelnemen';
 
                             return (
                                 <div
                                     key={auction.id}
-                                    className={`auction-card ${isActive ? 'active' : 'disabled-auction'}`}
-                                    onClick={() => { if (isActive) setSelectedAuction(auction); }}
+                                    className={`auction-card ${canJoin ? 'active' : 'disabled-auction'}`}
+                                    onClick={() => {
+                                        if (canJoin) setSelectedAuction(auction);
+                                    }}
                                     role="button"
                                     tabIndex={0}
-                                    onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && isActive) { e.preventDefault(); setSelectedAuction(auction); } }}
+                                    onKeyDown={(e) => {
+                                        if ((e.key === 'Enter' || e.key === ' ') && canJoin) {
+                                            e.preventDefault();
+                                            setSelectedAuction(auction);
+                                        }
+                                    }}
                                 >
-                                    <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-                                        <h3 style={{margin:0}}>{auction.name}</h3>
-                                    </div>
-                                    <button className="enter-button" disabled={!isActive}>{isActive ? 'Deelnemen' : 'Niet gestart'}</button>
+                                    <h3>{auction.name}</h3>
+
+                                    <button
+                                        className={`enter-button ${soldOut ? 'sold-button' : ''}`}
+                                        disabled={!canJoin}
+                                    >
+                                        {buttonText}
+                                    </button>
                                 </div>
                             );
                         })}
-                        {auctions.length === 0 && <p>Geen actieve veilingen.</p>}
+
+                        {auctions.length === 0 && (
+                            <p>Geen veilingen gevonden.</p>
+                        )}
                     </div>
                 </div>
             ) : (
                 <div className="live-auction-view">
                     <button className="back-btn" onClick={() => setSelectedAuction(null)}>← Terug</button>
-                    <h2>{selectedAuction.name} <span className="live-badge">LIVE</span></h2>
+                    <h2>
+                        {selectedAuction.name}{' '}
+                        {isAuctionSoldOut(selectedAuction.id) ? (
+                            <span className="sold-badge">VERKOCHT</span>
+                        ) : (
+                            <span className="live-badge">LIVE</span>
+                        )}
+                    </h2>
 
                     {error && <div className="error-banner">{error}</div>}
 

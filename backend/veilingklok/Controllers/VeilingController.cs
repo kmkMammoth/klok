@@ -127,7 +127,7 @@ public class AuctionsController : ControllerBase
     }
 
     // PUT: api/Auctions/{id}
-    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester,Admin")]
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester, Admin")]
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateAuction(int id, string status)
     {
@@ -147,7 +147,7 @@ public class AuctionsController : ControllerBase
     }
 
     // DELETE: api/Auctions/{id}
-    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester,Admin")]
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester, Admin")]
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteAuction(int id)
     {

@@ -268,6 +268,15 @@
     font-weight: 700;
 }
 
+.status-badge-sold{
+    background: red;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
 .auction-products h4 {
     margin: 0 0 0.75rem 0;
     color: #463239;

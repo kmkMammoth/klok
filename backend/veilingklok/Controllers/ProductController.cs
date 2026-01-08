@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using veilingklok.Models;
 using veilingklok.Services;
-using System.Security.Claims;
 
 namespace veilingklok;
 
@@ -35,6 +34,12 @@ public class UpdateProductVeiling
 public class UpdateProductKoper
 {
     public string? koperId { get; set; }
+}
+
+public class ProductStatusResponse
+{
+    public int id { get; set; }
+    public string? status { get; set; }
 }
 
 public class ProductResponse
@@ -145,6 +150,25 @@ public class ProductsController : ControllerBase
         return Ok(response);
     }
 
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Aanvoerder, Koper, Veilingmeester")]
+    [HttpGet("{id}/status")]
+    public async Task<ActionResult<ProductStatusResponse>> GetProductStatus(int id)
+    {
+        var product = await _db.Product
+            .Where(p => p.ArtikelId == id)
+            .Select(p => new ProductStatusResponse
+            {
+                id = p.ArtikelId,
+                status = p.Status
+            })
+            .SingleOrDefaultAsync();
+
+        if (product == null)
+            return NotFound($"Product met ID {id} niet gevonden.");
+
+        return Ok(product);
+    }
+
     [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Aanvoerder")]
     [HttpPost]
     public async Task<ActionResult<ProductResponse>> AddProduct([FromBody] CreateProductRequest request)
@@ -155,11 +179,11 @@ public class ProductsController : ControllerBase
         // Validate minimumprijs is not negative
         if (request.minimumprijs.HasValue && request.minimumprijs < 0)
             return BadRequest("MinimumPrijs kan niet negatief zijn.");
-        
+
         var aanvoerderId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(aanvoerderId))
             return Unauthorized();
-        
+
         var product = new Product
         {
             Gebruiker_id = aanvoerderId,
@@ -218,11 +242,11 @@ public class ProductsController : ControllerBase
         // Validate minimumprijs is not negative
         if (request.minimumprijs.HasValue && request.minimumprijs < 0)
             return BadRequest("MinimumPrijs kan niet negatief zijn.");
-        
+
         var aanvoerderId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(aanvoerderId))
             return Unauthorized();
-        
+
         product.Gebruiker_id = aanvoerderId;
 
         if (!string.IsNullOrEmpty(request.soort))
@@ -370,6 +394,7 @@ public class ProductsController : ControllerBase
         if (success)
             return Ok(new { message = "Product succesvol gekocht!" });
 
-        return Conflict(new { message = "Kon product niet kopen. Het is mogelijk al verkocht of de veiling is gesloten." });
+        return Conflict(new
+            { message = "Kon product niet kopen. Het is mogelijk al verkocht of de veiling is gesloten." });
     }
 }
