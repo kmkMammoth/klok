@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using veilingklok;
 using veilingklok.Models;
 
@@ -39,9 +40,9 @@ namespace unittests
                     minimumprijs = p.MinimumPrijs,
                     kloklokatie = p.KlokLocatie,
                     afbeelding = p.Afbeelding,
-                        gebruiker_id = p.Gebruiker_id,
-                        startprijs = p.StartPrijs,
-                        incrementPerSecond = p.IncrementPerSecond
+                    gebruiker_id = p.Gebruiker_id,
+                    startprijs = p.StartPrijs,
+                    incrementPerSecond = p.IncrementPerSecond
                 })
                 .ToList();
 
@@ -51,7 +52,8 @@ namespace unittests
         public Task<ActionResult<ProductResponse>> GetProduct(int id)
         {
             var p = _db.Product.SingleOrDefault(prod => prod.ArtikelId == id);
-            if (p == null) return Task.FromResult<ActionResult<ProductResponse>>(new NotFoundObjectResult($"Product {id} niet gevonden"));
+            if (p == null)
+                return Task.FromResult<ActionResult<ProductResponse>>(new NotFoundObjectResult($"Product {id} niet gevonden"));
 
             var response = new ProductResponse
             {
@@ -65,6 +67,7 @@ namespace unittests
                 afbeelding = p.Afbeelding,
                 gebruiker_id = p.Gebruiker_id
             };
+
             return Task.FromResult<ActionResult<ProductResponse>>(new OkObjectResult(response));
         }
 
@@ -110,7 +113,8 @@ namespace unittests
         public Task<ActionResult> DeleteProduct(int id)
         {
             var p = _db.Product.SingleOrDefault(prod => prod.ArtikelId == id);
-            if (p == null) return Task.FromResult<ActionResult>(new NotFoundObjectResult($"Product {id} niet gevonden"));
+            if (p == null)
+                return Task.FromResult<ActionResult>(new NotFoundObjectResult($"Product {id} niet gevonden"));
 
             _db.Product.Remove(p);
             return Task.FromResult<ActionResult>(new OkResult());
@@ -119,34 +123,47 @@ namespace unittests
         public Task<ActionResult> AssignKoperToProduct(int id, UpdateProductKoper req)
         {
             var p = _db.Product.SingleOrDefault(prod => prod.ArtikelId == id);
-            if (p == null) return Task.FromResult<ActionResult>(new NotFoundObjectResult($"Product {id} niet gevonden"));
+            if (p == null)
+                return Task.FromResult<ActionResult>(new NotFoundObjectResult($"Product {id} niet gevonden"));
 
-            if (req == null || string.IsNullOrEmpty(req.koperId)) return Task.FromResult<ActionResult>(new BadRequestObjectResult("Ongeldig koperId"));
+            if (req == null || string.IsNullOrEmpty(req.koperId))
+                return Task.FromResult<ActionResult>(new BadRequestObjectResult("Ongeldig koperId"));
 
             var koper = _db.Koper.SingleOrDefault(k => k.Id == req.koperId);
-            if (koper == null) return Task.FromResult<ActionResult>(new BadRequestObjectResult($"Koper {req.koperId} niet gevonden"));
+            if (koper == null)
+                return Task.FromResult<ActionResult>(new BadRequestObjectResult($"Koper {req.koperId} niet gevonden"));
 
+            // Let op: in jouw models lijkt zowel Gebruiker_id als gebruiker_id te bestaan.
+            // In tests gebruiken we dezelfde als in je branches: gebruiker_id
             p.gebruiker_id = req.koperId;
+
             return Task.FromResult<ActionResult>(new OkResult());
         }
 
         public Task<ActionResult> AssignVeilingToProduct(int id, UpdateProductVeiling req)
         {
             var p = _db.Product.SingleOrDefault(prod => prod.ArtikelId == id);
-            if (p == null) return Task.FromResult<ActionResult>(new NotFoundObjectResult($"Product {id} niet gevonden"));
+            if (p == null)
+                return Task.FromResult<ActionResult>(new NotFoundObjectResult($"Product {id} niet gevonden"));
 
-            if (req == null) return Task.FromResult<ActionResult>(new BadRequestObjectResult("Ongeldige request"));
+            if (req == null)
+                return Task.FromResult<ActionResult>(new BadRequestObjectResult("Ongeldige request"));
 
             if (req.veilingId.HasValue)
             {
                 // don't allow assigning if product already has a veiling
-                if (p.VeilingId.HasValue) return Task.FromResult<ActionResult>(new BadRequestObjectResult("Product is al toegewezen aan een veiling"));
+                if (p.VeilingId.HasValue)
+                    return Task.FromResult<ActionResult>(new BadRequestObjectResult("Product is al toegewezen aan een veiling"));
 
                 var veiling = _db.Veiling.SingleOrDefault(v => v.VeilingId == req.veilingId.Value);
-                if (veiling == null) return Task.FromResult<ActionResult>(new BadRequestObjectResult($"Veiling {req.veilingId.Value} niet gevonden"));
+                if (veiling == null)
+                    return Task.FromResult<ActionResult>(new BadRequestObjectResult($"Veiling {req.veilingId.Value} niet gevonden"));
+
                 p.VeilingId = req.veilingId.Value;
+
                 if (req.startprijs.HasValue)
                     p.StartPrijs = req.startprijs.Value;
+
                 if (req.incrementPerSecond.HasValue)
                     p.IncrementPerSecond = req.incrementPerSecond.Value;
             }
@@ -173,28 +190,53 @@ namespace unittests
             ctx.Veiling.Add(new Veiling { VeilingId = 1 });
             return ctx;
         }
-        
+
+        // Extra test uit "andere branch" (echte controller + EF InMemory)
         [Fact]
         public async Task GetAllProducts_FilterByVeiling_ReturnsOnlyMatching()
         {
-            var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<VeilingContext>()
-                .UseInMemoryDatabase("product_filter_test")
+            // Gebruik een unieke DB-naam per test-run om flakiness te voorkomen
+            var dbName = $"product_filter_test_{Guid.NewGuid()}";
+
+            var options = new DbContextOptionsBuilder<VeilingContext>()
+                .UseInMemoryDatabase(dbName)
                 .Options;
+
             var ctx = new VeilingContext(options);
 
-            ctx.Veiling.Add(new Veiling { VeilingId = 1, Gebruiker_id = "vm1", VeilingNaam = "V1", Status = "Ongoing", StartTijd = DateTime.UtcNow, EindTijd = DateTime.UtcNow.AddHours(1) });
-            ctx.Veiling.Add(new Veiling { VeilingId = 2, Gebruiker_id = "vm1", VeilingNaam = "V2", Status = "Ongoing", StartTijd = DateTime.UtcNow, EindTijd = DateTime.UtcNow.AddHours(1) });
+            ctx.Veiling.Add(new Veiling
+            {
+                VeilingId = 1,
+                Gebruiker_id = "vm1",
+                VeilingNaam = "V1",
+                Status = "Ongoing",
+                StartTijd = DateTime.UtcNow,
+                EindTijd = DateTime.UtcNow.AddHours(1)
+            });
+
+            ctx.Veiling.Add(new Veiling
+            {
+                VeilingId = 2,
+                Gebruiker_id = "vm1",
+                VeilingNaam = "V2",
+                Status = "Ongoing",
+                StartTijd = DateTime.UtcNow,
+                EindTijd = DateTime.UtcNow.AddHours(1)
+            });
+
             ctx.Product.Add(new Product { ArtikelId = 10, Soort = "A", VeilingId = 1, Gebruiker_id = "a1" });
             ctx.Product.Add(new Product { ArtikelId = 11, Soort = "B", VeilingId = 2, Gebruiker_id = "a1" });
             ctx.Product.Add(new Product { ArtikelId = 12, Soort = "C", VeilingId = null, Gebruiker_id = "a1" });
+
             await ctx.SaveChangesAsync();
 
-            var mockMgr = new Moq.Mock<veilingklok.Services.IAuctionManager>();
+            var mockMgr = new Mock<veilingklok.Services.IAuctionManager>();
             var controller = new veilingklok.ProductsController(ctx, mockMgr.Object);
 
             var result = await controller.GetAllProducts(1);
             var ok = Assert.IsType<OkObjectResult>(result.Result);
             var list = Assert.IsType<List<ProductResponse>>(ok.Value);
+
             Assert.Single(list);
             Assert.Equal(10, list[0].id);
         }
@@ -269,8 +311,8 @@ namespace unittests
         public async Task AssignVeilingToProduct_FailsWhenAlreadyAssigned()
         {
             var ctx = GetContextWithData();
-            // ensure there is another veiling to attempt assigning
             ctx.Veiling.Add(new Veiling { VeilingId = 2 });
+
             var controller = new ProductsControllerForTest(ctx);
 
             var req1 = new UpdateProductVeiling { veilingId = 1 };
