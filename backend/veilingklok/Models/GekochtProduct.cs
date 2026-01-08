@@ -1,0 +1,21 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace veilingklok.Models;
+
+public class GekochtProduct
+{
+    [Key]
+    [Column("koper_id")]
+    public int? gebruiker_id { get; set; }
+
+    [Required, ForeignKey("Product")]
+    [Column("product_id")]
+    public int? ProductId { get; set; }
+
+    [Column("hoeveelheid")]
+    public int? Hoeveelheid { get; set; }
+
+    [Column("koopprijs", TypeName = "decimal(10,2)")]
+    public decimal? KoopPrijs { get; set; }
+}
