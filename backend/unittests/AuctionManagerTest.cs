@@ -164,5 +164,48 @@ namespace unittests
             Assert.NotNull(p.gebruiker_id);
             Assert.Equal("GEKOCHT", p.Status);
         }
+
+        [Fact]
+        public async Task TryBuyProduct_StartsNextProduct()
+        {
+            var dbName = "buy_test_start_next";
+            var ctxSeed = CreateContext(dbName);
+            ctxSeed.Veiling.Add(new Veiling { VeilingId = 1, Gebruiker_id = "vm1", VeilingNaam = "Test Veiling", Status = "Ongoing", StartTijd = DateTime.UtcNow.AddMinutes(-1), EindTijd = DateTime.UtcNow.AddMinutes(10) });
+            ctxSeed.Product.Add(new Product { ArtikelId = 1, Soort = "TestPlant", Gebruiker_id = "a1", StartPrijs = 100m, IncrementPerSecond = 0m, MinimumPrijs = 50m, StartedAtUtc = DateTime.UtcNow.AddSeconds(-2), Status = "RUNNING", VeilingId = 1 });
+            ctxSeed.Product.Add(new Product { ArtikelId = 2, Soort = "TestPlant", Gebruiker_id = "a1", StartPrijs = 100m, IncrementPerSecond = 0m, MinimumPrijs = 50m, StartedAtUtc = null, Status = "BESCHIKBAAR", VeilingId = 1 });
+            await ctxSeed.SaveChangesAsync();
+
+            var hub = CreateMockHub();
+            var scopeFactoryMock = new Mock<IServiceScopeFactory>();
+            var scopeMock = new Mock<IServiceScope>();
+            var spMock = new Mock<IServiceProvider>();
+            spMock.Setup(s => s.GetService(typeof(VeilingContext))).Returns(ctxSeed);
+            spMock.Setup(s => s.GetService(typeof(IHubContext<AuctionHub>))).Returns(hub);
+            // Setup a mock scoped IAuctionManager so we can observe that TryBuyProductAsync triggers StartNextProductAsync in the background
+            var tcs = new TaskCompletionSource<bool>();
+            var mockMgr = new Mock<IAuctionManager>();
+            mockMgr.Setup(m => m.StartNextProductAsync(1)).Returns(async () => { tcs.TrySetResult(true); await Task.CompletedTask; });
+            spMock.Setup(s => s.GetService(typeof(IAuctionManager))).Returns(mockMgr.Object);
+            scopeMock.Setup(s => s.ServiceProvider).Returns(spMock.Object);
+            scopeFactoryMock.Setup(f => f.CreateScope()).Returns(scopeMock.Object);
+
+            var mgr = new AuctionManager(ctxSeed, hub, scopeFactoryMock.Object);
+
+            var success = await mgr.TryBuyProductAsync(1, "buyer1");
+            Assert.True(success);
+
+            // Ensure background StartNextProductAsync was invoked (via our mock) within 5s
+            var completed = await Task.WhenAny(tcs.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+            Assert.Equal(tcs.Task, completed);
+
+            // Now invoke the real StartNextProductAsync to ensure it actually starts product 2 in DB
+            var realMgr = new AuctionManager(ctxSeed, hub, scopeFactoryMock.Object);
+            await realMgr.StartNextProductAsync(1);
+
+            var finalCtx = CreateContext(dbName);
+            var p2 = await finalCtx.Product.FindAsync(2);
+            Assert.NotNull(p2);
+            Assert.Equal("RUNNING", p2.Status);
+        }
     }
 }
