@@ -112,9 +112,6 @@ function AanvoerderCreateProduct() {
                 gebruikerId: formData.gebruikerId
             };
 
-            console.log('Payload being sent:', JSON.stringify(payload, null, 2));
-            console.log('Afbeelding length:', formData.afbeelding ? formData.afbeelding.length : 0);
-
             const response = await fetch('http://localhost:5102/api/products', {
                 method: 'POST',
                 headers: { 
