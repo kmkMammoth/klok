@@ -26,31 +26,6 @@ function KoperDashboard() {
     const lastStartedPayloadRef = useRef({});
     const [serverOffsetMs, setServerOffsetMs] = useState(0); // serverUtc - clientNow
 
-    // const [refreshingOverview, setRefreshingOverview] = useState(false);
-
-    // const refreshOverviewData = async () => {
-    //     setRefreshingOverview(true);
-    //     try {
-    //         const token = localStorage.getItem('accessToken');
-    //
-    //         const [auctionsData, productsData] = await Promise.all([
-    //             fetch('http://localhost:5102/api/auctions', {
-    //                 headers: { Authorization: `Bearer ${token}` }
-    //             }).then(r => r.json()),
-    //             fetch('http://localhost:5102/api/products', {
-    //                 headers: { Authorization: `Bearer ${token}` }
-    //             }).then(r => r.json())
-    //         ]);
-    //
-    //         setAuctions(auctionsData);
-    //         setProducts(productsData);
-    //     } catch (e) {
-    //         console.error('Overview refresh failed', e);
-    //     } finally {
-    //         setRefreshingOverview(false);
-    //     }
-    // };
-
     // 1. Haal veilingen op bij laden en zet SignalR connection + haal servertijd op
     useEffect(() => {
         fetchAuctions();
