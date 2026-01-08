@@ -162,7 +162,7 @@ namespace unittests
     }
 
     // --- Tests ---
-    public class ProductsControllerTests
+    public class ProductTests
     {
         private FakeVeilingContextForProducts GetContextWithData()
         {
@@ -170,20 +170,10 @@ namespace unittests
             ctx.Aanvoerder.Add(new Aanvoerder { Id = "a1" });
             ctx.Koper.Add(new Koper { Id = "k1" });
             ctx.Product.Add(new Product { ArtikelId = 1, Soort = "Plant", Gebruiker_id = "a1" });
-            ctx.Veiling.Add(new Veiling { VeilingId = 1, Gebruiker_id = "vm1", VeilingNaam = "ProductTest 1", Status = "Idle", StartTijd = DateTime.UtcNow, EindTijd = DateTime.UtcNow.AddHours(1) });
+            ctx.Veiling.Add(new Veiling { VeilingId = 1 });
             return ctx;
         }
-
-        [Fact]
-        public async Task GetAllProducts_ReturnsProducts()
-        {
-            var controller = new ProductsControllerForTest(GetContextWithData());
-            var result = await controller.GetAllProducts();
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var list = Assert.IsType<List<ProductResponse>>(okResult.Value);
-            Assert.Single(list);
-        }
-
+        
         [Fact]
         public async Task GetAllProducts_FilterByVeiling_ReturnsOnlyMatching()
         {
@@ -207,6 +197,16 @@ namespace unittests
             var list = Assert.IsType<List<ProductResponse>>(ok.Value);
             Assert.Single(list);
             Assert.Equal(10, list[0].id);
+        }
+
+        [Fact]
+        public async Task GetAllProducts_ReturnsProducts()
+        {
+            var controller = new ProductsControllerForTest(GetContextWithData());
+            var result = await controller.GetAllProducts();
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var list = Assert.IsType<List<ProductResponse>>(okResult.Value);
+            Assert.Single(list);
         }
 
         [Fact]
@@ -270,7 +270,7 @@ namespace unittests
         {
             var ctx = GetContextWithData();
             // ensure there is another veiling to attempt assigning
-            ctx.Veiling.Add(new Veiling { VeilingId = 2, Gebruiker_id = "vm1", VeilingNaam = "ProductTest 2", Status = "Idle", StartTijd = DateTime.UtcNow, EindTijd = DateTime.UtcNow.AddHours(1) });
+            ctx.Veiling.Add(new Veiling { VeilingId = 2 });
             var controller = new ProductsControllerForTest(ctx);
 
             var req1 = new UpdateProductVeiling { veilingId = 1 };
