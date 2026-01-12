@@ -62,7 +62,7 @@ public class GekochtProductControllerTests : IDisposable
             ProductId = 1,
             Hoeveelheid = 10,
             KoopPrijs = 25,
-            gebruiker_id = 1
+            GebruikerId = "1"
         });
         context.SaveChanges();
 
@@ -84,7 +84,7 @@ public class GekochtProductControllerTests : IDisposable
             ProductId = 2,
             Hoeveelheid = 5,
             KoopPrijs = 12,
-            gebruiker_id = 1
+            GebruikerId = "1"
         });
         context.SaveChanges();
 
@@ -152,7 +152,7 @@ public class GekochtProductControllerTests : IDisposable
             ProductId = 6,
             Hoeveelheid = 1,
             KoopPrijs = 5,
-            gebruiker_id = 1
+            GebruikerId = "1"
         });
         context.SaveChanges();
 

@@ -56,7 +56,8 @@ public class GekochtProductController : ControllerBase
         if (gebruikerId == null)
             return Unauthorized();
 
-        model.gebruiker_id = int.Parse(gebruikerId);
+        // Sla de string-gebruiker-id (Identity user id) op in het GekochtProduct
+        model.GebruikerId = gebruikerId;
 
         _db.GekochtProduct.Add(model);
         await _db.SaveChangesAsync();

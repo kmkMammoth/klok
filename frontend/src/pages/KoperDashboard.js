@@ -10,6 +10,7 @@ function KoperDashboard() {
     const [price, setPrice] = useState(0);
     const [error, setError] = useState('');
     const [buying, setBuying] = useState(false);
+    const [buyQuantity, setBuyQuantity] = useState(1);
     const [expired, setExpired] = useState(new Set());
     const [soldMessage, setSoldMessage] = useState('');
     const [redirectTimer, setRedirectTimer] = useState(null);
@@ -380,13 +381,20 @@ function KoperDashboard() {
         setError('');
 
         try {
-            // POST request om te kopen. De backend haalt de Koper ID uit het token.
-            const response = await fetch(`http://localhost:5102/api/products/${currentProduct.id}/buy`, {
+            // POST naar GekochtProduct API met hoeveelheid en koopprijs
+            const payload = {
+                ProductId: currentProduct.id,
+                Hoeveelheid: parseInt(buyQuantity, 10) || 1,
+                KoopPrijs: parseFloat(price?.toFixed(2)) || 0
+            };
+
+            const response = await fetch('http://localhost:5102/api/GekochtProduct', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${localStorage.getItem('accessToken')}`
-                }
+                },
+                body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
@@ -435,7 +443,7 @@ function KoperDashboard() {
                         {auctions.map(auction => {
                             const soldOut = isAuctionSoldOut(auction.id);
                             const isOngoing = auction.status === 'Ongoing';
-                            const canJoin = isOngoing && !soldOut && !auction.status;
+                            const canJoin = isOngoing && !soldOut;
 
                             let buttonText = 'Niet gestart';
                             
@@ -548,10 +556,21 @@ function KoperDashboard() {
                             <button
                                 className="buy-btn-large"
                                 onClick={handleBuy}
-                                disabled={!currentProduct || buying || currentProduct?.status !== 'RUNNING'}
+                                disabled={!currentProduct || buying || currentProduct?.status !== 'RUNNING' || (parseInt(buyQuantity, 10) <= 0)}
                             >
                                 {buying ? 'BEZIG...' : 'KOOP NU'}
                             </button>
+                            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <label style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Aantal te kopen</label>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={currentProduct?.hoeveelheid ?? currentProduct?.hoeveelheid ?? undefined}
+                                    value={buyQuantity}
+                                    onChange={(e) => setBuyQuantity(e.target.value)}
+                                    style={{ width: '80px', textAlign: 'center', padding: '4px' }}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

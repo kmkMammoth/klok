@@ -7,7 +7,7 @@ public class GekochtProduct
 {
     [Key]
     [Column("koper_id")]
-    public int? gebruiker_id { get; set; }
+    public string? GebruikerId { get; set; }
 
     [Required, ForeignKey("Product")]
     [Column("product_id")]
