@@ -13,6 +13,16 @@ public class GekochtProductCreateDto
     public decimal KoopPrijs { get; set; }
 }
 
+public class GekochtProductResponseDto
+{
+    public int Id { get; set; }
+    public string GebruikerId { get; set; }
+    public int ProductId { get; set; }
+    public int Hoeveelheid { get; set; }
+    public decimal KoopPrijs { get; set; }
+    public DateTime KoopDatum { get; set; }
+}
+
 
 [ApiController]
 [Route("api/[controller]")]

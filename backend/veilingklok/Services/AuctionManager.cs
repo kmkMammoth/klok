@@ -186,7 +186,8 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
                     ProductId = product.ArtikelId,
                     GebruikerId = buyerId,
                     Hoeveelheid = hoeveelheid,
-                    KoopPrijs = offeredPrice ?? newPrice
+                    KoopPrijs = offeredPrice ?? newPrice,
+                    KoopDatum = DateTime.UtcNow
                 };
 
                 _db.GekochtProduct.Add(gekocht);

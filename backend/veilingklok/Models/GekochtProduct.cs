@@ -22,4 +22,7 @@ public class GekochtProduct
 
     [Column("koopprijs", TypeName = "decimal(10,2)")]
     public decimal? KoopPrijs { get; set; }
+
+    [Column("KoopDatum")]
+    public DateTime? KoopDatum { get; set; }
 }

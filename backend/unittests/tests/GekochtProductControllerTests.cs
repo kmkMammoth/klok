@@ -68,7 +68,7 @@ public class GekochtProductControllerTests : IDisposable
         public async Task<bool> TryBuyProductAsync(int productId, string buyerId, int hoeveelheid = 1, decimal? offeredPrice = null)
         {
             using var ctx = _ctxFactory();
-            var gp = new GekochtProduct { ProductId = productId, GebruikerId = buyerId, Hoeveelheid = hoeveelheid, KoopPrijs = offeredPrice ?? 0m };
+            var gp = new GekochtProduct { ProductId = productId, GebruikerId = buyerId, Hoeveelheid = hoeveelheid, KoopPrijs = offeredPrice ?? 0m, KoopDatum = DateTime.UtcNow };
             ctx.GekochtProduct.Add(gp);
             await ctx.SaveChangesAsync();
             return true;
