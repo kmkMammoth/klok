@@ -31,6 +31,28 @@ function KoperDashboard() {
     const [nextProduct, setNextProduct] = useState(null);
     const [detailProduct, setDetailProduct] = useState(null);
 
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                // 1. Sluit bovenste modal (detailProduct)
+                if (detailProduct) {
+                    setDetailProduct(null);
+                    return;
+                }
+
+                // 2. Als detailProduct niet open, sluit live veiling (back)
+                if (selectedAuction) {
+                    setSelectedAuction(null);
+                    return;
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [detailProduct, selectedAuction]);
+
+
     // 1. Haal veilingen op bij laden en zet SignalR connection + haal servertijd op
     useEffect(() => {
         fetchAuctions();
