@@ -25,9 +25,23 @@ public class GekochtProductController : ControllerBase
         return Ok(await _db.GekochtProduct.ToListAsync());
     }
 
-    // GET: api/GekochtProduct/{productId}
+    // GET: api/GekochtProduct/{id}
     [Authorize(AuthenticationSchemes = "Identity.Bearer")]
-    [HttpGet("{productId}")]
+    [HttpGet("{id}")]
+    public async Task<ActionResult<GekochtProduct>> GetById(int id)
+    {
+        var item = await _db.GekochtProduct
+            .SingleOrDefaultAsync(g => g.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        return Ok(item);
+    }
+
+    // GET: api/GekochtProduct/product/{productId}
+    [Authorize(AuthenticationSchemes = "Identity.Bearer")]
+    [HttpGet("product/{productId}")]
     public async Task<ActionResult<GekochtProduct>> GetByProductId(int productId)
     {
         var item = await _db.GekochtProduct
@@ -65,13 +79,13 @@ public class GekochtProductController : ControllerBase
         return Ok();
     }
 
-    // DELETE: api/GekochtProduct/{productId}
+    // DELETE: api/GekochtProduct/{id}
     [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin")]
-    [HttpDelete("{productId}")]
-    public async Task<ActionResult> Delete(int productId)
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> Delete(int id)
     {
         var item = await _db.GekochtProduct
-            .SingleOrDefaultAsync(g => g.ProductId == productId);
+            .SingleOrDefaultAsync(g => g.Id == id);
 
         if (item == null)
             return NotFound();

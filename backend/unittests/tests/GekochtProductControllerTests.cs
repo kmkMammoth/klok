@@ -59,6 +59,7 @@ public class GekochtProductControllerTests : IDisposable
         using var context = CreateContext();
         context.GekochtProduct.Add(new GekochtProduct
         {
+            Id = 1,
             ProductId = 1,
             Hoeveelheid = 10,
             KoopPrijs = 25,
@@ -81,6 +82,7 @@ public class GekochtProductControllerTests : IDisposable
         using var context = CreateContext();
         context.GekochtProduct.Add(new GekochtProduct
         {
+            Id = 2,
             ProductId = 2,
             Hoeveelheid = 5,
             KoopPrijs = 12,
@@ -90,11 +92,11 @@ public class GekochtProductControllerTests : IDisposable
 
         var controller = CreateController("1");
 
-        var result = await controller.GetByProductId(2);
+        var result = await controller.GetById(2);
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var item = Assert.IsType<GekochtProduct>(ok.Value);
 
-        Assert.Equal(2, item.ProductId);
+        Assert.Equal(2, item.Id);
     }
 
     [Fact]
@@ -102,7 +104,40 @@ public class GekochtProductControllerTests : IDisposable
     {
         var controller = CreateController("1");
 
-        var result = await controller.GetByProductId(999);
+        var result = await controller.GetById(999);
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetByProductIdRoute_Existing_ReturnsOk()
+    {
+        using var context = CreateContext();
+        context.GekochtProduct.Add(new GekochtProduct
+        {
+            Id = 10,
+            ProductId = 10,
+            Hoeveelheid = 2,
+            KoopPrijs = 7,
+            GebruikerId = "1"
+        });
+        context.SaveChanges();
+
+        var controller = CreateController("1");
+
+        var result = await controller.GetByProductId(10);
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var item = Assert.IsType<GekochtProduct>(ok.Value);
+
+        Assert.Equal(10, item.ProductId);
+    }
+
+    [Fact]
+    public async Task GetByProductIdRoute_NotExisting_ReturnsNotFound()
+    {
+        var controller = CreateController("1");
+
+        var result = await controller.GetByProductId(9999);
 
         Assert.IsType<NotFoundResult>(result.Result);
     }
@@ -149,6 +184,7 @@ public class GekochtProductControllerTests : IDisposable
         using var context = CreateContext();
         context.GekochtProduct.Add(new GekochtProduct
         {
+            Id = 6,
             ProductId = 6,
             Hoeveelheid = 1,
             KoopPrijs = 5,

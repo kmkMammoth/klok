@@ -6,6 +6,10 @@ namespace veilingklok.Models;
 public class GekochtProduct
 {
     [Key]
+    [Column("Id")]
+    public int? Id { get; set; }
+
+    [Required, ForeignKey("Gebruiker")]
     [Column("koper_id")]
     public string? GebruikerId { get; set; }
 
