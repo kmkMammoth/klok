@@ -195,7 +195,7 @@ namespace unittests;
             context.Product.Add(new Product { ArtikelId = 1, Soort = "Roos", VeilingId = 1, Gebruiker_id = "a1" });
             context.SaveChanges();
 
-            _auctionManagerMock.Setup(m => m.TryBuyProductAsync(1, "k1")).ReturnsAsync(true);
+            _auctionManagerMock.Setup(m => m.TryBuyProductAsync(1, "k1", It.IsAny<int>(), It.IsAny<decimal?>())).ReturnsAsync(true);
 
             var controller = CreateController("k1");
             var result = await controller.BuyProduct(1);

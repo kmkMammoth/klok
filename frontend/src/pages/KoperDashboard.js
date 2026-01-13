@@ -116,6 +116,24 @@ function KoperDashboard() {
                     fetchProducts(selectedAuctionRef.current?.id);
                 });
 
+                conn.on('ProductUpdated', async (payload) => {
+                    // payload: { productId, remaining }
+                    try {
+                        if (!payload || !payload.productId) return;
+                        // Refresh the single product to get full details if possible
+                        const prod = await fetchProductById(payload.productId);
+                        if (prod) {
+                            setProducts(prev => prev.map(p => (p.id === prod.id ? prod : p)));
+                            setCurrentProduct(prev => (prev && prev.id === prod.id) ? { ...prev, hoeveelheid: prod.hoeveelheid, status: prod.status } : prev);
+                        } else {
+                            // fallback to applying remaining if fetch failed
+                            setCurrentProduct(prev => (prev && prev.id === payload.productId) ? { ...prev, hoeveelheid: payload.remaining } : prev);
+                        }
+                    } catch (e) {
+                        console.error('ProductUpdated handling failed', e);
+                    }
+                });
+
                 conn.on('AuctionEnded', (payload) => {
                     fetchAuctions();
                     fetchProducts(selectedAuction?.id);
@@ -402,15 +420,24 @@ function KoperDashboard() {
                 throw new Error(text || 'Kopen mislukt. Mogelijk is iemand je voor.');
             }
 
-            // Optimistically update UI: mark current product as expired and clear current product
-            setExpired(prev => {
-                const next = new Set(prev);
-                next.add(currentProduct.id);
-                return next;
-            });
-            setCurrentProduct(null);
+            // Refresh the product to get updated hoeveelheid/status instead of clearing current product
+            const refreshed = await fetchProductById(currentProduct.id);
+            if (refreshed) {
+                // If product is fully sold or marked GEKOCHT, mark expired and clear current product
+                if ((refreshed.hoeveelheid ?? 0) <= 0 || refreshed.status === 'GEKOCHT') {
+                    setExpired(prev => {
+                        const next = new Set(prev);
+                        next.add(refreshed.id);
+                        return next;
+                    });
+                    setCurrentProduct(null);
+                } else {
+                    // Update current product with remaining quantity
+                    setCurrentProduct(refreshed);
+                }
+            }
 
-            // Trigger background refresh but don't block UI on it
+            // Trigger background refresh of product list
             fetchProducts(selectedAuction.id).catch(() => {});
         } catch (err) {
             setError(err.message);

@@ -32,25 +32,47 @@ public class GekochtProductControllerTests : IDisposable
 
     private VeilingContext CreateContext() => new VeilingContext(_contextOptions);
 
-    private GekochtProductController CreateController(string? userId = null)
+    private GekochtProductController CreateController(string userId, string? role = null)
     {
         var context = CreateContext();
-        var controller = new GekochtProductController(context);
+        // Create a small stub auction manager that will insert a GekochtProduct into the same in-memory DB
+        var auctionManager = new StubAuctionManager(() => CreateContext());
+        var controller = new GekochtProductController(context, auctionManager);
 
-        if (!string.IsNullOrEmpty(userId))
+        var claims = new List<Claim>
         {
-            var user = new ClaimsPrincipal(new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, userId)
-            }, "mock"));
+            new Claim(ClaimTypes.NameIdentifier, userId)
+        };
 
-            controller.ControllerContext = new ControllerContext
-            {
-                HttpContext = new DefaultHttpContext { User = user }
-            };
+        if (!string.IsNullOrEmpty(role))
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
+        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, "mock"));
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = user }
+        };
+
         return controller;
+    }
+
+    private class StubAuctionManager : veilingklok.Services.IAuctionManager
+    {
+        private readonly Func<VeilingContext> _ctxFactory;
+        public StubAuctionManager(Func<VeilingContext> ctxFactory) { _ctxFactory = ctxFactory; }
+        public Task StartAuctionAsync(int veilingId) => Task.CompletedTask;
+        public Task StartNextProductAsync(int veilingId) => Task.CompletedTask;
+        public async Task<bool> TryBuyProductAsync(int productId, string buyerId, int hoeveelheid = 1, decimal? offeredPrice = null)
+        {
+            using var ctx = _ctxFactory();
+            var gp = new GekochtProduct { ProductId = productId, GebruikerId = buyerId, Hoeveelheid = hoeveelheid, KoopPrijs = offeredPrice ?? 0m };
+            ctx.GekochtProduct.Add(gp);
+            await ctx.SaveChangesAsync();
+            return true;
+        }
     }
 
     [Fact]
@@ -77,7 +99,7 @@ public class GekochtProductControllerTests : IDisposable
     }
 
     [Fact]
-    public async Task GetByProductId_Existing_ReturnsOk()
+    public async Task GetById_Existing_ReturnsOk()
     {
         using var context = CreateContext();
         context.GekochtProduct.Add(new GekochtProduct
@@ -100,7 +122,7 @@ public class GekochtProductControllerTests : IDisposable
     }
 
     [Fact]
-    public async Task GetByProductId_NotExisting_ReturnsNotFound()
+    public async Task GetById_NotExisting_ReturnsNotFound()
     {
         var controller = CreateController("1");
 
@@ -110,13 +132,13 @@ public class GekochtProductControllerTests : IDisposable
     }
 
     [Fact]
-    public async Task GetByProductIdRoute_Existing_ReturnsOk()
+    public async Task GetByProductId_Existing_ReturnsOk()
     {
         using var context = CreateContext();
         context.GekochtProduct.Add(new GekochtProduct
         {
             Id = 10,
-            ProductId = 10,
+            ProductId = 99,
             Hoeveelheid = 2,
             KoopPrijs = 7,
             GebruikerId = "1"
@@ -125,15 +147,15 @@ public class GekochtProductControllerTests : IDisposable
 
         var controller = CreateController("1");
 
-        var result = await controller.GetByProductId(10);
+        var result = await controller.GetByProductId(99);
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var item = Assert.IsType<GekochtProduct>(ok.Value);
 
-        Assert.Equal(10, item.ProductId);
+        Assert.Equal(99, item.ProductId);
     }
 
     [Fact]
-    public async Task GetByProductIdRoute_NotExisting_ReturnsNotFound()
+    public async Task GetByProductId_NotExisting_ReturnsNotFound()
     {
         var controller = CreateController("1");
 
@@ -147,14 +169,14 @@ public class GekochtProductControllerTests : IDisposable
     {
         var controller = CreateController("1");
 
-        var model = new GekochtProduct
+        var dto = new GekochtProductCreateDto
         {
             ProductId = 3,
             Hoeveelheid = 4,
             KoopPrijs = 40
         };
 
-        var result = await controller.Create(model);
+        var result = await controller.Create(dto);
 
         Assert.IsType<OkResult>(result);
 
@@ -163,23 +185,7 @@ public class GekochtProductControllerTests : IDisposable
     }
 
     [Fact]
-    public async Task Create_MissingFields_ReturnsBadRequest()
-    {
-        var controller = CreateController("1");
-
-        var model = new GekochtProduct
-        {
-            ProductId = 4
-        };
-
-        var result = await controller.Create(model);
-
-        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Contains("verplicht", badRequest.Value!.ToString());
-    }
-
-    [Fact]
-    public async Task Delete_Existing_ReturnsOk()
+    public async Task Delete_Existing_Admin_ReturnsOk()
     {
         using var context = CreateContext();
         context.GekochtProduct.Add(new GekochtProduct
@@ -192,7 +198,7 @@ public class GekochtProductControllerTests : IDisposable
         });
         context.SaveChanges();
 
-        var controller = CreateController("1");
+        var controller = CreateController("admin1", role: "Admin");
 
         var result = await controller.Delete(6);
 
@@ -205,7 +211,7 @@ public class GekochtProductControllerTests : IDisposable
     [Fact]
     public async Task Delete_NotExisting_ReturnsNotFound()
     {
-        var controller = CreateController("1");
+        var controller = CreateController("admin1", role: "Admin");
 
         var result = await controller.Delete(404);
 

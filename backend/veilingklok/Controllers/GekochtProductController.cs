@@ -6,15 +6,25 @@ using veilingklok.Models;
 
 namespace veilingklok;
 
+public class GekochtProductCreateDto
+{
+    public int ProductId { get; set; }
+    public int Hoeveelheid { get; set; }
+    public decimal KoopPrijs { get; set; }
+}
+
+
 [ApiController]
 [Route("api/[controller]")]
 public class GekochtProductController : ControllerBase
 {
     private readonly VeilingContext _db;
+    private readonly veilingklok.Services.IAuctionManager _auctionManager;
 
-    public GekochtProductController(VeilingContext db)
+    public GekochtProductController(VeilingContext db, veilingklok.Services.IAuctionManager auctionManager)
     {
         _db = db;
+        _auctionManager = auctionManager;
     }
 
     // GET: api/GekochtProduct
@@ -54,30 +64,22 @@ public class GekochtProductController : ControllerBase
     }
 
     // POST: api/GekochtProduct
-    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Koper, Admin")]
+    [Authorize(AuthenticationSchemes = "Identity.Bearer")]
     [HttpPost]
-    public async Task<ActionResult> Create([FromBody] GekochtProduct model)
+    public async Task<ActionResult> Create([FromBody] GekochtProductCreateDto dto)
     {
-        if (model == null ||
-            model.ProductId == null ||
-            model.Hoeveelheid == null ||
-            model.KoopPrijs == null)
-        {
-            return BadRequest("Alle velden zijn verplicht.");
-        }
-
         var gebruikerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (gebruikerId == null)
-            return Unauthorized();
+            return Unauthorized("Gebruiker niet gevonden.");
 
-        // Sla de string-gebruiker-id (Identity user id) op in het GekochtProduct
-        model.GebruikerId = gebruikerId;
-
-        _db.GekochtProduct.Add(model);
-        await _db.SaveChangesAsync();
+        // Delegate buying logic to AuctionManager which will create GekochtProduct, decrement stock and broadcast
+        var success = await _auctionManager.TryBuyProductAsync(dto.ProductId, gebruikerId, dto.Hoeveelheid <= 0 ? 1 : dto.Hoeveelheid, dto.KoopPrijs);
+        if (!success)
+            return BadRequest("Kopen mislukt: mogelijk onvoldoende voorraad, concurrentie of veiling gesloten.");
 
         return Ok();
     }
+
 
     // DELETE: api/GekochtProduct/{id}
     [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin")]
