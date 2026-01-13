@@ -525,12 +525,21 @@ function KoperDashboard() {
                 <div className="live-auction-view" style={{ position: 'relative' }}>
                     {nextProduct && (
                         <div className="next-product-overlay" role="button" tabIndex={0} onClick={() => setDetailProduct(nextProduct)} onKeyDown={(e) => { if (e.key === 'Enter') setDetailProduct(nextProduct); }}>
-                            <div className="img-container tiny">
-                                {nextProduct.afbeelding ? <img src={nextProduct.afbeelding} alt={nextProduct.soort} /> : <div className="placeholder">Geen afbeelding</div>}
+                            <div className="overlay-title-info">
+                                <strong>Volgend product:</strong>
                             </div>
-                            <div className="overlay-info">
-                                <strong>{nextProduct.soort}</strong>
-                                <div className="auction-badge">#{nextProduct.id}</div>
+                            <div className="overlay-content">
+                                <div className="img-container tiny">
+                                    {nextProduct.afbeelding
+                                        ? <img src={nextProduct.afbeelding} alt={nextProduct.soort} />
+                                        : <div className="placeholder">Geen afbeelding</div>
+                                    }
+                                </div>
+
+                                <div className="overlay-info">
+                                    <strong>{nextProduct.soort}</strong>
+                                    <div className="auction-badge">#{nextProduct.id}</div>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -609,8 +618,8 @@ function KoperDashboard() {
             )}
 
             {detailProduct && (
-                <div className="modal-next-product-overlay" onClick={() => setDetailProduct(null)}>
-                    <div className="modal-next-product-box" role="dialog" onClick={(e) => e.stopPropagation()}>
+                <div className="product-modal" onClick={() => setDetailProduct(null)}>
+                    <div className="modal-box" role="dialog" onClick={(e) => e.stopPropagation()}>
                         <h3>Product: {detailProduct.soort} <span className="auction-badge">#{detailProduct.id}</span></h3>
                         <div className="img-container">
                             {detailProduct.afbeelding ? <img src={detailProduct.afbeelding} alt={detailProduct.soort} /> : <div className="placeholder">Geen afbeelding</div>}

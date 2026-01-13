@@ -145,7 +145,7 @@
 
 .img-container {
     height: 300px;
-    background: #eee;
+    background: #ffffff;
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
@@ -247,26 +247,14 @@
     width: 92%;
     box-shadow: 0 8px 30px rgba(0,0,0,0.25);
 }
-.modal-next-product-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    /* background: rgba(0,0,0,0.45); */
-    background:transparent;
+.product-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(70, 50, 57, 0.8);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
-}
-.modal-next-product-box {
-    background: #fff;
-    padding: 1.25rem;
-    border-radius: 8px;
-    max-width: 520px;
-    width: 92%;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    z-index: 1100;
 }
 .preview-product-card {
     cursor: pointer;
@@ -300,12 +288,30 @@
     border-radius: 8px;
     padding: 10px;
     display: flex;
-    gap: 10px;
-    align-items: center;
+    flex-direction: column; /* titel boven, inhoud eronder */
+    gap: 8px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.12);
     cursor: pointer;
     z-index: 10;
 }
+
+/* Titel bovenaan */
+.next-product-overlay .overlay-title-info {
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #2d2d2d;
+}
+
+/* Rij met afbeelding + info */
+.next-product-overlay .overlay-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Afbeelding links */
 .next-product-overlay .img-container.tiny {
     height: 70px;
     width: 70px;
@@ -314,15 +320,25 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f8f8f8;
+    background: #ffffff;
+    flex-shrink: 0; /* voorkomt dat hij kleiner wordt */
 }
+
 .next-product-overlay .img-container.tiny img {
     max-width: 100%;
     max-height: 100%;
 }
+
+/* Info rechts */
 .next-product-overlay .overlay-info {
     display: flex;
     flex-direction: column;
     justify-content: center;
     font-size: 0.95rem;
+}
+
+.next-product-overlay .overlay-info .auction-badge {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #ffffff;
 }
