@@ -26,6 +26,16 @@ function KoperDashboard() {
     const lastStartedPayloadRef = useRef({});
     const [serverOffsetMs, setServerOffsetMs] = useState(0); // serverUtc - clientNow
 
+    // Preview modal state: show a popup when clicking an auction to preview next product
+    const [previewModalAuction, setPreviewModalAuction] = useState(null);
+    const [previewProduct, setPreviewProduct] = useState(null);
+    const previewExpiredRef = useRef(new Set());
+    const modalIntervalRef = useRef(null);
+
+    // Next product overlay (on live auction view) and detail modal
+    const [nextProduct, setNextProduct] = useState(null);
+    const [detailProduct, setDetailProduct] = useState(null);
+
     // 1. Haal veilingen op bij laden en zet SignalR connection + haal servertijd op
     useEffect(() => {
         fetchAuctions();
@@ -92,6 +102,11 @@ function KoperDashboard() {
                                 const info = { time: new Date().toISOString(), productId: prod.id, startPrice: prodStart, minPrice: prodMin, increment: prod.incrementPerSecond ?? prod.IncrementPerSecond, elapsedSeconds: 0, payload: payload };
                                 /* setDebugInfo(info);
                                 console.error('ProductStarted: product record has start<=min', info); */
+                            }
+
+                            // refresh product list for the selected auction so derived UI (next product overlay) updates quickly
+                            if (selectedAuctionRef.current) {
+                                fetchProducts(selectedAuctionRef.current.id).catch(() => {});
                             }
 
                             return;
@@ -196,6 +211,91 @@ function KoperDashboard() {
         };
     }, [selectedAuction]);
 
+    // Preview modal: open popup to show next product for a non-selected auction and keep it realtime-updated
+    useEffect(() => {
+        if (!previewModalAuction) return;
+        let active = true;
+        previewExpiredRef.current = new Set();
+
+        const computeAndSetPreview = async () => {
+            const data = await fetchProducts(previewModalAuction.id);
+            if (!data) {
+                if (active) setPreviewProduct(null);
+                return;
+            }
+
+            const auctionProducts = data.filter(p => (p.veilingId === previewModalAuction.id || p.veiling_id === previewModalAuction.id));
+
+            // prefer running product
+            const running = auctionProducts.filter(p => (p.status === 'RUNNING' || p.Status === 'RUNNING' || p.startedAtUtc) && !previewExpiredRef.current.has(p.id));
+            if (running.length > 0) {
+                running.sort((a,b) => a.id - b.id);
+                if (active) setPreviewProduct(running[0]);
+                return;
+            }
+
+            const unsold = auctionProducts
+                .filter(p => !p.koperId && !p.koper_id && !p.gebruikerIdKoper)
+                .filter(p => !previewExpiredRef.current.has(p.id));
+            if (unsold.length > 0) {
+                unsold.sort((a,b) => a.id - b.id);
+                if (active) setPreviewProduct(unsold[0]);
+                return;
+            }
+
+            if (active) setPreviewProduct(null);
+        };
+
+        const conn = connectionRef.current;
+        const onProdStarted = async (payload) => {
+            if (payload.auctionId !== previewModalAuction.id) return;
+            const prod = await fetchProductById(payload.productId);
+            if (active && prod) setPreviewProduct({...prod, status: 'RUNNING'});
+        };
+        const onProdSold = (payload) => {
+            if (payload.auctionId !== previewModalAuction.id) return;
+            previewExpiredRef.current.add(payload.productId);
+            // refresh list
+            computeAndSetPreview().catch(() => {});
+        };
+        const onAuctionStarted = (payload) => {
+            if (payload.auctionId !== previewModalAuction.id) return;
+            computeAndSetPreview().catch(() => {});
+        };
+
+        computeAndSetPreview().catch(() => {});
+
+        if (conn && conn.state === signalR.HubConnectionState.Connected) {
+            conn.invoke('JoinAuction', previewModalAuction.id.toString()).catch(() => {});
+            conn.on('ProductStarted', onProdStarted);
+            conn.on('ProductSold', onProdSold);
+            conn.on('AuctionStarted', onAuctionStarted);
+        }
+
+        return () => {
+            active = false;
+            if (conn) {
+                conn.off('ProductStarted', onProdStarted);
+                conn.off('ProductSold', onProdSold);
+                conn.off('AuctionStarted', onAuctionStarted);
+                if (conn.state === signalR.HubConnectionState.Connected) {
+                    conn.invoke('LeaveAuction', previewModalAuction.id.toString()).catch(() => {});
+                }
+            }
+            setPreviewProduct(null);
+        };
+    }, [previewModalAuction]);
+
+    // Close preview modal with ESC and cleanup
+    useEffect(() => {
+        if (!previewModalAuction) return;
+        const onKeyDown = (e) => {
+            if (e.key === 'Escape') setPreviewModalAuction(null);
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [previewModalAuction]);
+
     // 3. Bepaal wat het huidige product is (voorkeur voor een RUNNING product met startedAtUtc)
     // We voorkomen dat een recent ProductStarted event overschreven wordt door een latere products refresh.
     useEffect(() => {
@@ -248,6 +348,35 @@ function KoperDashboard() {
             setPrice(0);
         }
     }, [products, selectedAuction, expired, currentProduct]);
+
+    // Compute next product for overlay: prefer the next unsold product after the current one
+    useEffect(() => {
+        if (!selectedAuction) {
+            setNextProduct(null);
+            return;
+        }
+
+        const auctionProducts = products
+            .filter(p => (p.veilingId === selectedAuction.id || p.veiling_id === selectedAuction.id))
+            .sort((a, b) => a.id - b.id);
+
+        const unsold = auctionProducts
+            .filter(p => !p.koperId && !p.koper_id && !p.gebruikerIdKoper)
+            .filter(p => !expired.has(p.id))
+            .filter(p => (p.status !== 'VERWORPEN' && p.status !== 'GEKOCHT'));
+
+        if (unsold.length === 0) {
+            setNextProduct(null);
+            return;
+        }
+
+        if (currentProduct && currentProduct.id) {
+            const after = unsold.filter(p => p.id > currentProduct.id);
+            setNextProduct(after.length ? after[0] : unsold[0]);
+        } else {
+            setNextProduct(unsold[0]);
+        }
+    }, [products, currentProduct, expired, selectedAuction]);
 
     // 4. De Klok (Prijs daling) — bereken op basis van server-starttijd + client offset
     const fetchedProductDetailsRef = useRef(new Set());
@@ -435,7 +564,7 @@ function KoperDashboard() {
                         {auctions.map(auction => {
                             const soldOut = isAuctionSoldOut(auction.id);
                             const isOngoing = auction.status === 'Ongoing';
-                            const canJoin = isOngoing && !soldOut && !auction.status;
+                            const canJoin = isOngoing && !soldOut;
 
                             let buttonText = 'Niet gestart';
                             
@@ -453,14 +582,14 @@ function KoperDashboard() {
                                     key={auction.id}
                                     className={`auction-card ${canJoin ? 'active' : 'disabled-auction'}`}
                                     onClick={() => {
-                                        if (canJoin) setSelectedAuction(auction);
+                                        if (canJoin) setPreviewModalAuction(auction);
                                     }}
                                     role="button"
                                     tabIndex={0}
                                     onKeyDown={(e) => {
                                         if ((e.key === 'Enter' || e.key === ' ') && canJoin) {
                                             e.preventDefault();
-                                            setSelectedAuction(auction);
+                                            setPreviewModalAuction(auction);
                                         }
                                     }}
                                 >
@@ -480,9 +609,21 @@ function KoperDashboard() {
                             <p>Geen veilingen gevonden.</p>
                         )}
                     </div>
+
                 </div>
             ) : (
-                <div className="live-auction-view">
+                <div className="live-auction-view" style={{ position: 'relative' }}>
+                    {nextProduct && (
+                        <div className="next-product-overlay" role="button" tabIndex={0} onClick={() => setDetailProduct(nextProduct)} onKeyDown={(e) => { if (e.key === 'Enter') setDetailProduct(nextProduct); }}>
+                            <div className="img-container tiny">
+                                {nextProduct.afbeelding ? <img src={nextProduct.afbeelding} alt={nextProduct.soort} /> : <div className="placeholder">Geen afbeelding</div>}
+                            </div>
+                            <div className="overlay-info">
+                                <strong>{nextProduct.soort}</strong>
+                                <div className="auction-badge">#{nextProduct.id}</div>
+                            </div>
+                        </div>
+                    )}
                     <button className="back-btn" onClick={() => setSelectedAuction(null)}>← Terug</button>
                     <h2>
                         {selectedAuction.name}{' '}
@@ -556,6 +697,58 @@ function KoperDashboard() {
                     </div>
                 </div>
             )}
+        {/* Preview modal (rendered at root to avoid nested JSX issues) */}
+        {previewModalAuction && (
+            <div className="modal-overlay" onClick={() => setPreviewModalAuction(null)}>
+                <div className="modal-box" role="dialog" onClick={(e) => e.stopPropagation()}>
+                    <h3>Volgend product in: {previewModalAuction.name}</h3>
+                    {previewProduct ? (
+                        <div className="preview-product-card" role="button" tabIndex={0} onClick={async () => {
+                            setSelectedAuction(previewModalAuction);
+                            setPreviewModalAuction(null);
+                            const prod = await fetchProductById(previewProduct.id);
+                            if (prod) setCurrentProduct({ ...prod, status: prod.status || 'RUNNING' });
+                        }} onKeyDown={(e) => { if (e.key === 'Enter') { setSelectedAuction(previewModalAuction); setPreviewModalAuction(null); fetchProductById(previewProduct.id).then(prod => { if (prod) setCurrentProduct({ ...prod, status: prod.status || 'RUNNING' }); }); } }}>
+                            <div className="img-container small">
+                                {previewProduct.afbeelding ? <img src={previewProduct.afbeelding} alt={previewProduct.soort} /> : <div className="placeholder">Geen afbeelding</div>}
+                            </div>
+                            <h4>{previewProduct.soort} <span className="auction-badge">#{previewProduct.id}</span></h4>
+                            <div className="product-specs small">
+                                <div className="spec-row"><strong>Aantal:</strong> <span>{previewProduct.hoeveelheid}</span></div>
+                                <div className="spec-row"><strong>Potmaat:</strong> <span>{previewProduct.potmaat}</span></div>
+                            </div>
+                            <div style={{marginTop:'12px'}}><button className="enter-button" onClick={(e) => { e.stopPropagation(); setSelectedAuction(previewModalAuction); setPreviewModalAuction(null); }}>Ga naar veiling</button></div>
+                        </div>
+                    ) : (
+                        <p>Geen volgend product beschikbaar.</p>
+                    )}
+                    <div style={{ marginTop: '12px' }}>
+                        <button className="enter-button" onClick={() => { setSelectedAuction(previewModalAuction); setPreviewModalAuction(null); }}>Bekijk Veiling</button>
+                        <button className="enter-button" style={{ marginLeft: '8px', background: '#ccc', color: '#000' }} onClick={() => setPreviewModalAuction(null)}>Sluiten</button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {detailProduct && (
+            <div className="modal-overlay" onClick={() => setDetailProduct(null)}>
+                <div className="modal-box" role="dialog" onClick={(e) => e.stopPropagation()}>
+                    <h3>Product: {detailProduct.soort} <span className="auction-badge">#{detailProduct.id}</span></h3>
+                    <div className="img-container">
+                        {detailProduct.afbeelding ? <img src={detailProduct.afbeelding} alt={detailProduct.soort} /> : <div className="placeholder">Geen afbeelding</div>}
+                    </div>
+                    <div className="product-specs">
+                        <div className="spec-row"><strong>Aantal:</strong> <span>{detailProduct.hoeveelheid}</span></div>
+                        <div className="spec-row"><strong>Potmaat:</strong> <span>{detailProduct.potmaat}</span></div>
+                        <div className="spec-row"><strong>Steellengte:</strong> <span>{detailProduct.steellengte}</span></div>
+                        <div className="spec-row"><strong>Locatie:</strong> <span>{detailProduct.kloklokatie}</span></div>
+                    </div>
+                    <div style={{ marginTop: '12px' }}>
+                        <button className="enter-button" onClick={() => setDetailProduct(null)}>Sluiten</button>
+                    </div>
+                </div>
+            </div>
+        )}
         </div>
     );
 }
