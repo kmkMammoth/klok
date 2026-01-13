@@ -101,7 +101,7 @@ function KoperDashboard() {
 
                             // refresh product list for the selected auction so derived UI (next product overlay) updates quickly
                             if (selectedAuctionRef.current) {
-                                fetchProducts(selectedAuctionRef.current.id).catch(() => {});
+                                fetchProducts(selectedAuctionRef.current.id).catch(() => { });
                             }
 
                             return;
@@ -156,7 +156,7 @@ function KoperDashboard() {
             clearInterval(interval);
             if (serverTimeIntervalRef.current) clearInterval(serverTimeIntervalRef.current);
             if (connectionRef.current) {
-                connectionRef.current.stop().catch(() => {});
+                connectionRef.current.stop().catch(() => { });
                 connectionRef.current = null;
             }
         };
@@ -365,9 +365,9 @@ function KoperDashboard() {
             setPrice(newPrice);
         };
 
-        timerRef.current = setInterval(() => { updatePrice().catch(() => {}); }, 200); // update 5x/sec
+        timerRef.current = setInterval(() => { updatePrice().catch(() => { }); }, 200); // update 5x/sec
         // run once immediately to avoid initial blank
-        updatePrice().catch(() => {});
+        updatePrice().catch(() => { });
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }, [currentProduct, serverOffsetMs]);
 
@@ -442,7 +442,7 @@ function KoperDashboard() {
             setCurrentProduct(null);
 
             // Trigger background refresh but don't block UI on it
-            fetchProducts(selectedAuction.id).catch(() => {});
+            fetchProducts(selectedAuction.id).catch(() => { });
         } catch (err) {
             setError(err.message);
         } finally {
@@ -458,9 +458,9 @@ function KoperDashboard() {
         );
     };
 
-    const isAuctionRejected = (auctionId) => { 
-        const auctionProducts = products.filter(p => p.veilingId === auctionId); 
-        return auctionProducts.some(p => p.status === 'VERWORPEN'); 
+    const isAuctionRejected = (auctionId) => {
+        const auctionProducts = products.filter(p => p.veilingId === auctionId);
+        return auctionProducts.some(p => p.status === 'VERWORPEN');
     };
 
     const formatPrice = (amount) => new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount);
@@ -477,7 +477,7 @@ function KoperDashboard() {
                             const canJoin = isOngoing && !soldOut;
 
                             let buttonText = 'Niet gestart';
-                            
+
                             if (auction.status === 'Done') {
                                 buttonText = 'GEEÏNDIGD';
                             }
@@ -608,27 +608,27 @@ function KoperDashboard() {
                 </div>
             )}
 
-        {detailProduct && (
-            <div className="modal-overlay" onClick={() => setDetailProduct(null)}>
-                <div className="modal-box" role="dialog" onClick={(e) => e.stopPropagation()}>
-                    <h3>Product: {detailProduct.soort} <span className="auction-badge">#{detailProduct.id}</span></h3>
-                    <div className="img-container">
-                        {detailProduct.afbeelding ? <img src={detailProduct.afbeelding} alt={detailProduct.soort} /> : <div className="placeholder">Geen afbeelding</div>}
-                    </div>
-                    <div className="product-specs">
-                        <div className="spec-row"><strong>Aantal:</strong> <span>{detailProduct.hoeveelheid}</span></div>
-                        <div className="spec-row"><strong>Potmaat:</strong> <span>{detailProduct.potmaat}</span></div>
-                        <div className="spec-row"><strong>Steellengte:</strong> <span>{detailProduct.steellengte}</span></div>
-                        <div className="spec-row"><strong>Locatie:</strong> <span>{detailProduct.kloklokatie}</span></div>
-                        <div className="spec-row"><strong>Aanvoerder:</strong> <span>{detailProduct.gebruiker_id}</span></div>
-                        <div className="spec-row"><strong>Startprijs:</strong> <span>{formatPrice(detailProduct.startprijs || detailProduct.startPrice)}</span></div>
-                    </div>
-                    <div style={{ marginTop: '12px' }}>
-                        <button className="enter-button" onClick={() => setDetailProduct(null)}>Sluiten</button>
+            {detailProduct && (
+                <div className="modal-next-product-overlay" onClick={() => setDetailProduct(null)}>
+                    <div className="modal-next-product-box" role="dialog" onClick={(e) => e.stopPropagation()}>
+                        <h3>Product: {detailProduct.soort} <span className="auction-badge">#{detailProduct.id}</span></h3>
+                        <div className="img-container">
+                            {detailProduct.afbeelding ? <img src={detailProduct.afbeelding} alt={detailProduct.soort} /> : <div className="placeholder">Geen afbeelding</div>}
+                        </div>
+                        <div className="product-specs">
+                            <div className="spec-row"><strong>Aantal:</strong> <span>{detailProduct.hoeveelheid}</span></div>
+                            <div className="spec-row"><strong>Potmaat:</strong> <span>{detailProduct.potmaat}</span></div>
+                            <div className="spec-row"><strong>Steellengte:</strong> <span>{detailProduct.steellengte}</span></div>
+                            <div className="spec-row"><strong>Locatie:</strong> <span>{detailProduct.kloklokatie}</span></div>
+                            <div className="spec-row"><strong>Aanvoerder:</strong> <span>{detailProduct.gebruiker_id}</span></div>
+                            <div className="spec-row"><strong>Startprijs:</strong> <span>{formatPrice(detailProduct.startprijs || detailProduct.startPrice)}</span></div>
+                        </div>
+                        <div style={{ marginTop: '12px' }}>
+                            <button className="enter-button" onClick={() => setDetailProduct(null)}>Sluiten</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        )}
+            )}
         </div>
     );
 }
