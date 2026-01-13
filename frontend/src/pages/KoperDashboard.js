@@ -304,11 +304,18 @@ function KoperDashboard() {
 
         if (currentProduct && currentProduct.id) {
             const after = unsold.filter(p => p.id > currentProduct.id);
-            setNextProduct(after.length ? after[0] : unsold[0]);
+
+            if (after.length > 0) {
+                setNextProduct(after[0]);
+            } else {
+                // Laatste product bereikt, toon een speciale "Laatste product" melding
+                setNextProduct({ lastProduct: true });
+            }
         } else {
             setNextProduct(unsold[0]);
         }
     }, [products, currentProduct, expired, selectedAuction]);
+
 
     // 4. De Klok (Prijs daling) — bereken op basis van server-starttijd + client offset
     const fetchedProductDetailsRef = useRef(new Set());
@@ -546,25 +553,38 @@ function KoperDashboard() {
             ) : (
                 <div className="live-auction-view" style={{ position: 'relative' }}>
                     {nextProduct && (
-                        <div className="next-product-overlay" role="button" tabIndex={0} onClick={() => setDetailProduct(nextProduct)} onKeyDown={(e) => { if (e.key === 'Enter') setDetailProduct(nextProduct); }}>
+                        <div
+                            className="next-product-overlay"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => nextProduct.lastProduct ? null : setDetailProduct(nextProduct)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && !nextProduct.lastProduct) setDetailProduct(nextProduct); }}
+                        >
                             <div className="overlay-title-info">
-                                <strong>Volgend product:</strong>
+                                {nextProduct.lastProduct ? (
+                                    <strong>Laatste product van de veiling</strong>
+                                ) : (
+                                    <strong>Volgend product:</strong>
+                                )}
                             </div>
-                            <div className="overlay-content">
-                                <div className="img-container tiny">
-                                    {nextProduct.afbeelding
-                                        ? <img src={nextProduct.afbeelding} alt={nextProduct.soort} />
-                                        : <div className="placeholder">Geen afbeelding</div>
-                                    }
-                                </div>
+                            {!nextProduct.lastProduct && (
+                                <div className="overlay-content">
+                                    <div className="img-container tiny">
+                                        {nextProduct.afbeelding
+                                            ? <img src={nextProduct.afbeelding} alt={nextProduct.soort} />
+                                            : <div className="placeholder">Geen afbeelding</div>
+                                        }
+                                    </div>
 
-                                <div className="overlay-info">
-                                    <strong>{nextProduct.soort}</strong>
-                                    <div className="auction-badge">#{nextProduct.id}</div>
+                                    <div className="overlay-info">
+                                        <strong>{nextProduct.soort}</strong>
+                                        <div className="auction-badge">#{nextProduct.id}</div>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
+
                     <button className="back-btn" onClick={() => setSelectedAuction(null)}>← Terug</button>
                     <h2>
                         {selectedAuction.name}{' '}
