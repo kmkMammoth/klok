@@ -116,7 +116,7 @@ function CreateAuction({ auctions, addAuction }) {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch('http://localhost:5102/api/products',
+            const res = await fetch('http://localhost:5102/api/products/available',
                 {headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }}
             );
             if (!res.ok) throw new Error('Fout bij ophalen producten');
