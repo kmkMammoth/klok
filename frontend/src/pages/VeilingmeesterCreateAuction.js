@@ -342,7 +342,24 @@ function CreateAuction({ auctions, addAuction }) {
                                             )}
 
                                             <div className="product-grid">
-                                                {products.map(p => {
+                                                {products
+                                                    .sort((a, b) => {
+                                                        const aAssignedId = getProductAuctionId(a);
+                                                        const aIsAssigned = aAssignedId !== null && aAssignedId !== undefined;
+                                                        const aHasZeroQuantity = !a.hoeveelheid || a.hoeveelheid === 0;
+                                                        const aIsDisabled = aIsAssigned || aHasZeroQuantity;
+
+                                                        const bAssignedId = getProductAuctionId(b);
+                                                        const bIsAssigned = bAssignedId !== null && bAssignedId !== undefined;
+                                                        const bHasZeroQuantity = !b.hoeveelheid || b.hoeveelheid === 0;
+                                                        const bIsDisabled = bIsAssigned || bHasZeroQuantity;
+
+                                                        // Available (not disabled) products first
+                                                        if (!aIsDisabled && bIsDisabled) return -1;
+                                                        if (aIsDisabled && !bIsDisabled) return 1;
+                                                        return 0;
+                                                    })
+                                                    .map(p => {
                                                     const assignedId = getProductAuctionId(p);
                                                     const isAssigned = assignedId !== null && assignedId !== undefined;
                                                     const hasZeroQuantity = !p.hoeveelheid || p.hoeveelheid === 0;
