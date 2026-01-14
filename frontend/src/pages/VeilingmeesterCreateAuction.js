@@ -116,7 +116,7 @@ function CreateAuction({ auctions, addAuction }) {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch('http://localhost:5102/api/products/available',
+            const res = await fetch('http://localhost:5102/api/products',
                 {headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }}
             );
             if (!res.ok) throw new Error('Fout bij ophalen producten');
@@ -345,17 +345,19 @@ function CreateAuction({ auctions, addAuction }) {
                                                 {products.map(p => {
                                                     const assignedId = getProductAuctionId(p);
                                                     const isAssigned = assignedId !== null && assignedId !== undefined;
+                                                    const hasZeroQuantity = !p.hoeveelheid || p.hoeveelheid === 0;
+                                                    const isDisabled = isAssigned || hasZeroQuantity;
                                                     return (
                                                         <div
                                                             key={p.id}
-                                                            className={`product-card ${selected[p.id]?.selected ? 'selected' : ''} ${isAssigned ? 'disabled' : ''}`}
+                                                            className={`product-card ${selected[p.id]?.selected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
                                                             role="button"
                                                             tabIndex={0}
                                                             aria-pressed={!!selected[p.id]?.selected}
-                                                            aria-disabled={isAssigned}
-                                                            onClick={() => { if (isAssigned) return; toggleProductSelected(p.id); }}
+                                                            aria-disabled={isDisabled}
+                                                            onClick={() => { if (isDisabled) return; toggleProductSelected(p.id); }}
                                                             onKeyDown={(e) => {
-                                                                if (isAssigned) {
+                                                                if (isDisabled) {
                                                                     if (e.key === 'Enter' || e.key === ' ') {
                                                                         e.preventDefault();
                                                                         openProductModal(p.id, p);
@@ -384,6 +386,10 @@ function CreateAuction({ auctions, addAuction }) {
 
                                                             {isAssigned && (
                                                                 <div className="assigned-badge">Toegevoegd aan veiling #{assignedId}</div>
+                                                            )}
+                                                            
+                                                            {hasZeroQuantity && !isAssigned && (
+                                                                <div className="assigned-badge">Hoeveelheid = 0</div>
                                                             )}
 
                                                             {selected[p.id]?.selected && (
