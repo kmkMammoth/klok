@@ -285,6 +285,7 @@ function KoperDashboard() {
 
         const unsold = auctionProducts
             .filter(p => !p.koperId && !p.koper_id && !p.gebruikerIdKoper)
+            .filter(p => (p.status !== 'VERWORPEN' && p.status !== 'GEKOCHT'))
             .filter(p => !expired.has(p.id));
 
         if (unsold.length > 0) {
