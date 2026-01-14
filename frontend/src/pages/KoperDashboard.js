@@ -430,6 +430,28 @@ function KoperDashboard() {
                         next.add(refreshed.id);
                         return next;
                     });
+
+                    // Check if there are any products left in this auction
+                    const allProducts = await fetchProducts(selectedAuction.id);
+                    const remainingProducts = allProducts.filter(p =>
+                        p.status !== 'GEKOCHT' && p.status !== 'VERWORPEN' && (p.hoeveelheid ?? 0) > 0
+                    );
+
+                    if (remainingProducts.length === 0) {
+                        setRedirectTimer(10);
+                        const interval = setInterval(() => {
+                            setRedirectTimer((prev) => {
+                                if (prev <= 1) {
+                                    clearInterval(interval);
+                                    setSelectedAuction(null);
+                                    setRedirectTimer(null);
+                                    return 0;
+                                }
+                                return prev - 1;
+                            });
+                        }, 1000);
+                    }
+
                     setCurrentProduct(null);
                 } else {
                     // Update current product with remaining quantity
