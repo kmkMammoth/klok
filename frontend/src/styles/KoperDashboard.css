@@ -203,6 +203,75 @@
     cursor: not-allowed;
 }
 
+/* Prijshistorie Sectie */
+.history-panel {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 1px solid #eee;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    max-height: 550px; /* Stel een vaste hoogte in */
+}
+
+.history-list-container {
+    overflow-y: auto;
+    flex-grow: 1;
+    padding-right: 5px;
+}
+
+/* Optioneel: Mooiere scrollbar voor de historie */
+.history-list-container::-webkit-scrollbar {
+    width: 6px;
+}
+.history-list-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+.history-list-container::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+.history-list-container::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+.history-panel h3 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.history-table th {
+    text-align: left;
+    color: #888;
+    font-weight: 600;
+    padding-bottom: 8px;
+}
+
+.history-table td {
+    padding: 10px 0;
+    border-bottom: 1px solid #f9f9f9;
+}
+
+.history-row-name {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.history-row-price {
+    font-weight: bold;
+    color: #27ae60;
+}
+
 .error-banner {
     background: #ffdddd;
     color: #c0392b;

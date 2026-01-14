@@ -18,6 +18,7 @@ function KoperDashboard() {
     // Development debug state (commented out). Used to surface price calc anomalies.
     // To enable: uncomment the state below and the setDebugInfo / console calls throughout this file.
     /* const [debugInfo, setDebugInfo] = useState(null); // dev-only visible debug info */
+    const [soldProductsHistory, setSoldProductsHistory] = useState([]);
 
     // Refs / state voor realtime
     const timerRef = useRef(null);
@@ -26,7 +27,6 @@ function KoperDashboard() {
     const serverTimeIntervalRef = useRef(null);
     const lastStartedPayloadRef = useRef({});
     const [serverOffsetMs, setServerOffsetMs] = useState(0); // serverUtc - clientNow
-
 
     // Next product overlay (on live auction view) and detail modal
     const [nextProduct, setNextProduct] = useState(null);
@@ -40,7 +40,6 @@ function KoperDashboard() {
                     setDetailProduct(null);
                     return;
                 }
-
                 // 2. Als detailProduct niet open, sluit live veiling (back)
                 if (selectedAuction) {
                     setSelectedAuction(null);
@@ -53,7 +52,28 @@ function KoperDashboard() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [detailProduct, selectedAuction]);
 
+    const fetchHistoryBySoort = async (soort) => {
+        if (!soort) return;
+        try {
+            const response = await fetch(`http://localhost:5102/api/GekochtProduct/history-by-name/${encodeURIComponent(soort)}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setSoldProductsHistory(data);
+            }
+        } catch (err) {
+            console.error('Fout bij ophalen historie via SQL', err);
+        }
+    };
 
+    // Trigger de fetch zodra het huidige product in de veiling verandert
+    useEffect(() => {
+        if (currentProduct?.soort) {
+            fetchHistoryBySoort(currentProduct.soort);
+        }
+    }, [currentProduct?.soort]); // Alleen opnieuw ophalen als de NAAM van het product verandert
+    
     // 1. Haal veilingen op bij laden en zet SignalR connection + haal servertijd op
     useEffect(() => {
         fetchAuctions();
@@ -130,7 +150,6 @@ function KoperDashboard() {
                             return;
                         }
                     }
-
                     // fallback to payload if fetching failed
                     setCurrentProduct(prev => (prev && prev.id === payload.productId) ? { ...prev, startedAtUtc: payload.startedAtUtc, startprijs: payload.startPrice, incrementPerSecond: payload.incrementPerSecond, minimumprijs: payload.minimumPrice, status: 'RUNNING' } : (selectedAuctionRef.current && selectedAuctionRef.current.id === payload.auctionId ? { id: payload.productId, startedAtUtc: payload.startedAtUtc, startprijs: payload.startPrice, incrementPerSecond: payload.incrementPerSecond, minimumprijs: payload.minimumPrice, status: 'RUNNING' } : prev));
                 });
@@ -146,6 +165,7 @@ function KoperDashboard() {
                     setCurrentProduct(prev => (prev && prev.id === payload.productId) ? null : prev);
                     // refresh product list to show updated ownership and upcoming product
                     fetchProducts(selectedAuctionRef.current?.id);
+                    fetchSoldHistory(); // Update geschiedenis bij verkoop
                 });
 
                 conn.on('ProductUpdated', async (payload) => {
@@ -209,6 +229,7 @@ function KoperDashboard() {
         selectedAuctionRef.current = selectedAuction;
         if (!selectedAuction) return;
         setExpired(new Set()); // Reset expired bij wisselen veiling
+        fetchSoldHistory(); // Laad geschiedenis bij selectie veiling
         (async () => {
             const data = await fetchProducts(selectedAuction.id);
             if (data) {
@@ -265,7 +286,6 @@ function KoperDashboard() {
         if (running.length > 0) {
             running.sort((a, b) => a.id - b.id);
             const nextRunning = running[0];
-
             // Only set/replace if it's a different product or if we don't already have a valid startedAtUtc
             if (currentProduct?.id !== nextRunning.id || !currentProduct?.startedAtUtc) {
                 setCurrentProduct({ ...nextRunning, startedAtUtc: nextRunning.startedAtUtc, status: 'RUNNING' });
@@ -368,6 +388,7 @@ function KoperDashboard() {
             const increment = parseFloat(currentProduct.incrementPerSecond ?? 0) || 0;
 
             const startedAt = currentProduct.startedAtUtc ? parseStartedAtMs(currentProduct.startedAtUtc) : null;
+
             if (!startedAt) {
                 // If no server-start time available, fallback to server offset-based "now" and assume it just started
                 setPrice(startPrice);
@@ -394,12 +415,12 @@ function KoperDashboard() {
 
             // Use payload startPrice if we have it cached and current startPrice appears invalid
             const payload = lastStartedPayloadRef.current[currentProduct.id];
+
             if ((startPrice <= minPrice) && payload && payload.startPrice && parseFloat(payload.startPrice) > minPrice) {
                 startPrice = parseFloat(payload.startPrice);
             }
 
             let newPrice = startPrice - (elapsedSeconds * increment);
-
             // If computed price already below minimum, log full debug so we can trace elapsed/serverOffset
             if (newPrice <= minPrice) {
                 const info = { time: new Date().toISOString(), productId: currentProduct?.id, startPrice, minPrice, increment, elapsedSeconds, startedAt, serverNow, computedPrice: newPrice, payload };
@@ -462,6 +483,20 @@ function KoperDashboard() {
         }
     };
 
+    const fetchSoldHistory = async () => {
+        try {
+            // We gebruiken de nieuwe gesorteerde endpoint
+            const response = await fetch('http://localhost:5102/api/GekochtProduct/history-all-sorted', {
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+            });
+            if (response.ok) {
+                setSoldProductsHistory(await response.json());
+            }
+        } catch (err) {
+            console.error('Fout bij ophalen gesorteerde historie', err);
+        }
+    };
+
     const handleBuy = async () => {
         if (!currentProduct) return;
         setBuying(true);
@@ -501,10 +536,9 @@ function KoperDashboard() {
                     });
 
                     // Check if there are any products left in this auction
+                    setExpired(prev => new Set(prev).add(refreshed.id));
                     const allProducts = await fetchProducts(selectedAuction.id);
-                    const remainingProducts = allProducts.filter(p =>
-                        p.status !== 'GEKOCHT' && p.status !== 'VERWORPEN' && (p.hoeveelheid ?? 0) > 0
-                    );
+                    const remainingProducts = allProducts.filter(p => p.status !== 'GEKOCHT' && p.status !== 'VERWORPEN' && (p.hoeveelheid ?? 0) > 0);
 
                     if (remainingProducts.length === 0) {
                         setRedirectTimer(10);
@@ -527,9 +561,9 @@ function KoperDashboard() {
                     setCurrentProduct(refreshed);
                 }
             }
-
             // Trigger background refresh of product list
             fetchProducts(selectedAuction.id).catch(() => {});
+            fetchSoldHistory();
         } catch (err) {
             setError(err.message);
         } finally {
@@ -552,6 +586,16 @@ function KoperDashboard() {
 
     const formatPrice = (amount) => new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount);
 
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('nl-NL', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).format(date);
+    };
+    
     return (
         <div className="koper-dashboard-container">
             {!selectedAuction ? (
@@ -562,17 +606,7 @@ function KoperDashboard() {
                             const soldOut = isAuctionSoldOut(auction.id);
                             const isOngoing = auction.status === 'Ongoing';
                             const canJoin = isOngoing && !soldOut;
-
-                            let buttonText = 'Niet gestart';
-
-                            if (auction.status === 'Done') {
-                                buttonText = 'GEEÏNDIGD';
-                            }
-                            if (soldOut) {
-                                buttonText = 'GEEÏNDIGD';
-                            } else if (isOngoing) {
-                                buttonText = 'Deelnemen';
-                            }
+                            let buttonText = isOngoing ? 'Deelnemen' : (auction.status === 'Done' || soldOut ? 'GEËINDIGD' : 'Niet gestart');
 
                             return (
                                 <div
@@ -633,11 +667,7 @@ function KoperDashboard() {
                                             : <div className="placeholder">Geen afbeelding</div>
                                         }
                                     </div>
-
-                                    <div className="overlay-info">
-                                        <strong>{nextProduct.soort}</strong>
-                                        <div className="auction-badge">#{nextProduct.id}</div>
-                                    </div>
+                                    <div className="overlay-info"><strong>{nextProduct.soort}</strong><div className="auction-badge">#{nextProduct.id}</div></div>
                                 </div>
                             )}
                         </div>
@@ -663,7 +693,6 @@ function KoperDashboard() {
                                         {currentProduct.afbeelding ? <img src={currentProduct.afbeelding} alt={currentProduct.soort} /> : <div className="placeholder">Geen afbeelding</div>}
                                     </div>
                                     <h3>{currentProduct.soort}</h3>
-
                                     <div className="product-specs">
                                         <div className="spec-row">
                                             <strong>Aantal:</strong> <span>{currentProduct.hoeveelheid}</span>
@@ -693,6 +722,7 @@ function KoperDashboard() {
                                 </div>
                             )}
                         </div>
+
                         <div className="clock-panel">
                             <div className="clock-circle">
                                 {soldMessage ? (
@@ -733,6 +763,64 @@ function KoperDashboard() {
                                     }}
                                     style={{ width: '80px', textAlign: 'center', padding: '4px' }}
                                 />
+                            </div>
+                        </div>
+
+                        <div className="history-panel">
+                            <h3>Prijshistorie</h3>
+                            <div className="history-list-container">
+                                <table className="history-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Product ID</th>
+                                        <th>Naam</th>
+                                        <th>Datum</th>
+                                        <th>Aantal</th>
+                                        <th>Prijs</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {(() => {
+                                        // 1. Controleer of er een huidig product op de klok staat
+                                        if (!currentProduct || !currentProduct.soort) {
+                                            return (
+                                                <tr>
+                                                    <td colSpan="5" style={{ textAlign: 'center', color: '#999', paddingTop: '20px' }}>
+                                                        Wachten op product historie...
+                                                    </td>
+                                                </tr>
+                                            );
+                                        }
+
+                                        // 2. Filter de geschiedenis: toon alleen items die EXACT dezelfde soort hebben
+                                        // als het product dat nu op de klok staat.
+                                        const filteredHistory = soldProductsHistory.filter(h =>
+                                            h.soort === currentProduct.soort
+                                        );
+
+                                        if (filteredHistory.length === 0) {
+                                            return (
+                                                <tr>
+                                                    <td colSpan="5" style={{ textAlign: 'center', color: '#999', paddingTop: '20px' }}>
+                                                        Geen eerdere verkopen gevonden voor {currentProduct.soort}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        }
+
+                                        // 3. Render de lijst (deze is al gesorteerd op datum door de SQL query)
+                                        return filteredHistory.map(h => (
+                                            <tr key={h.id}>
+                                                <td>{h.productId}</td>
+                                                <td className="history-row-name">{h.soort}</td>
+                                                <td>{formatDate(h.koopDatum || h.KoopDatum)}</td>
+                                                <td>{h.hoeveelheid}</td>
+                                                <td className="history-row-price">{formatPrice(h.koopPrijs)}</td>
+                                            </tr>
+                                        ));
+                                    })()}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
