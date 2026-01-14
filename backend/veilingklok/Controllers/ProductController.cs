@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using veilingklok.Models;
 using veilingklok.Services;
+using System.Reflection;
 
 namespace veilingklok;
 

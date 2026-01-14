@@ -10,6 +10,7 @@ function KoperDashboard() {
     const [price, setPrice] = useState(0);
     const [error, setError] = useState('');
     const [buying, setBuying] = useState(false);
+    const [buyQuantity, setBuyQuantity] = useState(1);
     const [expired, setExpired] = useState(new Set());
     const [soldMessage, setSoldMessage] = useState('');
     const [redirectTimer, setRedirectTimer] = useState(null);
@@ -145,6 +146,24 @@ function KoperDashboard() {
                     setCurrentProduct(prev => (prev && prev.id === payload.productId) ? null : prev);
                     // refresh product list to show updated ownership and upcoming product
                     fetchProducts(selectedAuctionRef.current?.id);
+                });
+
+                conn.on('ProductUpdated', async (payload) => {
+                    // payload: { productId, remaining }
+                    try {
+                        if (!payload || !payload.productId) return;
+                        // Refresh the single product to get full details if possible
+                        const prod = await fetchProductById(payload.productId);
+                        if (prod) {
+                            setProducts(prev => prev.map(p => (p.id === prod.id ? prod : p)));
+                            setCurrentProduct(prev => (prev && prev.id === prod.id) ? { ...prev, hoeveelheid: prod.hoeveelheid, status: prod.status } : prev);
+                        } else {
+                            // fallback to applying remaining if fetch failed
+                            setCurrentProduct(prev => (prev && prev.id === payload.productId) ? { ...prev, hoeveelheid: payload.remaining } : prev);
+                        }
+                    } catch (e) {
+                        console.error('ProductUpdated handling failed', e);
+                    }
                 });
 
                 conn.on('AuctionEnded', (payload) => {
@@ -448,13 +467,20 @@ function KoperDashboard() {
         setError('');
 
         try {
-            // POST request om te kopen. De backend haalt de Koper ID uit het token.
-            const response = await fetch(`http://localhost:5102/api/products/${currentProduct.id}/buy`, {
+            // POST naar GekochtProduct API met hoeveelheid en koopprijs
+            const payload = {
+                ProductId: currentProduct.id,
+                Hoeveelheid: parseInt(buyQuantity, 10) || 1,
+                KoopPrijs: parseFloat(price?.toFixed(2)) || 0
+            };
+
+            const response = await fetch('http://localhost:5102/api/GekochtProduct', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${localStorage.getItem('accessToken')}`
-                }
+                },
+                body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
@@ -462,16 +488,25 @@ function KoperDashboard() {
                 throw new Error(text || 'Kopen mislukt. Mogelijk is iemand je voor.');
             }
 
-            // Optimistically update UI: mark current product as expired and clear current product
-            setExpired(prev => {
-                const next = new Set(prev);
-                next.add(currentProduct.id);
-                return next;
-            });
-            setCurrentProduct(null);
+            // Refresh the product to get updated hoeveelheid/status instead of clearing current product
+            const refreshed = await fetchProductById(currentProduct.id);
+            if (refreshed) {
+                // If product is fully sold or marked GEKOCHT, mark expired and clear current product
+                if ((refreshed.hoeveelheid ?? 0) <= 0 || refreshed.status === 'GEKOCHT') {
+                    setExpired(prev => {
+                        const next = new Set(prev);
+                        next.add(refreshed.id);
+                        return next;
+                    });
+                    setCurrentProduct(null);
+                } else {
+                    // Update current product with remaining quantity
+                    setCurrentProduct(refreshed);
+                }
+            }
 
-            // Trigger background refresh but don't block UI on it
-            fetchProducts(selectedAuction.id).catch(() => { });
+            // Trigger background refresh of product list
+            fetchProducts(selectedAuction.id).catch(() => {});
         } catch (err) {
             setError(err.message);
         } finally {
@@ -650,10 +685,21 @@ function KoperDashboard() {
                             <button
                                 className="buy-btn-large"
                                 onClick={handleBuy}
-                                disabled={!currentProduct || buying || currentProduct?.status !== 'RUNNING'}
+                                disabled={!currentProduct || buying || currentProduct?.status !== 'RUNNING' || (parseInt(buyQuantity, 10) <= 0)}
                             >
                                 {buying ? 'BEZIG...' : 'KOOP NU'}
                             </button>
+                            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <label style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Aantal te kopen</label>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={currentProduct?.hoeveelheid ?? currentProduct?.hoeveelheid ?? undefined}
+                                    value={buyQuantity}
+                                    onChange={(e) => setBuyQuantity(e.target.value)}
+                                    style={{ width: '80px', textAlign: 'center', padding: '4px' }}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

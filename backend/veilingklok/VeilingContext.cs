@@ -13,6 +13,7 @@ public class VeilingContext : IdentityDbContext<Gebruiker>
     public DbSet<Veilingmeester> Veilingmeester { get; set; }
     public DbSet<Product> Product { get; set; }
     public DbSet<Veiling> Veiling { get; set; }   
+    public DbSet<GekochtProduct> GekochtProduct { get; set; }
 
     public VeilingContext(DbContextOptions<VeilingContext> options) : base(options)
     {
