@@ -13,6 +13,18 @@ public class GekochtProductCreateDto
     public decimal KoopPrijs { get; set; }
 }
 
+// Helper DTO voor de SQL output mapping
+public class GekochtProductHistoryDto
+{
+    public int Id { get; set; }
+    public string GebruikerId { get; set; }
+    public int ProductId { get; set; }
+    public string Soort { get; set; }
+    public int Hoeveelheid { get; set; }
+    public decimal KoopPrijs { get; set; }
+    public DateTime KoopDatum { get; set; }
+}
+
 public class GekochtProductResponseDto
 {
     public int Id { get; set; }
@@ -106,5 +118,39 @@ public class GekochtProductController : ControllerBase
         await _db.SaveChangesAsync();
 
         return Ok();
+    }
+    
+    // GET: api/GekochtProduct/history-all-sorted
+    [Authorize(AuthenticationSchemes = "Identity.Bearer")]
+    [HttpGet("history-all-sorted")]
+    public async Task<ActionResult> GetHistoryAllSorted()
+    {
+        try
+        {
+            // We halen alles op met een JOIN, gesorteerd op soort (en daarna datum)
+            // De database gebruikt een index op 'soort' voor deze sortering.
+            var sql = @"
+                SELECT 
+                    g.Id, 
+                    g.koper_id as GebruikerId,
+                    g.product_id as ProductId, 
+                    p.soort as Soort, 
+                    g.hoeveelheid as Hoeveelheid, 
+                    g.koopprijs as KoopPrijs, 
+                    g.KoopDatum 
+                FROM GekochtProduct g
+                INNER JOIN Product p ON g.product_id = p.artikel_id
+                ORDER BY g.KoopDatum DESC";
+
+            var history = await _db.Database
+                .SqlQueryRaw<GekochtProductHistoryDto>(sql)
+                .ToListAsync();
+
+            return Ok(history);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Fout bij ophalen historie: {ex.Message}");
+        }
     }
 }
