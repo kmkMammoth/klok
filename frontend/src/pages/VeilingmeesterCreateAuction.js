@@ -10,6 +10,7 @@ function CreateAuction({ auctions, addAuction }) {
     const [selected, setSelected] = useState({});
     const [productModal, setProductModal] = useState(null);
     const [productLoading, setProductLoading] = useState(false);
+    const [showUnavailable, setShowUnavailable] = useState(true);
 
     const openProductModal = async (id, initialProduct = null) => {
         try {
@@ -331,7 +332,23 @@ function CreateAuction({ auctions, addAuction }) {
                             </div>
 
                             <div className="form-group full-width">
-                                <label>Kies Producten</label>
+                                <div className="product-header-with-toggle">
+                                    <label>Kies Producten</label>
+                                    <div className="toggle-container">
+                                        <label className="toggle-label">
+                                            <span>Toon niet-beschikbare producten</span>
+                                            <div className="toggle-wrapper">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={showUnavailable}
+                                                    onChange={(e) => setShowUnavailable(e.target.checked)}
+                                                    className="toggle-checkbox"
+                                                />
+                                                <span className="toggle-switch"></span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
                                 <div className="product-selection">
                                     {products.length === 0 ? (
                                         <div className="empty-products">Geen producten gevonden.</div>
@@ -343,6 +360,13 @@ function CreateAuction({ auctions, addAuction }) {
 
                                             <div className="product-grid">
                                                 {products
+                                                    .filter(p => {
+                                                        if (showUnavailable) return true;
+                                                        const assignedId = getProductAuctionId(p);
+                                                        const isAssigned = assignedId !== null && assignedId !== undefined;
+                                                        const hasZeroQuantity = !p.hoeveelheid || p.hoeveelheid === 0;
+                                                        return !isAssigned && !hasZeroQuantity;
+                                                    })
                                                     .sort((a, b) => {
                                                         const aAssignedId = getProductAuctionId(a);
                                                         const aIsAssigned = aAssignedId !== null && aAssignedId !== undefined;

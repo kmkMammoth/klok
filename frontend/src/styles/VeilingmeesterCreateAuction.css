@@ -41,6 +41,93 @@
     font-weight: 700;
 }
 
+.product-header-with-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.product-header-with-toggle > label {
+    margin: 0;
+    flex: 1;
+    min-width: 120px;
+}
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #463239;
+    user-select: none;
+}
+
+.toggle-label > span:first-child {
+    font-weight: 500;
+    line-height: 1;
+    display: inline-block;
+    transform: translateY(-7px);
+    margin-right: 4px;
+}
+
+.toggle-wrapper {
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.toggle-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-switch {
+    display: block;
+    position: relative;
+    width: 48px;
+    height: 24px;
+    background-color: #ccc;
+    border-radius: 24px;
+    transition: background-color 0.3s ease;
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-checkbox:checked + .toggle-switch {
+    background-color: #EB4511;
+}
+
+.toggle-checkbox:checked + .toggle-switch::after {
+    transform: translateX(24px);
+}
+
+.toggle-label:hover .toggle-switch {
+    opacity: 0.9;
+}
+
 .form-overlay {
     position: fixed;
     top: 0;
@@ -66,12 +153,15 @@
 
 .form-modal {
     background: white;
-    padding: 2.5rem;
+    padding: 2rem;
     border-radius: 16px;
     width: 90%;
-    max-width: 500px;
+    max-width: 800px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     animation: slideUp 0.3s ease;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 
 @keyframes slideUp {
