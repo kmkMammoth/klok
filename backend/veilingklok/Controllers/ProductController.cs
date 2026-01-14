@@ -170,6 +170,42 @@ public class ProductsController : ControllerBase
         return Ok(product);
     }
 
+    [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Aanvoerder, Koper, Admin, Veilingmeester")]
+    [HttpGet("available")]
+    public async Task<ActionResult<IEnumerable<ProductResponse>>> GetAvailableProducts()
+    {
+        var producten = await _db.Product
+            .Where(p =>
+                p.Hoeveelheid.HasValue &&
+                p.Hoeveelheid > 0 &&
+                p.Status == "BESCHIKBAAR")
+            .OrderBy(p => p.ArtikelId)
+            .ToListAsync();
+
+        var responses = producten.Select(p => new ProductResponse
+        {
+            id = p.ArtikelId,
+            soort = p.Soort,
+            potmaat = p.Potmaat,
+            steellengte = p.Steellengte,
+            hoeveelheid = p.Hoeveelheid,
+            minimumprijs = p.MinimumPrijs,
+            kloklokatie = p.KlokLocatie,
+            afbeelding = p.Afbeelding,
+            gebruiker_id = p.Gebruiker_id,
+            startprijs = p.StartPrijs,
+            incrementPerSecond = p.IncrementPerSecond,
+            startedAtUtc = p.StartedAtUtc.HasValue ? p.StartedAtUtc.Value.ToString("o") : null,
+            koopprijs = p.KoopPrijs,
+            veilingId = p.VeilingId,
+            koperId = p.gebruiker_id,
+            status = p.Status
+        }).ToList();
+
+        return Ok(responses);
+    }
+
+
     [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Aanvoerder")]
     [HttpPost]
     public async Task<ActionResult<ProductResponse>> AddProduct([FromBody] CreateProductRequest request)
