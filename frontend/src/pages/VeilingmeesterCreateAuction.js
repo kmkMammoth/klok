@@ -485,12 +485,10 @@ function CreateAuction({ auctions, addAuction }) {
                                         <div className="auction-item-title">
                                             <h3 style={{ margin: '0.25rem 0 0 0' }}>{auction.name}</h3>
                                             <div style={{ marginTop: 6 }}>
-                                                {getProductsForAuction(auction.id).some(p => p.status === 'VERWORPEN') ? (
+                                                {auction.status === 'Done' ? (
                                                     <span className="status-badge-sold">GEEÏNDIGD</span>
-                                                ) : auction.status !== 'Ongoing' ? (
+                                                ) : auction.status === 'Idle' ? (
                                                     <span className="status-badge">NIET GESTART</span>
-                                                ) : getProductsForAuction(auction.id).every(p => p.status === 'GEKOCHT') ? (
-                                                    <span className="status-badge-sold">VERKOCHT</span>
                                                 ) : (
                                                     <span className="live-badge">LIVE</span>
                                                 )}

@@ -454,9 +454,9 @@ function KoperDashboard() {
         );
     };
 
-    const isAuctionRejected = (auctionId) => { 
-        const auctionProducts = products.filter(p => p.veilingId === auctionId); 
-        return auctionProducts.some(p => p.status === 'VERWORPEN'); 
+    const isAuctionRejected = (auctionId) => {
+        const auctionProducts = products.filter(p => p.veilingId === auctionId);
+        return auctionProducts.some(p => p.status === 'VERWORPEN');
     };
 
     const formatPrice = (amount) => new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount);
@@ -473,12 +473,12 @@ function KoperDashboard() {
                             const canJoin = isOngoing && !soldOut;
 
                             let buttonText = 'Niet gestart';
-                            
+
                             if (auction.status === 'Done') {
                                 buttonText = 'GEEÏNDIGD';
                             }
                             if (soldOut) {
-                                buttonText = 'VERKOCHT';
+                                buttonText = 'GEEÏNDIGD';
                             } else if (isOngoing) {
                                 buttonText = 'Deelnemen';
                             }
@@ -592,9 +592,20 @@ function KoperDashboard() {
                                 <input
                                     type="number"
                                     min={1}
-                                    max={currentProduct?.hoeveelheid ?? currentProduct?.hoeveelheid ?? undefined}
+                                    max={currentProduct?.hoeveelheid}
                                     value={buyQuantity}
-                                    onChange={(e) => setBuyQuantity(e.target.value)}
+                                    onChange={(e) => {
+                                        let value = Number(e.target.value);
+
+                                        if (!currentProduct) return;
+
+                                        if (value < 1) value = 1;
+                                        if (value > currentProduct.hoeveelheid) {
+                                            value = currentProduct.hoeveelheid;
+                                        }
+
+                                        setBuyQuantity(value);
+                                    }}
                                     style={{ width: '80px', textAlign: 'center', padding: '4px' }}
                                 />
                             </div>
