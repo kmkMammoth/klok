@@ -27,6 +27,33 @@ function KoperDashboard() {
     const lastStartedPayloadRef = useRef({});
     const [serverOffsetMs, setServerOffsetMs] = useState(0); // serverUtc - clientNow
 
+
+    // Next product overlay (on live auction view) and detail modal
+    const [nextProduct, setNextProduct] = useState(null);
+    const [detailProduct, setDetailProduct] = useState(null);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                // 1. Sluit bovenste modal (detailProduct)
+                if (detailProduct) {
+                    setDetailProduct(null);
+                    return;
+                }
+
+                // 2. Als detailProduct niet open, sluit live veiling (back)
+                if (selectedAuction) {
+                    setSelectedAuction(null);
+                    return;
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [detailProduct, selectedAuction]);
+
+
     // 1. Haal veilingen op bij laden en zet SignalR connection + haal servertijd op
     useEffect(() => {
         fetchAuctions();
@@ -93,6 +120,11 @@ function KoperDashboard() {
                                 const info = { time: new Date().toISOString(), productId: prod.id, startPrice: prodStart, minPrice: prodMin, increment: prod.incrementPerSecond ?? prod.IncrementPerSecond, elapsedSeconds: 0, payload: payload };
                                 /* setDebugInfo(info);
                                 console.error('ProductStarted: product record has start<=min', info); */
+                            }
+
+                            // refresh product list for the selected auction so derived UI (next product overlay) updates quickly
+                            if (selectedAuctionRef.current) {
+                                fetchProducts(selectedAuctionRef.current.id).catch(() => { });
                             }
 
                             return;
@@ -165,7 +197,7 @@ function KoperDashboard() {
             clearInterval(interval);
             if (serverTimeIntervalRef.current) clearInterval(serverTimeIntervalRef.current);
             if (connectionRef.current) {
-                connectionRef.current.stop().catch(() => {});
+                connectionRef.current.stop().catch(() => { });
                 connectionRef.current = null;
             }
         };
@@ -268,6 +300,42 @@ function KoperDashboard() {
         }
     }, [products, selectedAuction, expired, currentProduct]);
 
+    // Compute next product for overlay: prefer the next unsold product after the current one
+    useEffect(() => {
+        if (!selectedAuction) {
+            setNextProduct(null);
+            return;
+        }
+
+        const auctionProducts = products
+            .filter(p => (p.veilingId === selectedAuction.id || p.veiling_id === selectedAuction.id))
+            .sort((a, b) => a.id - b.id);
+
+        const unsold = auctionProducts
+            .filter(p => !p.koperId && !p.koper_id && !p.gebruikerIdKoper)
+            .filter(p => !expired.has(p.id))
+            .filter(p => (p.status !== 'VERWORPEN' && p.status !== 'GEKOCHT'));
+
+        if (unsold.length === 0) {
+            setNextProduct(null);
+            return;
+        }
+
+        if (currentProduct && currentProduct.id) {
+            const after = unsold.filter(p => p.id > currentProduct.id);
+
+            if (after.length > 0) {
+                setNextProduct(after[0]);
+            } else {
+                // Laatste product bereikt, toon een speciale "Laatste product" melding
+                setNextProduct({ lastProduct: true });
+            }
+        } else {
+            setNextProduct(unsold[0]);
+        }
+    }, [products, currentProduct, expired, selectedAuction]);
+
+
     // 4. De Klok (Prijs daling) — bereken op basis van server-starttijd + client offset
     const fetchedProductDetailsRef = useRef(new Set());
 
@@ -345,9 +413,9 @@ function KoperDashboard() {
             setPrice(newPrice);
         };
 
-        timerRef.current = setInterval(() => { updatePrice().catch(() => {}); }, 200); // update 5x/sec
+        timerRef.current = setInterval(() => { updatePrice().catch(() => { }); }, 200); // update 5x/sec
         // run once immediately to avoid initial blank
-        updatePrice().catch(() => {});
+        updatePrice().catch(() => { });
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }, [currentProduct, serverOffsetMs]);
 
@@ -537,9 +605,43 @@ function KoperDashboard() {
                             <p>Geen veilingen gevonden.</p>
                         )}
                     </div>
+
                 </div>
             ) : (
-                <div className="live-auction-view">
+                <div className="live-auction-view" style={{ position: 'relative' }}>
+                    {nextProduct && (
+                        <div
+                            className="next-product-overlay"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => nextProduct.lastProduct ? null : setDetailProduct(nextProduct)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && !nextProduct.lastProduct) setDetailProduct(nextProduct); }}
+                        >
+                            <div className="overlay-title-info">
+                                {nextProduct.lastProduct ? (
+                                    <strong>Laatste product van de veiling</strong>
+                                ) : (
+                                    <strong>Volgend product:</strong>
+                                )}
+                            </div>
+                            {!nextProduct.lastProduct && (
+                                <div className="overlay-content">
+                                    <div className="img-container tiny">
+                                        {nextProduct.afbeelding
+                                            ? <img src={nextProduct.afbeelding} alt={nextProduct.soort} />
+                                            : <div className="placeholder">Geen afbeelding</div>
+                                        }
+                                    </div>
+
+                                    <div className="overlay-info">
+                                        <strong>{nextProduct.soort}</strong>
+                                        <div className="auction-badge">#{nextProduct.id}</div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <button className="back-btn" onClick={() => setSelectedAuction(null)}>← Terug</button>
                     <h2>
                         {selectedAuction.name}{' '}
@@ -631,6 +733,28 @@ function KoperDashboard() {
                                     style={{ width: '80px', textAlign: 'center', padding: '4px' }}
                                 />
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {detailProduct && (
+                <div className="product-modal" onClick={() => setDetailProduct(null)}>
+                    <div className="modal-box" role="dialog" onClick={(e) => e.stopPropagation()}>
+                        <h3>Product: {detailProduct.soort} <span className="auction-badge">#{detailProduct.id}</span></h3>
+                        <div className="img-container">
+                            {detailProduct.afbeelding ? <img src={detailProduct.afbeelding} alt={detailProduct.soort} /> : <div className="placeholder">Geen afbeelding</div>}
+                        </div>
+                        <div className="product-specs">
+                            <div className="spec-row"><strong>Aantal:</strong> <span>{detailProduct.hoeveelheid}</span></div>
+                            <div className="spec-row"><strong>Potmaat:</strong> <span>{detailProduct.potmaat}</span></div>
+                            <div className="spec-row"><strong>Steellengte:</strong> <span>{detailProduct.steellengte}</span></div>
+                            <div className="spec-row"><strong>Locatie:</strong> <span>{detailProduct.kloklokatie}</span></div>
+                            <div className="spec-row"><strong>Aanvoerder:</strong> <span>{detailProduct.gebruiker_id}</span></div>
+                            <div className="spec-row"><strong>Startprijs:</strong> <span>{formatPrice(detailProduct.startprijs || detailProduct.startPrice)}</span></div>
+                        </div>
+                        <div style={{ marginTop: '12px' }}>
+                            <button className="enter-button" onClick={() => setDetailProduct(null)}>Sluiten</button>
                         </div>
                     </div>
                 </div>

@@ -244,7 +244,7 @@ function AanvoerderCreateProduct() {
                                     </div>
                                 </div>
                                 <div className="auction-item-details">
-                                    <div className="detail-small"><span>Startprijs:</span><strong>{product.minimumprijs ? `€ ${parseFloat(product.minimumprijs).toFixed(2)}` : '€ 0.00'}</strong></div>
+                                    <div className="detail-small"><span>Minimumprijs:</span><strong>{product.minimumprijs ? `€ ${parseFloat(product.minimumprijs).toFixed(2)}` : '€ 0.00'}</strong></div>
                                     <div className="detail-small"><span>Kloklocatie:</span><strong>{product.kloklokatie}</strong></div>
                                     {product.afbeelding && <div style={{marginTop:8}}><img src={product.afbeelding} alt="product" style={{maxWidth: '100%', maxHeight:150, borderRadius:8}}/></div>}
                                 </div>
