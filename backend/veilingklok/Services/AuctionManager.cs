@@ -8,7 +8,9 @@ namespace veilingklok.Services
     public interface IAuctionManager
     {
         Task StartAuctionAsync(int veilingId);
-        Task<bool> TryBuyProductAsync(int productId, string buyerId);
+        // Try to buy a given hoeveelheid of the product. Returns true when the purchase succeeded.
+        // `hoeveelheid` defaults to 1 for backward compatibility. `offeredPrice` is optional.
+        Task<bool> TryBuyProductAsync(int productId, string buyerId, int hoeveelheid = 1, decimal? offeredPrice = null);
         Task StartNextProductAsync(int veilingId);
     }
 
@@ -128,7 +130,7 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
                 // swallow - non-critical
             }
         }
-        public async Task<bool> TryBuyProductAsync(int productId, string buyerId)
+        public async Task<bool> TryBuyProductAsync(int productId, string buyerId, int hoeveelheid = 1, decimal? offeredPrice = null)
         {
             // Use per-product semaphore to prevent concurrent buys in-memory and allow async/await within critical section
             var sem = _productLocks.GetOrAdd(productId, _ => new System.Threading.SemaphoreSlim(1,1));
@@ -139,6 +141,15 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
                 var current = await _db.Product.AsNoTracking().SingleOrDefaultAsync(p => p.ArtikelId == productId);
                 if (current == null) return false;
 
+                // Determine available quantity (treat null as 1)
+                var available = current.Hoeveelheid ?? 1;
+                if (available <= 0) return false;
+
+                if (hoeveelheid <= 0) return false;
+
+                if (hoeveelheid > available) return false; // cannot buy more than available
+
+                // If product already fully assigned to a buyer, reject
                 if (!string.IsNullOrEmpty(current.gebruiker_id)) return false; // already sold
 
                 if (current.VeilingId.HasValue)
@@ -160,7 +171,7 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
                     product.StartedAtUtc = DateTime.UtcNow;
                 }
 
-                // calculate price
+                // calculate price (per-unit)
                 var elapsed = (DateTime.UtcNow - product.StartedAtUtc.Value).TotalSeconds;
                 var startPrice = product.StartPrijs ?? 0m;
                 var increment = product.IncrementPerSecond ?? 0m;
@@ -169,17 +180,46 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
                 var newPrice = startPrice - (decimal)elapsed * increment;
                 if (newPrice < minPrice) newPrice = minPrice;
 
-                product.gebruiker_id = buyerId;
-                product.Status = "GEKOCHT";
-                product.KoopPrijs = newPrice;
+                // Create a GekochtProduct record for this purchase
+                var gekocht = new GekochtProduct
+                {
+                    ProductId = product.ArtikelId,
+                    GebruikerId = buyerId,
+                    Hoeveelheid = hoeveelheid,
+                    KoopPrijs = offeredPrice ?? newPrice,
+                    KoopDatum = DateTime.UtcNow
+                };
+
+                _db.GekochtProduct.Add(gekocht);
+
+                // Decrement available quantity
+                var remaining = (product.Hoeveelheid ?? 1) - hoeveelheid;
+                product.Hoeveelheid = remaining;
+
+                // If this purchase exhausts the product, mark it sold
+                var fullySold = remaining <= 0;
+                if (fullySold)
+                {
+                    product.gebruiker_id = buyerId;
+                    product.Status = "GEKOCHT";
+                    product.KoopPrijs = offeredPrice ?? newPrice;
+                }
 
                 try
                 {
                     await _db.SaveChangesAsync();
 
-                    // Broadcast sale
-                    await _hub.Clients.Group($"auction-{product.VeilingId}")
-                        .SendAsync("ProductSold", new { productId = product.ArtikelId, buyerId = buyerId, price = newPrice, soldAtUtc = DateTime.UtcNow });
+                    // Broadcast sale only when fully sold; otherwise broadcast an update so clients can refresh quantities
+                    if (fullySold)
+                    {
+                        await _hub.Clients.Group($"auction-{product.VeilingId}")
+                            .SendAsync("ProductSold", new { productId = product.ArtikelId, buyerId = buyerId, price = (offeredPrice ?? newPrice), soldAtUtc = DateTime.UtcNow });
+                    }
+                    else
+                    {
+                        await _hub.Clients.Group($"auction-{product.VeilingId}")
+                            .SendAsync("ProductUpdated", new { productId = product.ArtikelId, remaining = product.Hoeveelheid });
+                    }
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -187,8 +227,8 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
                     return false;
                 }
 
-                // Start next product (outside of critical section would be preferable, but we can call it now asynchronously)
-                if (product.VeilingId.HasValue)
+                // Start next product only if this product was fully sold
+                if (product.VeilingId.HasValue && fullySold)
                 {
                     // Start next product without blocking the caller for long - run asynchronously using a new scope so we don't access a disposed DbContext
                     _ = Task.Run(async () =>
