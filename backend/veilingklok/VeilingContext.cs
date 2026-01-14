@@ -22,6 +22,16 @@ public class VeilingContext : IdentityDbContext<Gebruiker>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        
+        // Voeg index toe op de kolom 'Soort' in de Products tabel
+        modelBuilder.Entity<Product>()
+            .HasIndex(p => p.Soort)
+            .HasDatabaseName("IX_Products_Soort");
+
+        // Voeg index toe op de kolom 'ProductId' in de GekochtProduct tabel
+        modelBuilder.Entity<GekochtProduct>()
+            .HasIndex(g => g.ProductId)
+            .HasDatabaseName("IX_GekochtProduct_ProductId");
 
         // Stel alle tabellen in op enkelvoudige namen
         modelBuilder.Entity<Gebruiker>().ToTable("Gebruiker");
