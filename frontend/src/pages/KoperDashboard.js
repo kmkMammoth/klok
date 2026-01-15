@@ -2,7 +2,23 @@ import { useState, useEffect, useRef } from 'react';
 import '../styles/KoperDashboard.css';
 import * as signalR from '@microsoft/signalr';
 
+/**
+ * KoperDashboard
+ *
+ * Overzicht en live veiling-scherm voor kopers.
+ * Functies en verantwoordelijkheden:
+ * - Haalt beschikbare veilingen op en toont deze in een grid.
+ * - Verbindt met de SignalR AuctionHub voor realtime events (AuctionStarted, ProductStarted, ProductSold, ProductUpdated, AuctionEnded).
+ * - Bepaalt het huidige product op de klok en toont de klokprijs (dalende prijs) op basis van server-starttijd + client-server tijds-offset.
+ * - Ondersteunt directe koopactie (KOOP NU) met hoeveelheid, inclusief fout- en statusafhandeling.
+ * - Toont een prijshistorie voor het huidige producttype (soort) met recentste transacties eerst.
+ * - Houdt een overlay bij met het volgende product om kopers context te geven.
+ * - Tijdsynchronisatie: de server UTC-tijd wordt periodiek opgehaald via /api/time en als offset gebruikt
+ *   om een consistente prijsdaling over clients te berekenen.
+ */
+
 function KoperDashboard() {
+    // UI-state
     const [auctions, setAuctions] = useState([]);
     const [selectedAuction, setSelectedAuction] = useState(null);
     const [products, setProducts] = useState([]);
@@ -17,10 +33,10 @@ function KoperDashboard() {
 
     // Development debug state (commented out). Used to surface price calc anomalies.
     // To enable: uncomment the state below and the setDebugInfo / console calls throughout this file.
-    /* const [debugInfo, setDebugInfo] = useState(null); // dev-only visible debug info */
+    /* const [debugInfo, setDebugInfo] = useState(null); // DEV: optionele debug-output tijdens prijsberekening */
     const [soldProductsHistory, setSoldProductsHistory] = useState([]);
 
-    // Refs / state voor realtime
+    // Refs / state voor realtime en timers
     const timerRef = useRef(null);
     const connectionRef = useRef(null);
     const selectedAuctionRef = useRef(null);
@@ -32,6 +48,7 @@ function KoperDashboard() {
     const [nextProduct, setNextProduct] = useState(null);
     const [detailProduct, setDetailProduct] = useState(null);
 
+    // Globale keybindings (Esc): sluit detail-modal of verlaat live veiling
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') {
@@ -52,6 +69,10 @@ function KoperDashboard() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [detailProduct, selectedAuction]);
 
+    /**
+     * Haal verkoophistorie op voor een specifieke productsoort (naam).
+     * Wordt gebruikt om de prijshistorie-tabel dynamisch te vullen bij wijziging van huidig product.
+     */
     const fetchHistoryBySoort = async (soort) => {
         if (!soort) return;
         try {
@@ -74,7 +95,7 @@ function KoperDashboard() {
         }
     }, [currentProduct?.soort]); // Alleen opnieuw ophalen als de NAAM van het product verandert
     
-    // 1. Haal veilingen op bij laden en zet SignalR connection + haal servertijd op
+    // 1. Initialisatie: haal veilingen op, zet SignalR-verbinding, en synchroniseer servertijd.
     useEffect(() => {
         fetchAuctions();
         const interval = setInterval(fetchAuctions, 5000); // Poll elke 5 sec voor nieuwe veilingen
@@ -109,6 +130,7 @@ function KoperDashboard() {
                     .withAutomaticReconnect()
                     .build();
 
+                // Event: een veiling is gestart (ververs lijsten)
                 conn.on('AuctionStarted', (payload) => {
                     // payload: { auctionId, startedAtUtc }
                     // refresh auctions list and products
@@ -118,6 +140,7 @@ function KoperDashboard() {
                     }
                 });
 
+                // Event: een product is gestart (zorgt voor set van huidig product en prijs-start)
                 conn.on('ProductStarted', async (payload) => {
                     // payload contains productId, startedAtUtc and other details
                     // Debug: ProductStarted payload received (disabled in production)
@@ -154,6 +177,7 @@ function KoperDashboard() {
                     setCurrentProduct(prev => (prev && prev.id === payload.productId) ? { ...prev, startedAtUtc: payload.startedAtUtc, startprijs: payload.startPrice, incrementPerSecond: payload.incrementPerSecond, minimumprijs: payload.minimumPrice, status: 'RUNNING' } : (selectedAuctionRef.current && selectedAuctionRef.current.id === payload.auctionId ? { id: payload.productId, startedAtUtc: payload.startedAtUtc, startprijs: payload.startPrice, incrementPerSecond: payload.incrementPerSecond, minimumprijs: payload.minimumPrice, status: 'RUNNING' } : prev));
                 });
 
+                // Event: een product is verkocht (werk lijsten en historie bij)
                 conn.on('ProductSold', (payload) => {
                     // payload: { productId, buyerId, price, soldAtUtc }
                     // If this was the current product, mark it expired and clear current product immediately
@@ -168,6 +192,7 @@ function KoperDashboard() {
                     fetchSoldHistory(); // Update geschiedenis bij verkoop
                 });
 
+                // Event: productgegevens zijn bijgewerkt (hoeveelheid/status)
                 conn.on('ProductUpdated', async (payload) => {
                     // payload: { productId, remaining }
                     try {
@@ -186,6 +211,7 @@ function KoperDashboard() {
                     }
                 });
 
+                // Event: veiling beëindigd (ververs overzicht)
                 conn.on('AuctionEnded', (payload) => {
                     fetchAuctions();
                     fetchProducts(selectedAuction?.id);
@@ -223,7 +249,7 @@ function KoperDashboard() {
         };
     }, []);
 
-    // 2. Als een veiling is geselecteerd, haal producten op en join de SignalR groep
+    // 2. Als een veiling is geselecteerd: haal producten op, join SignalR-groep, en zet back-up polling.
     useEffect(() => {
         // keep ref in sync so SignalR handlers can access the latest selection
         selectedAuctionRef.current = selectedAuction;
@@ -248,13 +274,13 @@ function KoperDashboard() {
             }
         })();
 
-        // Join SignalR group for realtime updates
+        // Join SignalR group for realtime updates (alleen bij verbonden verbinding)
         const conn = connectionRef.current;
         if (conn && conn.state === signalR.HubConnectionState.Connected) {
             conn.invoke('JoinAuction', selectedAuction.id.toString()).catch(err => console.error(err));
         }
 
-        // Periodiek fallback refresh (langzamer)
+        // Periodieke fallback refresh (langzamer dan events) om consistent te blijven
         const interval = setInterval(() => {
             fetchProducts(selectedAuction.id);
         }, 10000); // Poll 10s als fallback
@@ -268,8 +294,9 @@ function KoperDashboard() {
         };
     }, [selectedAuction]);
 
-    // 3. Bepaal wat het huidige product is (voorkeur voor een RUNNING product met startedAtUtc)
-    // We voorkomen dat een recent ProductStarted event overschreven wordt door een latere products refresh.
+    // 3. Selecteer huidig product voor de klok.
+    // Voorkeur: product met status RUNNING (gestart door server). Anders eerste onverkochte.
+    // Voorkom overschrijven van recent ProductStarted-event door latere products-refresh.
     useEffect(() => {
         if (products.length === 0) {
             setCurrentProduct(null);
@@ -321,7 +348,7 @@ function KoperDashboard() {
         }
     }, [products, selectedAuction, expired, currentProduct]);
 
-    // Compute next product for overlay: prefer the next unsold product after the current one
+    // Bepaal volgend product voor de overlay: toon de eerstvolgende onverkochte na het huidige product
     useEffect(() => {
         if (!selectedAuction) {
             setNextProduct(null);
@@ -357,10 +384,10 @@ function KoperDashboard() {
     }, [products, currentProduct, expired, selectedAuction]);
 
 
-    // 4. De Klok (Prijs daling) — bereken op basis van server-starttijd + client offset
+    // 4. De Klok (prijsdaling): bereken huidige prijs via server-starttijd + client-server offset.
     const fetchedProductDetailsRef = useRef(new Set());
 
-    // Helper: parse ISO-like timestamp from server as UTC even if timezone designator is missing
+    // Helper: parseer server-timestamp als UTC, ook als de tijdzone-indicator ontbreekt
     const parseStartedAtMs = (s) => {
         if (!s) return null;
         try {
@@ -382,6 +409,7 @@ function KoperDashboard() {
         }
 
         const updatePrice = async () => {
+            // Lees basiswaarden van het product; fallback naar minimumprijs bij ontbrekende startprijs
             const startPriceRaw = currentProduct.startprijs ?? currentProduct.startPrice ?? currentProduct.minimumprijs ?? 0;
             let startPrice = parseFloat(startPriceRaw) || 0;
             const minPrice = parseFloat(currentProduct.minimumprijs ?? 0) || 0;
@@ -441,6 +469,7 @@ function KoperDashboard() {
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }, [currentProduct, serverOffsetMs]);
 
+    /** Haal alle veilingen op (pollend gebruikt op het overzicht en bij events). */
     const fetchAuctions = async () => {
         try {
             const response = await fetch('http://localhost:5102/api/auctions', {
@@ -454,6 +483,7 @@ function KoperDashboard() {
         }
     };
 
+    /** Haal producten op, eventueel gefilterd op veilingId. */
     const fetchProducts = async (auctionId) => {
         try {
             const url = auctionId ? `http://localhost:5102/api/products?veilingId=${auctionId}` : 'http://localhost:5102/api/products';
@@ -470,6 +500,7 @@ function KoperDashboard() {
         }
     };
 
+    /** Haal een enkel product op met volledige details (voor actuele status/hoeveelheid/prijs). */
     const fetchProductById = async (productId) => {
         try {
             const r = await fetch(`http://localhost:5102/api/products/${productId}`, {
@@ -483,6 +514,7 @@ function KoperDashboard() {
         }
     };
 
+    /** Haal recente verkoophistorie op (gesorteerd) voor de tabel in het live-scherm. */
     const fetchSoldHistory = async () => {
         try {
             // We gebruiken de nieuwe gesorteerde endpoint
@@ -497,6 +529,12 @@ function KoperDashboard() {
         }
     };
 
+    /**
+     * Koopactie voor het huidige product (KOOP NU).
+     * - Bouwt payload op met hoeveelheid en huidige prijs
+     * - Roept de aankoop-API aan
+     * - Ververst producten en historie bij succes
+     */
     const handleBuy = async () => {
         if (!currentProduct) return;
         setBuying(true);
@@ -571,6 +609,7 @@ function KoperDashboard() {
         }
     };
 
+    /** Helper: controleer of alle producten in een veiling verkocht zijn. */
     const isAuctionSoldOut = (auctionId) => {
         const auctionProducts = products.filter(p => p.veilingId === auctionId);
         return (
@@ -579,13 +618,16 @@ function KoperDashboard() {
         );
     };
 
+    /** Helper: controleer of een veiling afgewezen producten bevat. */
     const isAuctionRejected = (auctionId) => {
         const auctionProducts = products.filter(p => p.veilingId === auctionId);
         return auctionProducts.some(p => p.status === 'VERWORPEN');
     };
 
+    /** Format een bedrag als euro-waarde in NL-locale. */
     const formatPrice = (amount) => new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount);
 
+    /** Format datum (ISO of string) naar dd-mm-jjjj (NL). */
     const formatDate = (dateString) => {
         if (!dateString) return '';
         const date = new Date(dateString);
@@ -600,6 +642,7 @@ function KoperDashboard() {
         <div className="koper-dashboard-container">
             {!selectedAuction ? (
                 <div className="dashboard-section">
+                    {/* Overzicht: beschikbare veilingen + status en toegangsknop */}
                     <h1>Beschikbare Veilingen</h1>
                     <div className="auctions-grid">
                         {auctions.map(auction => {
@@ -644,6 +687,7 @@ function KoperDashboard() {
                 </div>
             ) : (
                 <div className="live-auction-view" style={{ position: 'relative' }}>
+                    {/* Live veiling: overlay met volgend product (of melding "laatste product") */}
                     {nextProduct && (
                         <div
                             className="next-product-overlay"
@@ -675,6 +719,7 @@ function KoperDashboard() {
 
                     <button className="back-btn" onClick={() => setSelectedAuction(null)}>← Terug</button>
                     <h2>
+                        {/* Titel met live/sold-out badge voor snel overzicht */}
                         {selectedAuction.name}{' '}
                         {isAuctionSoldOut(selectedAuction.id) ? (
                             <span className="sold-badge">VERKOCHT</span>
@@ -686,6 +731,7 @@ function KoperDashboard() {
                     {error && <div className="error-banner">{error}</div>}
 
                     <div className="live-content">
+                        {/* Linker paneel: productdetails + wachtstatus */}
                         <div className="product-display">
                             {currentProduct ? (
                                 <>
@@ -723,6 +769,7 @@ function KoperDashboard() {
                             )}
                         </div>
 
+                        {/* Middenpaneel: klokprijs en koopactie */}
                         <div className="clock-panel">
                             <div className="clock-circle">
                                 {soldMessage ? (
@@ -766,6 +813,7 @@ function KoperDashboard() {
                             </div>
                         </div>
 
+                        {/* Rechter paneel: prijshistorie voor huidige productsoort */}
                         <div className="history-panel">
                             <h3>Prijshistorie</h3>
                             <div className="history-list-container">
@@ -828,6 +876,7 @@ function KoperDashboard() {
             )}
 
             {detailProduct && (
+                // Modal: details van geselecteerd (volgend) product
                 <div className="product-modal" onClick={() => setDetailProduct(null)}>
                     <div className="modal-box" role="dialog" onClick={(e) => e.stopPropagation()}>
                         <h3>Product: {detailProduct.soort} <span className="auction-badge">#{detailProduct.id}</span></h3>
