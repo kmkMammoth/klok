@@ -359,6 +359,10 @@ public class ProductsController : ControllerBase
             if (product.VeilingId != null)
                 return BadRequest("Product is al toegewezen aan een veiling.");
 
+            // Prevent assigning if hoeveelheid is 0 or null
+            if (!product.Hoeveelheid.HasValue || product.Hoeveelheid.Value == 0)
+                return BadRequest("Dit product kan niet worden toegevoegd aan een veiling");
+
             var veiling = await _db.Veiling.FindAsync(request.veilingId.Value);
             if (veiling == null)
                 return BadRequest($"Veiling met ID {request.veilingId.Value} niet gevonden.");

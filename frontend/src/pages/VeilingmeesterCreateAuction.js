@@ -10,6 +10,7 @@ function CreateAuction({ auctions, addAuction }) {
     const [selected, setSelected] = useState({});
     const [productModal, setProductModal] = useState(null);
     const [productLoading, setProductLoading] = useState(false);
+    const [showUnavailable, setShowUnavailable] = useState(true);
 
     const openProductModal = async (id, initialProduct = null) => {
         try {
@@ -116,7 +117,7 @@ function CreateAuction({ auctions, addAuction }) {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch('http://localhost:5102/api/products/available',
+            const res = await fetch('http://localhost:5102/api/products',
                 {headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }}
             );
             if (!res.ok) throw new Error('Fout bij ophalen producten');
@@ -331,7 +332,23 @@ function CreateAuction({ auctions, addAuction }) {
                             </div>
 
                             <div className="form-group full-width">
-                                <label>Kies Producten</label>
+                                <div className="product-header-with-toggle">
+                                    <label>Kies Producten</label>
+                                    <div className="toggle-container">
+                                        <label className="toggle-label">
+                                            <span>Toon niet-beschikbare producten</span>
+                                            <div className="toggle-wrapper">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={showUnavailable}
+                                                    onChange={(e) => setShowUnavailable(e.target.checked)}
+                                                    className="toggle-checkbox"
+                                                />
+                                                <span className="toggle-switch"></span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
                                 <div className="product-selection">
                                     {products.length === 0 ? (
                                         <div className="empty-products">Geen producten gevonden.</div>
@@ -342,20 +359,46 @@ function CreateAuction({ auctions, addAuction }) {
                                             )}
 
                                             <div className="product-grid">
-                                                {products.map(p => {
+                                                {products
+                                                    .filter(p => {
+                                                        if (showUnavailable) return true;
+                                                        const assignedId = getProductAuctionId(p);
+                                                        const isAssigned = assignedId !== null && assignedId !== undefined;
+                                                        const hasZeroQuantity = !p.hoeveelheid || p.hoeveelheid === 0;
+                                                        return !isAssigned && !hasZeroQuantity;
+                                                    })
+                                                    .sort((a, b) => {
+                                                        const aAssignedId = getProductAuctionId(a);
+                                                        const aIsAssigned = aAssignedId !== null && aAssignedId !== undefined;
+                                                        const aHasZeroQuantity = !a.hoeveelheid || a.hoeveelheid === 0;
+                                                        const aIsDisabled = aIsAssigned || aHasZeroQuantity;
+
+                                                        const bAssignedId = getProductAuctionId(b);
+                                                        const bIsAssigned = bAssignedId !== null && bAssignedId !== undefined;
+                                                        const bHasZeroQuantity = !b.hoeveelheid || b.hoeveelheid === 0;
+                                                        const bIsDisabled = bIsAssigned || bHasZeroQuantity;
+
+                                                        // Available (not disabled) products first
+                                                        if (!aIsDisabled && bIsDisabled) return -1;
+                                                        if (aIsDisabled && !bIsDisabled) return 1;
+                                                        return 0;
+                                                    })
+                                                    .map(p => {
                                                     const assignedId = getProductAuctionId(p);
                                                     const isAssigned = assignedId !== null && assignedId !== undefined;
+                                                    const hasZeroQuantity = !p.hoeveelheid || p.hoeveelheid === 0;
+                                                    const isDisabled = isAssigned || hasZeroQuantity;
                                                     return (
                                                         <div
                                                             key={p.id}
-                                                            className={`product-card ${selected[p.id]?.selected ? 'selected' : ''} ${isAssigned ? 'disabled' : ''}`}
+                                                            className={`product-card ${selected[p.id]?.selected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
                                                             role="button"
                                                             tabIndex={0}
                                                             aria-pressed={!!selected[p.id]?.selected}
-                                                            aria-disabled={isAssigned}
-                                                            onClick={() => { if (isAssigned) return; toggleProductSelected(p.id); }}
+                                                            aria-disabled={isDisabled}
+                                                            onClick={() => { if (isDisabled) return; toggleProductSelected(p.id); }}
                                                             onKeyDown={(e) => {
-                                                                if (isAssigned) {
+                                                                if (isDisabled) {
                                                                     if (e.key === 'Enter' || e.key === ' ') {
                                                                         e.preventDefault();
                                                                         openProductModal(p.id, p);
@@ -384,6 +427,10 @@ function CreateAuction({ auctions, addAuction }) {
 
                                                             {isAssigned && (
                                                                 <div className="assigned-badge">Toegevoegd aan veiling #{assignedId}</div>
+                                                            )}
+                                                            
+                                                            {hasZeroQuantity && !isAssigned && (
+                                                                <div className="assigned-badge">Hoeveelheid = 0</div>
                                                             )}
 
                                                             {selected[p.id]?.selected && (
