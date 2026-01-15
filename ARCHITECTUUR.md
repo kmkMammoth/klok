@@ -154,6 +154,35 @@ Rol-specifieke gegevens voor veilingmeesters.
 | `POST` | `/identity/login` | Openbaar | Login (ontvang Bearer-token) |
 | `POST` | `/api/users/{id}/roles` | Admin | Wijs rol toe aan gebruiker |
 
+### Koper (`/api/koper`)
+
+| Methode | Endpoint | Rollen | Beschrijving |
+|---------|----------|--------|-------------|
+| `POST` | `/api/koper/register` | Openbaar | Registreer nieuwe koper met KVK, adres en IBAN |
+
+### Aanvoerder (`/api/aanvoerder`)
+
+| Methode | Endpoint | Rollen | Beschrijving |
+|---------|----------|--------|-------------|
+| `POST` | `/api/aanvoerder/register` | Openbaar | Registreer nieuwe aanvoerder met KVK, adres en IBAN |
+
+### Veilingmeester (`/api/veilingmeester`)
+
+| Methode | Endpoint | Rollen | Beschrijving |
+|---------|----------|--------|-------------|
+| `POST` | `/api/veilingmeester/register` | Openbaar | Registreer nieuwe veilingmeester |
+
+### Gekochte Producten (`/api/gekochtproduct`)
+
+| Methode | Endpoint | Rollen | Beschrijving |
+|---------|----------|--------|-------------|
+| `GET` | `/api/gekochtproduct` | Alle (auth) | Haal alle gekochte producten op |
+| `GET` | `/api/gekochtproduct/{id}` | Alle (auth) | Details van één gekocht product |
+| `GET` | `/api/gekochtproduct/product/{productId}` | Alle (auth) | Gekocht product op basis van product-ID |
+| `GET` | `/api/gekochtproduct/history-all-sorted` | Alle (auth) | Volledige aankoophistorie gesorteerd op datum (met JOIN) |
+| `POST` | `/api/gekochtproduct` | Alle (auth) | Maak gekocht product aan (via AuctionManager) |
+| `DELETE` | `/api/gekochtproduct/{id}` | Admin | Verwijder gekocht product |
+
 ### Overige
 
 | Methode | Endpoint | Rollen | Beschrijving |
@@ -181,9 +210,9 @@ await connection.InvokeAsync("LeaveAuction", auctionId);
 |-------|---------|-------------|
 | `AuctionStarted` | `{ auctionId, startedAtUtc }` | Veiling gestart |
 | `ProductStarted` | `{ productId, auctionId, startedAtUtc, startPrice, incrementPerSecond, minimumPrice }` | Product begint in veiling |
-| `ProductSold` | `{ productId, buyerId, price, soldAtUtc }` | Product volledig verkocht |
-| `ProductUpdated` | `{ productId, remaining }` | Hoeveelheid bijgewerkt (deelverkoop) |
-| `ProductExpired` | `{ productId, expiredAtUtc }` | Product verlopen (prijsminimum bereikt) |
+| `ProductSold` | `{ productId, buyerId, price, soldAtUtc }` | Product volledig verkocht (alle hoeveelheid verkocht) |
+| `ProductUpdated` | `{ productId, remaining }` | Hoeveelheid bijgewerkt (deelverkoop: product blijft `RUNNING`) |
+| `ProductExpired` | `{ productId, expiredAtUtc }` | Product verlopen (prijsminimum bereikt, status → `VERWORPEN`) |
 | `AuctionEnded` | `{ auctionId }` | Veiling beëindigd (geen producten meer) |
 
 ### Groepen
@@ -244,24 +273,28 @@ Product "BESCHIKBAAR" → "RUNNING" → "GEKOCHT" / "VERWORPEN"
   - Plant automatische vervalling (zie onder).
 
 #### 4. **Aankoop (Buy)**
-- **Koper** roept `PUT /api/products/{id}/buy` aan met optioneel `hoeveelheid`.
+- **Koper** roept `PUT /api/products/{id}/buy` aan met optioneel `hoeveelheid` (standaard 1).
+- **Of** via `POST /api/gekochtproduct` met `productId`, `hoeveelheid` en `koopPrijs`.
 - Backend (`AuctionManager.TryBuyProductAsync`):
-  - **Semaphore-lock** (per product) voor gelijktijdigheid.
-  - Haalt huidge server-tijd op.
+  - **Semaphore-lock** (per product, in-memory ConcurrentDictionary) voor gelijktijdigheid.
+  - Haalt huidige server-tijd op (UTC).
   - Berekent huidige prijs: `prijs = startPrijs - (nu - startedAtUtc) * increment`.
   - Controleert:
     - Product is `RUNNING`.
     - Veiling is `Ongoing` en niet verlopen.
     - Hoeveelheid beschikbaar.
-  - Maakt `GekochtProduct`-record aan.
-  - Decrementeer product `Hoeveelheid`.
-  - Indien volledig verkocht:
+    - Gevraagde hoeveelheid ≤ beschikbare hoeveelheid.
+    - Prijs ≥ minimumPrijs.
+  - **Deelverkoopondersteuning**: 
+    - Maakt `GekochtProduct`-record aan met gekochte hoeveelheid.
+    - Decrementeert product `Hoeveelheid` met gekochte hoeveelheid.
+  - **Indien volledig verkocht** (hoeveelheid = 0):
     - Stelt `product.Status = GEKOCHT`, `product.gebruiker_id = buyerId`, `product.KoopPrijs = berekende_prijs`.
-    - Broadcast `ProductSold`.
+    - Broadcast `ProductSold` met finale prijs.
     - **Async trigger** `StartNextProductAsync` (geen blokkade).
-  - Indien partieel verkocht:
+  - **Indien partieel verkocht** (hoeveelheid > 0):
     - Broadcast `ProductUpdated` met resterende hoeveelheid.
-    - Product blijft `RUNNING`.
+    - Product blijft `RUNNING` en kan verder verkocht worden.
   - **Concurrency-controle**: Optimistic concurrency via `RowVersion`.
 
 #### 5. **Automatische Vervalling**
@@ -300,10 +333,17 @@ Product "BESCHIKBAAR" → "RUNNING" → "GEKOCHT" / "VERWORPEN"
 
 ### Voorbeeldpagina's
 
-- **Login/Register**: Openbare pagina's; geen authenticatie nodig.
-- **KoperBiddingPage**: Toont veilingproducten, kan bieden, luistert naar `ProductStarted`/`ProductSold` events.
-- **AanvoerderCreateProduct**: Formulier voor nieuw product; alleen Aanvoerders.
-- **VeilingmeesterDashboard**: Veilingen starten, producten toewijzen, veilingen verwijderen; alleen Veilingmeesters.
+De frontend bevat de volgende pagina's:
+
+- **Login** (`Login.js`): Openbare pagina voor inloggen.
+- **Register** (`Register.js`): Openbare pagina voor registreren.
+- **KoperDashboard** (`KoperDashboard.js`): Dashboard voor kopers; toont actieve veilingen en producten, kan bieden.
+- **AanvoerderCreateProduct** (`AanvoerderCreateProduct.js`): Formulier voor aanvoerders om nieuwe producten in te brengen.
+- **AanvoerderKoperOverview** (`AanvoerderKoperOverview.js`): Overzicht van kopers voor aanvoerders.
+- **VeilingmeesterCreateAuction** (`VeilingmeesterCreateAuction.js`): Formulier voor veilingmeesters om nieuwe veilingen aan te maken.
+- **ActorAccount** (`ActorAccount.js`): Account-overzicht voor gebruikers (profiel/instellingen).
+
+Alle beschermde pagina's gebruiken `RequireRole` HOC voor autorisatie.
 
 ---
 
@@ -463,20 +503,23 @@ dotnet test
 ### Opmerkingen voor Ontwikkelaars
 
 1. **Concurrency in TryBuyProductAsync**:
-   - Semaphore per product (in-memory) voor synchrone toegang.
+   - Semaphore per product (in-memory ConcurrentDictionary) voor synchrone toegang.
    - Optimistic concurrency via `RowVersion` voor database-conflictdetectie.
    - Maakt `GekochtProduct` aan **voor** productstatusupdate (transactionele semantiek).
 
 2. **Prijsberekening**:
    - Server berekent altijd finale prijs; clients gebruiken `/api/time` voor lokale schatting.
    - Prijs kan niet negatief worden (floor bij `minimumPrijs`).
+   - Prijs wordt gevalideerd tegen minimumPrijs voordat aankoop wordt toegestaan.
 
 3. **Veilingduration**:
    - Ingesteld bij veiling-creatie; duur wordt herinitialiseerd op start (`StartAuctionAsync`).
 
 4. **Productvervalling**:
    - Automatisch gepland na `ProductStarted`.
-   - Non-blocking async taak (via `Task.Run` met nieuwe scope).
+   - Berekent tijd tot minimumPrijs: `(startPrijs - minimumPrijs) / increment`.
+   - Non-blocking async taak (via `Task.Delay` met nieuwe scope).
+   - Controleert status voordat product als `VERWORPEN` wordt gemarkeerd.
 
 5. **Delete Veiling**:
    - Verwijdert enkel veiling-toewijzing van producten.
@@ -486,9 +529,25 @@ dotnet test
 6. **Email-verzending**:
    - `DummyEmailSender` geïmplementeerd; geen echte e-mails.
 
-7. **Dummy RowVersion**:
+7. **RowVersion (Optimistic Concurrency)**:
    - SQL Server `timestamp`/`rowversion` wordt automatisch bijgewerkt op schrijven.
    - Clients hoeven niet `RowVersion` in te stellen; database handelt het af.
+
+8. **Deelverkoop (Partial Sales)**:
+   - Producten ondersteunen deelverkoop: koper kan specifieke hoeveelheid kopen.
+   - Meerdere `GekochtProduct`-records kunnen verwijzen naar hetzelfde product.
+   - Product blijft `RUNNING` tot alle hoeveelheid verkocht is.
+   - `ProductUpdated` event houdt clients op de hoogte van resterende voorraad.
+
+9. **Aankoophistorie**:
+   - `/api/gekochtproduct/history-all-sorted` gebruikt raw SQL met JOIN voor performance.
+   - Retourneert volledige historie met product-soort, gesorteerd op aankoopdatum.
+
+10. **Rol-specifieke registratie**:
+    - Aparte endpoints voor Koper, Aanvoerder en Veilingmeester registratie.
+    - Koper en Aanvoerder vereisen KVK-nummer, adres, email en IBAN.
+    - Veilingmeester registratie is eenvoudiger (alleen username/password).
+    - Alle registraties zetten automatisch de juiste rol via UserManager.
 
 ---
 
