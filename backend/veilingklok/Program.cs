@@ -13,7 +13,7 @@ using veilingklok.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Services
+// =============== Core Services ===============
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDataProtection();
@@ -21,16 +21,32 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<RoleManager<IdentityRole>>();
 builder.Services.AddScoped<SignInManager<Gebruiker>>();
 builder.Services.AddTransient<IEmailSender<Gebruiker>, DummyEmailSender>();
-builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme, options => { 
-    options.BearerTokenExpiration = TimeSpan.FromMinutes(60.0); });
+
+// =============== Authentication (Identity Bearer Tokens) ===============
+// ASP.NET Core Identity met Bearer-token authenticatie.
+// Token-geldigheidsduur: 60 minuten (configureerbaar).
+builder.Services.AddAuthentication()
+    .AddBearerToken(IdentityConstants.BearerScheme, options => 
+    { 
+        options.BearerTokenExpiration = TimeSpan.FromMinutes(60.0); 
+    });
+
+// =============== Database ===============
+// Entity Framework Core + SQL Server.
+// DefaultConnection uit appsettings.json (lokale dev-instelling).
 builder.Services.AddDbContext<VeilingContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddEndpointsApiExplorer();
 
-// SignalR and auction services
+// =============== SignalR & Auction Services ===============
+// SignalR: Real-time events via WebSocket (of polling fallback).
+// AuctionManager: Orchestratie van veilincyclus (start, sequencing, expiry, buy).
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IAuctionManager, AuctionManager>();
-// ---------------- Swagger + JWT ----------------
+
+// =============== Swagger + JWT Documentation ===============
+// Development-only: Swagger UI met Bearer-token support.
 if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddSwaggerGen(options =>
@@ -38,7 +54,7 @@ if (builder.Environment.IsDevelopment())
         options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
             Name = "Authorization",
-            Description = "Please enter a valid token",
+            Description = "Bearer token invoeren (formaat: 'Bearer <token>')",
             In = ParameterLocation.Header,
             Type = SecuritySchemeType.Http,
             Scheme = "Bearer"
@@ -62,7 +78,11 @@ if (builder.Environment.IsDevelopment())
         });
     });
 }
-// ---------------- CORS ----------------
+
+// =============== CORS ===============
+// Cross-Origin Resource Sharing voor frontend (React).
+// Development: localhost:3000 toegestaan.
+// Production: Moet worden bijgewerkt naar production-frontend-URL!
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -70,28 +90,38 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:3000")
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials();
+              .AllowCredentials();  // Nodig voor cookies/auth-headers
     });
 });
 
-// ---------------- Identity ----------------
+// =============== Identity (ASP.NET Core) ===============
+// Role-based identity met Gebruiker entity als user-base.
+// EF Core stores voor token/role-persistentie.
 builder.Services.AddIdentity<Gebruiker, IdentityRole>()
-.AddRoles<IdentityRole>()
-.AddEntityFrameworkStores<VeilingContext>();
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<VeilingContext>();
 
-// ---------------- Dummy Email Sender ----------------
+// =============== Email Sender (Dummy) ===============
+// Placeholder voor e-mail-verzending (bijv. bevestigingslinks).
+// In productie: vervang door real provider.
 builder.Services.AddTransient<IEmailSender<Gebruiker>, DummyEmailSender>();
 
-// ---------------- JWT Service ----------------
 
 var app = builder.Build();
 
-// ---------------- Seed Roles + Admin ----------------
+// =============== Seed Roles + Admin ===============
+// Startup-taak: Create standard roles + hardcoded admin-user op eerste run.
+// WAARSCHUWING: Wachtwoord is hardcoded (Test123!) – vervang in productie!
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Gebruiker>>();
 
+    // **Role-setup**: 4 standaard-rollen voor het veilingplatform.
+    // - Koper: Kan op producten bieden
+    // - Aanvoerder: Kan producten inbrengen
+    // - Veilingmeester: Kan veilingen starten/beheren
+    // - Admin: Volledige toegang
     string[] roles = { "Koper", "Aanvoerder", "Veilingmeester", "Admin" };
     foreach (var role in roles)
     {
@@ -99,6 +129,9 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole(role));
     }
 
+    // **Admin-seed**: Maak standaard-admin aan (eenmalig op startup).
+    // Credentials: adminUser / Test123!
+    // IMPORTANT: Wijzig dit in productie en gebruik environment variables!
     var password = "Test123!";
     var adminEmail = "admin@example.com";
     var adminUsername = "adminUser";
@@ -117,13 +150,16 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// ---------------- Middleware ----------------
+// =============== Middleware & Endpoints ===============
 if (app.Environment.IsDevelopment())
 {
+    // **Swagger**: Alleen in development; UI voor API-exploratie.
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// **CORS**: Enkel localhost:3000 (React frontend dev).
+// In productie: aangeven naar production-frontend-URL.
 app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
