@@ -3,31 +3,52 @@ import { useEffect, useRef, useState } from 'react';
 import '../styles/Navbar.css';
 import { useRole } from '../auth/RoleContext';
 
+/**
+ * Navbar
+ *
+ * Header-navigatie getoond bovenaan elke pagina.
+ * Functies en verantwoordelijkheden:
+ * - Toont Flora Veiling logo (link naar home/login).
+ * - Toont rol-specifieke navigatieknoppen:
+ *   - Veilingmeester/Admin: "Veiling Dashboard" (CreateAuction)
+ *   - Koper/Admin: "Koper Dashboard" (live veilingen)
+ *   - Aanvoerder/Admin: "Koper Overview", "Product Dashboard"
+ * - Toont openbare links (Login, Register) voor niet-ingelogde gebruikers.
+ * - Toont account-dropdown-menu (Account, Uitloggen) voor ingelogde gebruikers.
+ * - Sluit account-menu bij klik buiten (mousedown) of Esc-toets.
+ */
 function Navbar() {
     const navigate = useNavigate();
 
+    // Check loginatus via localStorage token
     const token = localStorage.getItem('accessToken');
     const isLoggedIn = !!token;
 
+    // Haal huidige rol op vanuit globale RoleContext
     const { role } = useRole();
 
+    // Bepaal rol-specifieke zichtbaarheid van menu-items
     const canSeeCreateAuction = role === 'Veilingmeester' || role === 'Admin';
     const canSeeKoperOverview = role === 'Aanvoerder' || role === 'Admin';
     const canSeeCreateProduct = role === 'Aanvoerder' || role === 'Admin';
     const canSeeKoperDashboard = role === 'Koper' || role === 'Admin';
 
+    // UI-state: account-menu open/dicht
     const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
     const accountMenuRef = useRef(null);
 
+    /** Verwijder token en stuur terug naar login */
     const handleLogout = () => {
         localStorage.removeItem('accessToken');
         setIsAccountMenuOpen(false);
         navigate('/login', { replace: true });
     };
 
+    // Sluit account-menu bij klik buiten of Esc-toets
     useEffect(() => {
         if (!isAccountMenuOpen) return;
 
+        // Klik buiten account-menu ref sluit menu
         const onMouseDown = (e) => {
             if (
                 accountMenuRef.current &&
@@ -37,6 +58,7 @@ function Navbar() {
             }
         };
 
+        // Esc-toets sluit menu
         const onKeyDown = (e) => {
             if (e.key === 'Escape') {
                 setIsAccountMenuOpen(false);
@@ -55,6 +77,7 @@ function Navbar() {
     return (
         <nav className="navbar">
             <div className="nav-container">
+                {/* Logo */}
                 <div className="logo">
                     <NavLink to={isLoggedIn ? '/' : '/login'}>
                         <img
@@ -65,7 +88,9 @@ function Navbar() {
                     </NavLink>
                 </div>
 
+                {/* Navigatieknop-lijst */}
                 <ul className="nav-menu">
+                    {/* Menu voor niet-ingelogde gebruikers */}
                     {!isLoggedIn && (
                         <>
                             <li>
@@ -81,8 +106,10 @@ function Navbar() {
                         </>
                     )}
 
+                    {/* Menu voor ingelogde gebruikers */}
                     {isLoggedIn && (
                         <>
+                            {/* Rol-specifieke knoppen */}
                             {canSeeCreateAuction && (
                                 <li>
                                     <NavLink to="/create-auction">
@@ -115,11 +142,12 @@ function Navbar() {
                                 </li>
                             )}
 
-                            {/* Account menu */}
+                            {/* Account-dropdown menu */}
                             <li
                                 ref={accountMenuRef}
                                 className={`nav-account ${isAccountMenuOpen ? 'open' : ''}`}
                             >
+                                {/* Account-trigger knop */}
                                 <button
                                     type="button"
                                     className="nav-account-trigger nav-account-icon-btn"
@@ -152,6 +180,7 @@ function Navbar() {
                                     </svg>
                                 </button>
 
+                                {/* Account-dropdown inhoud */}
                                 <div className="nav-account-menu" role="menu">
                                     <NavLink
                                         to="/account"
