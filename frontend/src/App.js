@@ -12,12 +12,30 @@ import { RoleProvider } from './auth/RoleContext';
 import RequireRole from './auth/RequireRole';
 import KoperDashboard from './pages/KoperDashboard';
 
+/**
+ * App
+ *
+ * Hoofd-app component met centraliseerde routing en role-based access control.
+ * Functies en verantwoordelijkheden:
+ * - Controleert loginstatus via localStorage accessToken.
+ * - Wraps alle content met RoleProvider voor globale rol-state.
+ * - Definieert routes voor openbare pagina's (Login, Register).
+ * - Definieert rol-beschermde routes via RequireRole HOC:
+ *   - Koper: KoperDashboard (live veilingen)
+ *   - Veilingmeester: CreateAuction (veilingbeheer)
+ *   - Aanvoerder: AanvoerderCreateProduct (productcreatie), KoperOverview (koophistorie)
+ *   - Admin: toegang tot alle pagina's
+ * - Toont Navbar (header) en Footer (footer) op alle pagina's.
+ * - Standaardroute: Account (ActorAccount) voor ingelogde gebruikers, anders Login.
+ */
 function App() {
+    // Check loginstatus: token aanwezig = ingelogd
     const token = localStorage.getItem('accessToken');
     const isLoggedIn = !!token;
     console.log('isLoggedIn:', isLoggedIn);
     
     return (
+        // RoleProvider: verzorgt globale rol-state en auto-refresh bij mount
         <RoleProvider>
             <div className="App">
                 <Navbar />
@@ -25,14 +43,18 @@ function App() {
                 <div className="content">
 
                     <Routes>
+                        {/* Standaardroute: Account voor ingelogd, anders redirect naar Login */}
                         <Route
                             path="/"
                             element={isLoggedIn ? <Account /> : <Navigate to="/login" />}
                         />
 
+                        {/* Openbare routes */}
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         
+                        {/* Rol-beschermde routes */}
+                        {/* Koper-route: live veilingen */}
                         <Route
                             path="/koper-dashboard"
                             element={
@@ -42,6 +64,7 @@ function App() {
                             }
                         />
 
+                        {/* Veilingmeester-route: veilingbeheer en creatie */}
                         <Route
                             path="/create-auction"
                             element={
@@ -51,6 +74,7 @@ function App() {
                             }
                         />
 
+                        {/* Aanvoerder-route: productcreatie */}
                         <Route
                             path="/create-product"
                             element={
@@ -60,6 +84,7 @@ function App() {
                             }
                         />
 
+                        {/* Aanvoerder-route: koophistorie weergave */}
                         <Route
                             path="/koper-overview"
                             element={
@@ -69,6 +94,7 @@ function App() {
                             }
                         />
 
+                        {/* Account-route: rol-specifieke account-pagina (alle rollen) */}
                         <Route
                             path="/account"
                             element={
