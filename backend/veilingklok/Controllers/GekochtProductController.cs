@@ -13,7 +13,10 @@ public class GekochtProductCreateDto
     public decimal KoopPrijs { get; set; }
 }
 
-// Helper DTO voor de SQL output mapping
+/// <summary>
+/// Response DTO voor koopgeschiedenis met JOIN-info (product soort).
+/// Gebruikt voor SQL-mapping en client-weergave.
+/// </summary>
 public class GekochtProductHistoryDto
 {
     public int Id { get; set; }
