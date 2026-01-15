@@ -4,6 +4,9 @@ using veilingklok.Models;
 
 namespace veilingklok;
 
+/// <summary>
+/// Request body voor koper-registratie: bevat credentials en KvK-gegevens.
+/// </summary>
 public class KoperRegistratie
 {
     public string UserName { get; set; }
@@ -15,18 +18,26 @@ public class KoperRegistratie
     public string IbanHash { get; set; }
 }
 
+/// <summary>
+/// Beheerst koper-registratie: validatie, account-creatie, en rol-toewijzing.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class KoperController : ControllerBase
 {
+    // DbContext en UserManager worden via DI aangeleverd.
     private readonly VeilingContext _db;
     private readonly UserManager<Gebruiker> _userManager;
+    
     public KoperController(VeilingContext db, UserManager<Gebruiker> userManager)
     {
         _db = db;
         _userManager = userManager;
     }
 
+    /// <summary>
+    /// Registreer nieuwe koper: valideer input, maak account aan, en wijs "Koper"-rol toe.
+    /// </summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register(KoperRegistratie dto)
     {
