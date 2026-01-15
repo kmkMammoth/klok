@@ -126,6 +126,10 @@ public class AuctionsController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Start veilingafloop: delegeert aan AuctionManager voor status-update en event-broadcast.
+    /// Bij status="Ongoing" triggers automatische productsequencing.
+    /// </summary>
     // PUT: api/Auctions/{id}
     [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester, Admin")]
     [HttpPut("{id}")]
@@ -134,7 +138,8 @@ public class AuctionsController : ControllerBase
         var veiling = await _db.Veiling.SingleOrDefaultAsync(v => v.VeilingId == id);
         if (veiling == null) return NotFound();
 
-        // If we're starting the auction, let auction manager handle start and broadcasting
+        // Bij start (status="Ongoing"): AuctionManager handelt alles af
+        // (UTC-time sync, first product trigger, SignalR broadcast).
         if (!string.IsNullOrWhiteSpace(status) && status == "Ongoing")
         {
             await _auctionManager.StartAuctionAsync(id);
@@ -146,6 +151,10 @@ public class AuctionsController : ControllerBase
         return Ok();
     }
 
+    /// <summary>
+    /// Verwijder veiling: reset alle gelinkte producten naar BESCHIKBAAR
+    /// (tenzij reeds verkocht), verwijder vervolgens veiling zelf.
+    /// </summary>
     // DELETE: api/Auctions/{id}
     [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Veilingmeester, Admin")]
     [HttpDelete("{id}")]
@@ -154,14 +163,18 @@ public class AuctionsController : ControllerBase
         var veiling = await _db.Veiling.SingleOrDefaultAsync(v => v.VeilingId == id);
         if (veiling == null) return NotFound();
 
+        // Haal alle producten in deze veiling op.
         var producten = await _db.Product.Where(p => p.VeilingId == id).ToListAsync();
+        
         foreach (var p in producten)
         {
+            // Verwijder veilingkoppeling en veiling-specifieke prijsvelden.
             p.VeilingId = null;
             p.StartPrijs = null;
             p.IncrementPerSecond = null;
 
-            // Reset runtime auction fields for products that were not sold
+            // **Reset runtime-velden alleen voor onverkochte producten**.
+            // Reeds verkochte producten (GEKOCHT) behouden hun status/prijs.
             if (p.Status != "GEKOCHT")
             {
                 p.StartedAtUtc = null;
@@ -171,6 +184,7 @@ public class AuctionsController : ControllerBase
             }
         }
 
+        // Sla product-updates op, verwijder vervolgens veiling.
         await _db.SaveChangesAsync();
         _db.Veiling.Remove(veiling);
         await _db.SaveChangesAsync();
