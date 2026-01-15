@@ -1,3 +1,12 @@
+/**
+ * Applicatie-entrypoint voor de frontend.
+ *
+ * Doel:
+ * - Initialiseert React root.
+ * - Wrapt de app in React.StrictMode voor extra waarschuwingen.
+ * - Activeert client-side routing via BrowserRouter.
+ * - Optioneel: performance-meting via reportWebVitals.
+ */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
@@ -6,7 +15,9 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
 
+// Initialiseert de React root en mount onder het element met id 'root'
 const root = ReactDOM.createRoot(document.getElementById('root'));
+// Render de applicatie met StrictMode en BrowserRouter (client-side routing)
 root.render(
   <React.StrictMode>
     <BrowserRouter>
