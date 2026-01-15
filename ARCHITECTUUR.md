@@ -8,11 +8,15 @@
 
 ## 1. Overzicht & Technische Stack
 
-Veilingklok is een real-time veilingplatform waarmee veilingmeesters producten kunnen aanbieden, aanvoerders producten kunnen inbrengen, en kopers producten kunnen kopen. Het systeem ondersteunt:
-- **Live prijsdaling** met server-authoriteit
-- **Real-time notificaties** via SignalR
+Veilingklok is een real-time veilingplatform waarmee veilingmeesters producten kunnen aanbieden, aanvoerders producten kunnen inbrengen, en kopers producten kunnen kopen. Het systeem implementeert een **falling-price auction** model met server-authoriteit en real-time client-updates via SignalR. Het systeem ondersteunt:
+
+- **Live prijsdaling** met server-authoriteit (gebaseerd op UTC-server-tijd)
+- **Real-time updates** via SignalR WebSocket
 - **Rolgebaseerde toegang** (Koper, Aanvoerder, Veilingmeester, Admin)
-- **Concurrentiebeheer** bij gelijktijdige aankopen
+- **Concurrentiebeheer** bij gelijktijdige aankopen (Semaphore + optimistic concurrency)
+- **Deelverkoop** - producten kunnen in meerdere delen worden verkocht
+- **Automatische vervalling** - producten vervallen automatisch wanneer minimumprijs bereikt is
+- **Asynchroon productsequencing** - volgende product start automatisch na verkoop
 
 ### Technische Stack
 
@@ -193,45 +197,72 @@ Rol-specifieke gegevens voor veilingmeesters.
 
 ## 5. Real-time Communicatie (SignalR)
 
-### Hub: `/hubs/auction`
+### Connectie & Hub-configuratie
 
-SignalR-hub voor live updates tijdens veilingen.
+SignalR-hub is gehost op het relative pad `/hubs/auction`. Clients moeten verbinding maken met deze hub om real-time updates te ontvangen.
 
-#### Client-methoden (client → server)
+### Groepsmanagement
 
-```csharp
-await connection.InvokeAsync("JoinAuction", auctionId);
-await connection.InvokeAsync("LeaveAuction", auctionId);
-```
+Communicatie wordt georganiseerd in groepen per veiling:
+- **Groepnaam**: `auction-{veilingId}` (bijv. `auction-42`)
+- **Joinen**: Client roept `JoinAuction(auctionId)` aan
+- **Verlaten**: Client roept `LeaveAuction(auctionId)` aan
+- **Broadcasting**: Server stuurt events naar alle clients in een groep
 
-#### Server-events (server → client)
+### Client-methoden (Client → Server)
+
+Clients kunnen deze methoden op de server aanroepen:
+
+| Methode | Parameters | Beschrijving |
+|---------|------------|-------------|
+| `JoinAuction` | `auctionId` (int) | Client joint groep voor specifieke veiling |
+| `LeaveAuction` | `auctionId` (int) | Client verlaat groep voor specifieke veiling |
+
+### Server-events (Server → Client)
+
+Server stuurt deze events naar clients in de groep:
 
 | Event | Payload | Beschrijving |
 |-------|---------|-------------|
-| `AuctionStarted` | `{ auctionId, startedAtUtc }` | Veiling gestart |
-| `ProductStarted` | `{ productId, auctionId, startedAtUtc, startPrice, incrementPerSecond, minimumPrice }` | Product begint in veiling |
-| `ProductSold` | `{ productId, buyerId, price, soldAtUtc }` | Product volledig verkocht (alle hoeveelheid verkocht) |
-| `ProductUpdated` | `{ productId, remaining }` | Hoeveelheid bijgewerkt (deelverkoop: product blijft `RUNNING`) |
-| `ProductExpired` | `{ productId, expiredAtUtc }` | Product verlopen (prijsminimum bereikt, status → `VERWORPEN`) |
-| `AuctionEnded` | `{ auctionId }` | Veiling beëindigd (geen producten meer) |
-
-### Groepen
-
-Clients joinen een groep `auction-{veilingId}` per veiling. Events worden naar groepen broadcast.
+| `AuctionStarted` | `{ auctionId, startedAtUtc }` | Veiling is gestart; startTijd is ingesteld op server-UTC |
+| `ProductStarted` | `{ productId, auctionId, startedAtUtc, startPrice, incrementPerSecond, minimumPrice }` | Product begint met prijsdaling; alle prijsparameters meegezonden |
+| `ProductSold` | `{ productId, buyerId, price, soldAtUtc }` | Product/hoeveelheid volledig verkocht met definitieve prijs |
+| `ProductUpdated` | `{ productId, remaining }` | Hoeveelheid bijgewerkt door deelverkoop; product blijft `RUNNING` |
+| `ProductExpired` | `{ productId, expiredAtUtc }` | Product verlopen (minimumprijs bereikt); productstatus → `VERWORPEN` |
+| `AuctionEnded` | `{ auctionId }` | Veiling afgelopen (geen producten meer beschikbaar) |
 
 ### Prijsbeheer & Synchronisatie
 
-**Server-authoriteit**:
-- Prijzen worden **altijd** berekend op de server.
-- Formule: `prijs = startPrijs - (huidig_moment - startMoment) * incrementPerSecond`
-- Prijs kan niet lager dan `minimumPrijs` gaan.
+#### Server-authoriteit
+Prijzen worden **altijd** berekend op de server en zijn authoriteit:
 
-**Client-synchronisatie**:
-- Client haalt server-tijd op via `GET /api/time`.
-- Client berekent lokale offset: `offset = serverTime - clientTime`.
-- Client berekent huidige tijd: `lokaleHuidigeTime = Date.now() + offset`.
-- Clients tonen **geschatte** prijs lokaal voor smooth UI.
-- Server zendt `ProductSold` event met **authoriteit** prijs.
+**Prijsberekeningsformule**:
+- Formule: `prijs = startPrijs - (huidig_moment - startMoment) * incrementPerSecond`
+
+**Grenzen**:
+- Prijs kan niet lager dan `minimumPrijs` gaan: `prijs = max(huidigeProijs, minimumPrijs)`
+- Als prijs `minimumPrijs` bereikt en product is nog niet verkocht, wordt product automatisch verlopen
+
+#### Client-synchronisatie via `/api/time`
+
+Omdat clients potentieel verschillende systeemtijden hebben, synchroniseert de frontend met de server via een offset-berekening. De client haalt de server-UTC op via `GET /api/time` en berekent een tijdsverschil. Dit verschil wordt vervolgens gebruikt voor lokale prijsberekening zodat de UI smooth blijft zonder constant naar de server te moeten vragen. De client berekent de huidige geschatte prijs met de offset-gecorrigeerde servertime.
+
+Bij aankoop stuurt de server de finale, authoratieve prijs via het `ProductSold` event. De client vertrouwt deze server-prijs zonder verdere validatie.
+
+#### Waarom server-authoriteit?
+- **Anti-cheat**: Client kan klok niet manipuleren voor lagere prijs
+- **Consistentie**: Alle kopers zien exact dezelfde servertijd
+- **Vervalling**: Server bepaalt exact wanneer minimumprijs bereikt is
+
+### Server-tijdcoördinatie
+
+Alle timestamps gebruiken **UTC** (Coordinated Universal Time):
+- `Veiling.StartTijd`, `Veiling.EindTijd`: UTC
+- `Product.StartedAtUtc`: UTC moment dat product in veiling gestart is
+- Afgeleide berekeningen: Alle tijddifferences in seconden
+- Geen lokale timezone-conversies in backend
+
+Alle timestamps gebruiken **UTC** (Coordinated Universal Time). Dit is standaard in de backend implementatie.
 
 ---
 
@@ -239,10 +270,9 @@ Clients joinen een groep `auction-{veilingId}` per veiling. Events worden naar g
 
 ### Statussen & Transities
 
-```
-Veiling "Idle" → "Ongoing" → "Done"
-Product "BESCHIKBAAR" → "RUNNING" → "GEKOCHT" / "VERWORPEN"
-```
+Veilingen gaan door statussen: `Idle` → `Ongoing` → `Done`
+
+Producten gaan door statussen: `BESCHIKBAAR` → `RUNNING` → `GEKOCHT` of `VERWORPEN`
 
 ### Gedetailleerde Flow
 
@@ -297,15 +327,24 @@ Product "BESCHIKBAAR" → "RUNNING" → "GEKOCHT" / "VERWORPEN"
     - Product blijft `RUNNING` en kan verder verkocht worden.
   - **Concurrency-controle**: Optimistic concurrency via `RowVersion`.
 
-#### 5. **Automatische Vervalling**
-- Na `ProductStarted` plant backend automatische vervalling:
-  - Berekent tijd tot minimumprijs: `secondsUntilMin = (startPrijs - minimumPrijs) / increment`.
-  - Plant taak voor `secondsUntilMin * 1000` ms.
-- Na verloop:
-  - Controleert product is nog `RUNNING` en niet verkocht.
-  - Stelt `product.Status = VERWORPEN`.
-  - Broadcast `ProductExpired`.
-  - Trigger `StartNextProductAsync`.
+#### 5. **Automatische Vervalling** (Auto-expiry)
+Na `ProductStarted` plant backend automatische vervalling voor wanneer de prijs het minimumPrijs bereikt.
+
+**Berekening van vervaltijd**:
+`secondsUntilMin = (StartPrijs - MinimumPrijs) / IncrementPerSecond`
+
+Voorbeeld:
+- StartPrijs: EUR 10,00
+- MinimumPrijs: EUR 5,00  
+- IncrementPerSecond: EUR 0,50
+- Verval na: (10 - 5) / 0,50 times 1000 = 10.000 ms = 10 seconden
+
+**Vervalproces**:
+- Runt op background thread (Task.Delay, geen blokkade van request handler)
+- Controleert na verloop of product nog `RUNNING` is en niet verkocht.
+- Stelt `product.Status = VERWORPEN`
+- Broadcast `ProductExpired` event naar groep
+- Trigger `StartNextProductAsync` automatisch (start volgende product)
 
 #### 6. **Veilingeinde**
 - Geen onverkochte producten meer.
