@@ -11,6 +11,10 @@ using System.Reflection;
 
 namespace veilingklok;
 
+/// <summary>
+/// Request body voor het aanmaken of bijwerken van een product.
+/// Inclusief optionele veilingvelden zodat reusability behouden blijft.
+/// </summary>
 public class CreateProductRequest
 {
     public string? soort { get; set; }
@@ -26,23 +30,35 @@ public class CreateProductRequest
     public decimal? incrementPerSecond { get; set; }
 }
 
+/// <summary>
+/// Request body voor veilingkoppeling: bevat doelveiling en facultatieve prijsinstellingen.
+/// </summary>
 public class UpdateProductVeiling
 {
     public int? veilingId { get; set; }
     public decimal? startprijs { get; set; }
     public decimal? incrementPerSecond { get; set; }
 }
+/// <summary>
+/// Request body voor koppelen van koper aan product (buiten veilingflow om).
+/// </summary>
 public class UpdateProductKoper
 {
     public string? koperId { get; set; }
 }
 
+/// <summary>
+/// Beperkte statusweergave van een product (id + status).
+/// </summary>
 public class ProductStatusResponse
 {
     public int id { get; set; }
     public string? status { get; set; }
 }
 
+/// <summary>
+/// REST-response voor productoverzichten: combineert product-, veiling- en koopinfo.
+/// </summary>
 public class ProductResponse
 {
     public int id { get; set; }
@@ -71,6 +87,7 @@ public class ProductResponse
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase
 {
+    // DbContext + AuctionManager worden via DI aangeleverd.
     private readonly VeilingContext _db;
     private readonly IAuctionManager _auctionManager;
 
@@ -84,6 +101,7 @@ public class ProductsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ProductResponse>>> GetAllProducts([FromQuery] int? veilingId)
     {
+        // Optionele filter op veilingId voor scoped ophalen.
         var query = _db.Product.AsQueryable();
         if (veilingId.HasValue)
         {
@@ -121,6 +139,7 @@ public class ProductsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<ProductResponse>> GetProduct(int id)
     {
+        // Ophalen enkelvoudig product met exact ID; single-or-default om 404 te kunnen geven.
         var product = await _db.Product
             .Where(p => p.ArtikelId == id)
             .SingleOrDefaultAsync();
@@ -155,6 +174,7 @@ public class ProductsController : ControllerBase
     [HttpGet("{id}/status")]
     public async Task<ActionResult<ProductStatusResponse>> GetProductStatus(int id)
     {
+        // Minimale projectie voor lightweight statuspolling.
         var product = await _db.Product
             .Where(p => p.ArtikelId == id)
             .Select(p => new ProductStatusResponse
@@ -174,6 +194,7 @@ public class ProductsController : ControllerBase
     [HttpGet("available")]
     public async Task<ActionResult<IEnumerable<ProductResponse>>> GetAvailableProducts()
     {
+        // Alleen voorraad > 0 en status BESCHIKBAAR, gesorteerd op ArtikelId.
         var producten = await _db.Product
             .Where(p =>
                 p.Hoeveelheid.HasValue &&
@@ -266,6 +287,7 @@ public class ProductsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateProduct(int id, [FromBody] CreateProductRequest request)
     {
+        // Zoek product dat geüpdatet moet worden.
         var product = await _db.Product
             .Where(p => p.ArtikelId == id)
             .SingleOrDefaultAsync();
@@ -322,6 +344,7 @@ public class ProductsController : ControllerBase
     [HttpPut("{id}/assign-koper")]
     public async Task<ActionResult> AssignKoperToProduct(int id, [FromBody] UpdateProductKoper request)
     {
+        // Directe koopkoppeling (buiten veiling) door Admin/Koper.
         var product = await _db.Product.Where(p => p.ArtikelId == id).SingleOrDefaultAsync();
         if (product == null)
             return NotFound($"Product met ID {id} niet gevonden.");
@@ -341,21 +364,25 @@ public class ProductsController : ControllerBase
         return Ok();
     }
 
+    /// <summary>
+    /// Wijs product toe aan veiling: stelt VeilingId, prijsvelden en reset runtime-status.
+    /// Voorkomt dubbele toewijzing; reset oud runtime-state bij hergebruik.
+    /// </summary>
     [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Admin, Veilingmeester")]
     [HttpPut("{id}/assign-veiling")]
     public async Task<ActionResult> AssignVeilingToProduct(int id, [FromBody] UpdateProductVeiling request)
     {
+        // Haal doelproduct op (exclusief tracking voor performance niet nodig hier).
         var product = await _db.Product.Where(p => p.ArtikelId == id).SingleOrDefaultAsync();
         if (product == null)
             return NotFound($"Product met ID {id} niet gevonden.");
 
-        // allow clearing the veiling by sending null
         if (request == null)
             return BadRequest("Ongeldige request body.");
 
         if (request.veilingId.HasValue)
         {
-            // Prevent assigning if already assigned to a veiling
+            // **Voorkoming dubbele toewijzing**: Kan niet opnieuw toewijzen als al aan veiling gekoppeld.
             if (product.VeilingId != null)
                 return BadRequest("Product is al toegewezen aan een veiling.");
 
@@ -367,6 +394,7 @@ public class ProductsController : ControllerBase
             if (veiling == null)
                 return BadRequest($"Veiling met ID {request.veilingId.Value} niet gevonden.");
 
+            // Zet veilingkoppeling en veiling-specifieke prijsvelden.
             product.VeilingId = request.veilingId.Value;
 
             if (request.startprijs.HasValue)
@@ -375,7 +403,9 @@ public class ProductsController : ControllerBase
             if (request.incrementPerSecond.HasValue)
                 product.IncrementPerSecond = request.incrementPerSecond.Value;
 
-            // When adding to a new veiling ensure any previous runtime auction state is cleared
+            // **Runtime-status reset**: Product nog niet gestart in veiling; wis alle runtime-velden.
+            // Dit is cruciaal voor hergebruik: als product eerder gebruikt werd,
+            // zet StartedAtUtc=null zodat ProductSequencing het als "nieuw" ziet.
             product.StartedAtUtc = null;
             product.KoopPrijs = null;
             product.gebruiker_id = null;
@@ -383,12 +413,12 @@ public class ProductsController : ControllerBase
         }
         else
         {
+            // **Koppeling verwijderen**: Zet VeilingId en veiling-velden op null.
             product.VeilingId = null;
-            // clear auction-specific settings when removing from veiling
             product.StartPrijs = null;
             product.IncrementPerSecond = null;
 
-            // Also clear any runtime auction state so the product can be reused cleanly
+            // Reset runtime-state; bewaar reeds verkochte producten (GEKOCHT).
             product.StartedAtUtc = null;
             product.KoopPrijs = null;
             if (product.Status != "GEKOCHT")
@@ -404,6 +434,7 @@ public class ProductsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteProduct(int id)
     {
+        // Hard delete: geen soft-delete kolom aanwezig.
         var product = await _db.Product
             .Where(p => p.ArtikelId == id)
             .SingleOrDefaultAsync();
@@ -417,6 +448,11 @@ public class ProductsController : ControllerBase
         return Ok();
     }
 
+    /// <summary>
+    /// Koop product: delegeert aan AuctionManager voor concurrency-beheer, prijsberekening,
+    /// GekochtProduct-creatie, en volgende-product-triggering.
+    /// Valideert dat gebruiker geregistreerd is als Koper.
+    /// </summary>
     [Authorize(AuthenticationSchemes = "Identity.Bearer", Roles = "Koper, Admin")]
     [HttpPost("{id}/buy")]
     public async Task<ActionResult> BuyProduct(int id)
@@ -425,16 +461,19 @@ public class ProductsController : ControllerBase
         if (string.IsNullOrEmpty(userId))
             return Unauthorized("Gebruiker niet herkend.");
 
-        // Controleer of de gebruiker bestaat in de Koper tabel om FK constraint errors te voorkomen
+        // **Validatie**: Controleer of gebruiker in Koper tabel bestaat (FK constraint).
+        // Alleen geregistreerde kopers mogen bieden.
         var koper = await _db.Koper.FindAsync(userId);
         if (koper == null)
             return BadRequest("Uw account is niet geregistreerd als koper. Alleen kopers kunnen bieden.");
 
-        // Delegate buy operation to AuctionManager which enforces concurrency and broadcasts
+        // **Delegation**: AuctionManager handelt concurrency (semaphore), prijs,
+        // GekochtProduct-creatie, hoeveelheid-decrement en SignalR-broadcasts af.
         var success = await _auctionManager.TryBuyProductAsync(id, userId);
         if (success)
             return Ok(new { message = "Product succesvol gekocht!" });
 
+        // Conflict als product al verkocht, veiling gesloten, onvoldoende hoeveelheid, etc.
         return Conflict(new
             { message = "Kon product niet kopen. Het is mogelijk al verkocht of de veiling is gesloten." });
     }

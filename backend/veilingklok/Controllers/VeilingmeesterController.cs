@@ -4,24 +4,35 @@ using veilingklok.Models;
 
 namespace veilingklok;
 
+/// <summary>
+/// Request body voor veilingmeester-registratie: bevat credentials.
+/// </summary>
 public class VeilingmeesterRegistratie
 {
     public string UserName { get; set; }
     public string Password { get; set; }
 }
 
+/// <summary>
+/// Beheerst veilingmeester-registratie: validatie, account-creatie, en rol-toewijzing.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class VeilingmeesterController : ControllerBase
 {
+    // DbContext en UserManager worden via DI aangeleverd.
     private readonly VeilingContext _db;
     private readonly UserManager<Gebruiker> _userManager;
+    
     public VeilingmeesterController(VeilingContext db, UserManager<Gebruiker> userManager)
     {
         _db = db;
         _userManager = userManager;
     }
 
+    /// <summary>
+    /// Registreer nieuwe veilingmeester: valideer input, maak account aan, en wijs "Veilingmeester"-rol toe.
+    /// </summary>
     [HttpPost("register")]
         public async Task<IActionResult> Register(VeilingmeesterRegistratie dto)
         {

@@ -14,12 +14,21 @@ namespace veilingklok.Services
         Task StartNextProductAsync(int veilingId);
     }
 
+    /// <summary>
+    /// Orchestreert de veilingcyclus: start veilingen, beheert productsequencing, 
+    /// handelt aankopen af met optimistic concurrency, en plant automatische vervalling.
+    /// </summary>
     public class AuctionManager : IAuctionManager
     {
-private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, System.Threading.SemaphoreSlim> _productLocks = new();
+        /// <summary>
+        /// Per-product semaphore-locks voor synchrone aankoopaccesscontrol.
+        /// Voorkomt gelijktijdige purchases op hetzelfde product in-memory.
+        /// </summary>
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, System.Threading.SemaphoreSlim> _productLocks = new();
+        
         private readonly VeilingContext _db;
-        private readonly IHubContext<AuctionHub> _hub;
-        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IHubContext<AuctionHub> _hub;  // SignalR hub voor live broadcasts
+        private readonly IServiceScopeFactory _scopeFactory;  // Factory voor background task DB-scopes
 
         public AuctionManager(VeilingContext db, IHubContext<AuctionHub> hub, IServiceScopeFactory scopeFactory)
         {
@@ -28,28 +37,39 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
             _scopeFactory = scopeFactory;
         }
 
+        /// <summary>
+        /// Start veilingafloop: zet status naar "Ongoing" en stelt UTC-start-/eindtijden in.
+        /// Broadcast 'AuctionStarted' event en trigger automatisch eerste product.
+        /// </summary>
         public async Task StartAuctionAsync(int veilingId)
         {
             var veiling = await _db.Veiling.FindAsync(veilingId);
             if (veiling == null) return;
 
-            // Start auction using UTC times
+            // Zet veilingtijden op server-UTC nu (behoudt duur).
+            // Dit synchroniseert met serverclock voor prijsberekening op cliënt.
             var duration = veiling.EindTijd - veiling.StartTijd;
             veiling.StartTijd = DateTime.UtcNow;
             veiling.EindTijd = veiling.StartTijd.Add(duration);
             veiling.Status = "Ongoing";
             await _db.SaveChangesAsync();
 
+            // Broadcast veilingstart naar alle connected clients in groep.
             await _hub.Clients.Group($"auction-{veilingId}")
                 .SendAsync("AuctionStarted", new { auctionId = veilingId, startedAtUtc = veiling.StartTijd });
 
-            // Start first product
+            // Start eerste product.
             await StartNextProductAsync(veilingId);
         }
 
+        /// <summary>
+        /// Selecteert en start het volgende onverkochte product (FIFO op ArtikelId).
+        /// Zet StartedAtUtc (voor prijsberekening), stelt Status="RUNNING",
+        /// broadcast ProductStarted, en plant automatische vervalling.
+        /// </summary>
         public async Task StartNextProductAsync(int veilingId)
         {
-            // find next unsold product without StartedAt
+            // Selecteer volgende onverkochte product (niet gestart, niet verkocht, niet verlopen).
             var next = await _db.Product
                 .Where(p => p.VeilingId == veilingId && p.gebruiker_id == null && p.Status != "GEKOCHT" && p.StartedAtUtc == null)
                 .OrderBy(p => p.ArtikelId)
@@ -57,7 +77,7 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
 
             if (next == null)
             {
-                // No more products; end auction
+                // Geen producten meer: einde veiling.
                 var veiling = await _db.Veiling.FindAsync(veilingId);
                 if (veiling != null)
                 {
@@ -69,20 +89,25 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
                 return;
             }
 
+            // Zet startmoment op server-UTC nu (cruciaal voor client-prijsberekening).
             next.StartedAtUtc = DateTime.UtcNow;
             next.Status = "RUNNING";
             await _db.SaveChangesAsync();
 
+            // Broadcast ProductStarted naar cliënten; bevat startprijs en decrement-snelheid.
+            // Cliënten gebruiken deze voor lokale prijsweergave via offset-synchronisatie.
             await _hub.Clients.Group($"auction-{veilingId}")
                 .SendAsync("ProductStarted", new { productId = next.ArtikelId, startedAtUtc = next.StartedAtUtc, auctionId = veilingId, startPrice = next.StartPrijs, incrementPerSecond = next.IncrementPerSecond, minimumPrice = next.MinimumPrijs });
 
-            // Schedule automatic expiry when price reaches minimum (if applicable)
+            // Plan automatische vervalling wanneer prijs minimumwaarde bereikt.
+            // Deze taak draait op background thread om clients niet te blokkeren.
             try
             {
                 var startPrice = next.StartPrijs ?? 0m;
                 var minPrice = next.MinimumPrijs ?? 0m;
                 var increment = next.IncrementPerSecond ?? 0m;
 
+                // Bereken aantal seconden tot minimumprijs bereikt.
                 if (increment > 0 && startPrice > minPrice)
                 {
                     var secondsUntilMin = (double)((startPrice - minPrice) / increment);
@@ -92,17 +117,22 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
             }
             catch
             {
-                // Best-effort; do not throw if scheduling fails
+                // Best-effort: geen fout bij scheduling (geen blokkade voor clients).
             }
         }
 
+        /// <summary>
+        /// Background-taak voor automatische vervalling: wacht tot minimumprijs bereikt,
+        /// markeert product als "VERWORPEN", broadcast event, trigger volgende product.
+        /// </summary>
         private async Task ExpireProductAfterDelayAsync(int productId, int delayMs, DateTime startedAtUtc, int veilingId)
         {
-            // Run on background thread and create a new scope to access DB safely
+            // Wacht totdat minimumprijs tijd verstreken is (non-blocking async).
             await Task.Delay(delayMs);
 
             try
             {
+                // Maak nieuwe scope: background task moet fresh DB-context hebben.
                 using var scope = _scopeFactory.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<VeilingContext>();
                 var hub = scope.ServiceProvider.GetRequiredService<IHubContext<AuctionHub>>();
@@ -111,67 +141,82 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
                 var p = await db.Product.SingleOrDefaultAsync(x => x.ArtikelId == productId);
                 if (p == null) return;
 
-                // Ensure nothing changed: still running, unsold, and same start time
+                // Dubbel-check product nog niet verkocht en startmoment ongewijzigd
+                // (voorkoming van race condition tussen taak en aankoop).
                 if (p.Status == "RUNNING" && string.IsNullOrEmpty(p.gebruiker_id) && p.StartedAtUtc.HasValue && p.StartedAtUtc.Value == startedAtUtc)
                 {
-                    // mark as discarded/expired
-                    p.Status = "VERWORPEN"; // discarded
+                    // Mark product as "VERWORPEN" (verlopen).
+                    p.Status = "VERWORPEN";
                     await db.SaveChangesAsync();
 
+                    // Notify cliënten dat product verlopen is.
                     await hub.Clients.Group($"auction-{veilingId}")
                         .SendAsync("ProductExpired", new { productId = p.ArtikelId, expiredAtUtc = DateTime.UtcNow });
 
-                    // start next product (if any)
+                    // Auto-start volgende product (lifecycle voort).
                     await mgr.StartNextProductAsync(veilingId);
                 }
             }
             catch
             {
-                // swallow - non-critical
+                // Swallow: non-critical background taak; geen blokkade voor cliënten.
             }
         }
+        /// <summary>
+        /// Probeert product(en) te kopen: handelt meerdere stuks af (deelverpakking),
+        /// berekent prijs via server-authoriteit, maakt GekochtProduct aan,
+        /// en triggert volgende product als volledig verkocht.
+        /// 
+        /// Concurrency-strategie:
+        /// - Per-product semaphore: één-enige in-memory critical section per artikel.
+        /// - Optimistic concurrency: RowVersion op database voor detectie van conflicten.
+        /// </summary>
         public async Task<bool> TryBuyProductAsync(int productId, string buyerId, int hoeveelheid = 1, decimal? offeredPrice = null)
         {
-            // Use per-product semaphore to prevent concurrent buys in-memory and allow async/await within critical section
+            // Per-product semaphore: syncroniseert gelijktijdige aankopen op hetzelfde artikel.
+            // Voorkomt race conditions in-memory (bijv. dubbele hoeveelheid-check).
             var sem = _productLocks.GetOrAdd(productId, _ => new System.Threading.SemaphoreSlim(1,1));
             await sem.WaitAsync();
             try
             {
-                // Requery database state (async) to avoid stale data in concurrent contexts
+                // Herquery database-staat (AsNoTracking): voorkoming van stale data in gelijktijdige context.
+                // Eerste check alleen voor snelle validatie; latere Fetch() brengt entiteit in context.
                 var current = await _db.Product.AsNoTracking().SingleOrDefaultAsync(p => p.ArtikelId == productId);
                 if (current == null) return false;
 
-                // Determine available quantity (treat null as 1)
+                // Bepaal beschikbare hoeveelheid (null behandelen als 1).
                 var available = current.Hoeveelheid ?? 1;
                 if (available <= 0) return false;
 
                 if (hoeveelheid <= 0) return false;
 
-                if (hoeveelheid > available) return false; // cannot buy more than available
+                if (hoeveelheid > available) return false; // Niet meer kopen dan beschikbaar.
 
-                // If product already fully assigned to a buyer, reject
-                if (!string.IsNullOrEmpty(current.gebruiker_id)) return false; // already sold
+                // Check: product niet al volledig aan koper toegewezen.
+                if (!string.IsNullOrEmpty(current.gebruiker_id)) return false; // Reeds verkocht.
 
+                // Valideer veiling-status als product aan veiling toegewezen.
                 if (current.VeilingId.HasValue)
                 {
                     var veiling = await _db.Veiling.FindAsync(current.VeilingId.Value);
                     if (veiling == null) return false;
                     if (veiling.Status != "Ongoing") return false;
-                    if (DateTime.UtcNow > veiling.EindTijd) return false;
+                    if (DateTime.UtcNow > veiling.EindTijd) return false;  // Veiling verlopen.
                 }
 
-                // Fetch tracked entity to update (or find and attach)
+                // Fetch tracked entiteit voor update (kan nu veilig aanpassen).
                 var product = await _db.Product.FindAsync(productId);
                 if (product == null) return false;
 
-                // Ensure product has started
+                // Zet startmoment indien nog niet gestart (fallback).
                 if (!product.StartedAtUtc.HasValue)
                 {
-                    // Start it immediately
                     product.StartedAtUtc = DateTime.UtcNow;
                 }
 
-                // calculate price (per-unit)
+                // **Prijsberekening**: Server-authoriteit via lineaire prijsdaling.
+                // Formule: prijs = startPrijs - (nu - startMoment) * increment
+                // Prijs kan niet lager dan minimumPrijs gaan.
                 var elapsed = (DateTime.UtcNow - product.StartedAtUtc.Value).TotalSeconds;
                 var startPrice = product.StartPrijs ?? 0m;
                 var increment = product.IncrementPerSecond ?? 0m;
@@ -180,7 +225,8 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
                 var newPrice = startPrice - (decimal)elapsed * increment;
                 if (newPrice < minPrice) newPrice = minPrice;
 
-                // Create a GekochtProduct record for this purchase
+                // **GekochtProduct**: Registreer aankoop incl. hoeveelheid en prijs.
+                // Dit record dient als audit trail van transactie.
                 var gekocht = new GekochtProduct
                 {
                     ProductId = product.ArtikelId,
@@ -192,14 +238,15 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
 
                 _db.GekochtProduct.Add(gekocht);
 
-                // Decrement available quantity
+                // Decrement beschikbare hoeveelheid na dit aankoop.
                 var remaining = (product.Hoeveelheid ?? 1) - hoeveelheid;
                 product.Hoeveelheid = remaining;
 
-                // If this purchase exhausts the product, mark it sold
+                // Check of product nu volledig verkocht is (resterende hoeveelheid <= 0).
                 var fullySold = remaining <= 0;
                 if (fullySold)
                 {
+                    // Product volledig weg: zet eindstatus, markeer koper, sla prijs op.
                     product.gebruiker_id = buyerId;
                     product.Status = "GEKOCHT";
                     product.KoopPrijs = offeredPrice ?? newPrice;
@@ -207,9 +254,13 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
 
                 try
                 {
+                    // **SaveChanges**: Optimistic concurrency check via RowVersion.
+                    // Indien conflict (iemand ander kocht gelijktijdig): catch exception en return false.
                     await _db.SaveChangesAsync();
 
-                    // Broadcast sale only when fully sold; otherwise broadcast an update so clients can refresh quantities
+                    // **Broadcasting**: Afhankelijk of volledig verkocht of partieel.
+                    // - ProductSold (volledig): trigger volgende product.
+                    // - ProductUpdated (partieel): clients kunnen hoeveelheid verversen.
                     if (fullySold)
                     {
                         await _hub.Clients.Group($"auction-{product.VeilingId}")
@@ -223,14 +274,16 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    // concurrency conflict => someone bought first
+                    // Concurrency-conflict: iemand ander kocht gelijktijdig (RowVersion gewijzigd).
+                    // Return false; client kan opnieuw proberen.
                     return false;
                 }
 
-                // Start next product only if this product was fully sold
+                // **Volgende product**: Trigger alleen als dit product volledig verkocht EN aan veiling toegewezen.
+                // Async zonder blokkade: background taak met nieuwe scope.
                 if (product.VeilingId.HasValue && fullySold)
                 {
-                    // Start next product without blocking the caller for long - run asynchronously using a new scope so we don't access a disposed DbContext
+                    // Nieuwe scope: background task kan disposed DbContext niet hergebruiken.
                     _ = Task.Run(async () =>
                     {
                         try
@@ -247,7 +300,7 @@ private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, 
             }
             finally
             {
-                sem.Release();
+                sem.Release();  // Geef semaphore vrij voor volgende aankoop.
             }
         }
     }
