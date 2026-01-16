@@ -1,21 +1,42 @@
 ﻿import { useState, useEffect } from 'react';
 import '../styles/VeilingmeesterCreateAuction.css';
 
+/**
+ * CreateAuction (VeilingmeesterCreateAuction)
+ *
+ * Veilingmeesterscherm voor beheer en creatie van veilingen.
+ * Functies en verantwoordelijkheden:
+ * - Toont een lijst van bestaande veilingen met status (IDLE, LIVE, GEEÏNDIGD).
+ * - Biedt formulier om nieuwe veiling aan te maken met naam, eindtijd, en product-selectie.
+ * - Haalt beschikbare producten op en filtert op basis van toewijzing en voorraad.
+ * - Ondersteunt product-selectie met rol-specifieke prijsinstellingen (startprijs, increment/s).
+ * - Toont product-details in modal (soort, potmaat, steellengte, hoeveelheid, etc.).
+ * - Ondersteunt start-actie (status wijzigen van Idle naar Ongoing).
+ * - Ondersteunt verwijderings-actie met bevestiging.
+ * - Poll veilingen en producten bij focus/visibility-wijziging (altijd actueel).
+ * - Postverwerkingsstap: voegt geselecteerde producten toe aan de net-gemaakte veiling.
+ */
 function CreateAuction({ auctions, addAuction }) {
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    // UI-state
     const [localAuctions, setLocalAuctions] = useState([]);
     const [products, setProducts] = useState([]);
+    // Product-selectie mapping: { [productId]: { selected, startPrice, incrementPerSecond } }
     const [selected, setSelected] = useState({});
+    // Modal state voor product-details
     const [productModal, setProductModal] = useState(null);
     const [productLoading, setProductLoading] = useState(false);
+    // Filtertoggle: toon producten die al zijn toegewezen of geen voorraad hebben
     const [showUnavailable, setShowUnavailable] = useState(true);
 
     const openProductModal = async (id, initialProduct = null) => {
         try {
+            // Als productgegevens al lokaal beschikbaar zijn, toon ze onmiddellijk
             if (initialProduct) setProductModal(initialProduct);
             setProductLoading(true);
+            // Haal volledige productgegevens op vanuit API
             const res = await fetch(`http://localhost:5102/api/products/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } });
             if (!res.ok) {
                 const text = await res.text();
@@ -38,6 +59,7 @@ function CreateAuction({ auctions, addAuction }) {
         endTime: ''
     });
 
+    /** Schakel product-selectie aan/uit en initialiseer prijsinstellingen */
     const toggleProductSelected = (id) => {
         setSelected(prev => {
             const exists = prev[id];
@@ -52,11 +74,14 @@ function CreateAuction({ auctions, addAuction }) {
     };
 
     useEffect(() => {
+        // Initiële fetch: haal veilingen en producten op
         fetchAuctions();
 
         fetchProducts();
 
+        // Re-fetch veilingen bij terugkeer naar window (focus)
         const onFocus = () => fetchAuctions();
+        // Re-fetch veilingen bij terugkeer naar tab/window (visibilitychange)
         const onVisibility = () => {
             if (document.visibilityState === 'visible') fetchAuctions();
         };
@@ -71,6 +96,7 @@ function CreateAuction({ auctions, addAuction }) {
     }, []);
 
     useEffect(() => {
+        // Keybinding: Esc sluit product-detail modal
         if (!productModal && !productLoading) return;
         const onKeyDown = (e) => {
             const isEscape = e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27;
@@ -91,6 +117,7 @@ function CreateAuction({ auctions, addAuction }) {
         return () => document.removeEventListener('keydown', onKeyDown, true);
     }, [productModal, productLoading]);
 
+    // Keybinding: Esc sluit formulier-modal (bij open)
     useEffect(() => {
         if (!showForm) return;
         const handleKeyDown = (e) => {
@@ -98,6 +125,7 @@ function CreateAuction({ auctions, addAuction }) {
             if (isEscape) {
                 e.preventDefault();
                 e.stopPropagation();
+                // Sluit eerst eventueel geopende product-modal, anders sluit formulier
                 if (productModal) {
                     setProductModal(null);
                     return;
@@ -115,6 +143,7 @@ function CreateAuction({ auctions, addAuction }) {
         };
     }, [showForm, productModal]);
 
+    /** Haal alle beschikbare producten op */
     const fetchProducts = async () => {
         try {
             const res = await fetch('http://localhost:5102/api/products',
@@ -128,6 +157,7 @@ function CreateAuction({ auctions, addAuction }) {
         }
     };
 
+    /** Haal alle veilingen op (niet alleen de geïnitialeerde) */
     const fetchAuctions = async () => {
         try {
             const response = await fetch('http://localhost:5102/api/auctions',
@@ -143,6 +173,7 @@ function CreateAuction({ auctions, addAuction }) {
         }
     };
 
+    /** Verwijder veiling met bevestiging en ververs lijsten */
     const handleDelete = async (id) => {
         if (!window.confirm('Weet je zeker dat je deze veiling wilt verwijderen?')) {
             return;
@@ -167,6 +198,7 @@ function CreateAuction({ auctions, addAuction }) {
         }
     };
 
+    /** Start veiling: wijzig status naar "Ongoing" en ververs lijsten */
     const handleStart = async (id) => {
         if (!window.confirm('Wil je deze veiling starten?')) return;
 
@@ -190,6 +222,10 @@ function CreateAuction({ auctions, addAuction }) {
         }
     };
 
+    /**
+     * Creatie-handler: valideer, bouw veiling-payload, POST naar API,
+     * voeg geselecteerde producten toe aan veiling via PUT /api/products/{id}.
+     */
     const handleSubmit = async (e) => {
         e.preventDefault();
         const selectedIds = Object.keys(selected).filter(k => selected[k].selected);
@@ -260,15 +296,19 @@ function CreateAuction({ auctions, addAuction }) {
         }
     };
 
+    /** Helper: format bedrag als euro-waarde in NL-locale */
     const formatPrice = (price) => {
         if (!price && price !== 0) return '€ 0.00';
         return `€ ${parseFloat(price).toFixed(2)}`;
     };
 
+    /** Helper: bepaal veilingId van product (flexibel voor verschillende veld-namen) */
     const getProductAuctionId = (p) => p.veilingId ?? p.veiling_id ?? (p.veiling && p.veiling.id) ?? null;
 
+    // UI-state voor uitvouwbare veilingen
     const [expandedAuctions, setExpandedAuctions] = useState({});
 
+    /** Toggle veilinguitvouwing voor product-details weergave */
     const toggleAuction = (id) => {
         setExpandedAuctions(prev => {
             const next = { ...prev, [id]: !prev[id] };
@@ -277,12 +317,15 @@ function CreateAuction({ auctions, addAuction }) {
         });
     };
 
+    /** Helper: filter producten die aan een specifieke veiling zijn toegewezen */
     const getProductsForAuction = (auctionId) => products.filter(p => getProductAuctionId(p) === auctionId);
 
+    /** Helper: filter producten die nog niet zijn toegewezen aan een veiling */
     const availableProducts = products.filter(p => getProductAuctionId(p) === null);
 
     return (
         <div className="create-container">
+            {/* Header: titel en knop voor nieuwe veiling */}
             <div className="create-header">
                 <h1>Veilingen</h1>
                 <button
@@ -294,6 +337,7 @@ function CreateAuction({ auctions, addAuction }) {
                 </button>
             </div>
 
+            {/* Formulier-overlay: creatie van nieuwe veiling */}
             {showForm && (
                 <div className="form-overlay">
                     <div className="form-modal">
@@ -307,7 +351,10 @@ function CreateAuction({ auctions, addAuction }) {
                             </button>
                         </div>
                         <form onSubmit={handleSubmit}>
+                            {/* Algemene foutmelding */}
                             {error && <div className="error-message">{error}</div>}
+                            
+                            {/* Veilingnaam veld */}
                             <div className="form-group">
                                 <label>Veilingnaam</label>
                                 <input
@@ -320,6 +367,8 @@ function CreateAuction({ auctions, addAuction }) {
                                     disabled={loading}
                                 />
                             </div>
+                            
+                            {/* Eindtijd veld */}
                             <div className="form-group">
                                 <label>Eindtijd</label>
                                 <input
@@ -331,6 +380,7 @@ function CreateAuction({ auctions, addAuction }) {
                                 />
                             </div>
 
+                            {/* Product-selectie met filter-toggle */}
                             <div className="form-group full-width">
                                 <div className="product-header-with-toggle">
                                     <label>Kies Producten</label>
@@ -434,6 +484,7 @@ function CreateAuction({ auctions, addAuction }) {
                                                             )}
 
                                                             {selected[p.id]?.selected && (
+                                                                // Rol-specifieke prijsinstellingen bij selectie
                                                                 <div className="product-settings" onClick={(e)=>e.stopPropagation()}>
                                                                     <label>Startprijs (€)</label>
                                                                     <input type="number" step="0.01" value={selected[p.id]?.startPrice} onChange={(e) => setSelected(prev => ({ ...prev, [p.id]: { ...prev[p.id], startPrice: e.target.value } }))} disabled={loading} />
@@ -450,6 +501,7 @@ function CreateAuction({ auctions, addAuction }) {
                                 </div>
                             </div>
 
+                            {/* Submit knop */}
                             <button type="submit" className="submit-button" disabled={loading}>
                                 {loading ? 'Bezig met opslaan...' : 'Bevestigen'}
                             </button>
@@ -459,6 +511,7 @@ function CreateAuction({ auctions, addAuction }) {
                 </div>
             )}
 
+            {/* Product-detail modal */}
             {(productLoading || productModal) && (
                 <div className="detail-modal-overlay" onClick={() => setProductModal(null)}>
                     <div className="detail-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
@@ -471,12 +524,14 @@ function CreateAuction({ auctions, addAuction }) {
                                 <div style={{padding: 24}}>Productinformatie wordt geladen…</div>
                             ) : (
                                 <>
+                                    {/* Productafbeelding */}
                                     {productModal.afbeelding && (
                                         <div className="detail-image">
                                             <img src={productModal.afbeelding} alt="product" onError={(e)=>{e.target.src=''; e.target.style.backgroundColor='#f3f3f3'}} />
                                         </div>
                                     )}
 
+                                    {/* Product details: soort, maten, hoeveelheid, prijzen, etc. */}
                                     <div className="detail-fields">
                                         <div className="detail-row"><strong>Soort:</strong> <span>{productModal.soort}</span></div>
                                         <div className="detail-row"><strong>Potmaat:</strong> <span>{productModal.potmaat ?? '-'}</span></div>
@@ -495,7 +550,7 @@ function CreateAuction({ auctions, addAuction }) {
                     </div>
                 </div>
             )}
-
+            {/* Lijst: bestaande veilingen met uitvouwbare product-details */}
             <div className="auctions-list-create">
                 <h2>Huidige Veilingen</h2>
                 <div className="auctions-grid-create">
@@ -543,6 +598,7 @@ function CreateAuction({ auctions, addAuction }) {
                                         </div>
                                     </div>
                                     <div className="auction-item-details">
+                                        {/* Veilingdetails: startprijs en eindtijd */}
                                         <div className="detail-small">
                                             <span>Startprijs:</span>
                                             <strong>{formatPrice(auction.startingPrice)}</strong>
@@ -560,6 +616,7 @@ function CreateAuction({ auctions, addAuction }) {
                                         </div>
                                     </div>
 
+                                    {/* Uitvouwbare sectie: producten in deze veiling */}
                                     {expandedAuctions[auction.id] && (
                                         <div className="auction-products" onClick={(e) => e.stopPropagation()}>
                                             <h4>Producten in deze veiling</h4>

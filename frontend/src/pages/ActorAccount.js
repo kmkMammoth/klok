@@ -1,11 +1,26 @@
 ﻿import '../styles/ActorAccount.css';
 import { useEffect, useState } from 'react';
 
+/**
+ * Account
+ * Toont een eenvoudige accountoverzichtspagina:
+ * - Leest Bearer-token uit localStorage om ingelogd-status te bepalen
+ * - Haalt de gebruikersrol op via de backend (`/api/UserManagement/role`)
+ * - Toont rol en eventuele foutmelding op het scherm
+ */
 const Account = () => {
+    // Inlogstatus op basis van aanwezigheid van accessToken.
     const hasToken = !!localStorage.getItem('accessToken');
+    // Weergegeven rol; default "-" totdat API-response binnen is.
     const [role, setRole] = useState('-');
+    // Eventuele foutmelding uit API-call.
     const [error, setError] = useState('');
 
+    /**
+     * Haal de huidige rol van de ingelogde gebruiker op.
+     * Vereist geldig Bearer-token (anders 401). Bij succes wordt de eerste rol getoond.
+     * Bij fout: toon bericht en reset rol naar '-'.
+     */
     const fetchRole = async () => {
         try {
             setError('');
@@ -34,16 +49,19 @@ const Account = () => {
         }
     };
 
+    // Haal rol op bij initial mount.
     useEffect(() => {
         fetchRole();
     }, []);
 
     return (
         <div style={{ padding: '1rem' }}>
+            {/* Eenvoudige accountheader + statusoverzicht */}
             <h1>Account</h1>
             <h2>Welkom, {role}</h2>
             <p><strong>Ingelogd:</strong> {hasToken ? 'Ja' : 'Nee'}</p>
             <p><strong>Rol:</strong> {role}</p>
+            {/* Foutmelding uit API-call naar rol-endpoint */}
             {error ? <p style={{ color: 'crimson' }}><strong>Fout:</strong> {error}</p> : null}
         </div>
     );

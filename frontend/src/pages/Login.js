@@ -3,20 +3,37 @@ import { Link, useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 import { useRole } from '../auth/RoleContext';
 
+/**
+ * Login
+ *
+ * Inlogscherm voor gebruikers.
+ * Functies en verantwoordelijkheden:
+ * - Toont een loginformulier met velden voor e-mailadres/gebruikersnaam en wachtwoord.
+ * - Valideert invoer client-side voordat submission wordt verzonden.
+ * - Stuurt logingegevens naar /login-endpoint (ASP.NET Identity minimal API).
+ * - Slaat ontvangen accessToken op in localStorage.
+ * - Haalt gebruikersrollen op via RoleContext.refresh() om de app-state bij te werken.
+ * - Navigeert naar /account (ActorAccount) na succesvolle login.
+ * - Toont foutvermeldingen voor ongeldige inloggegevens of netwerkproblemen.
+ * - Ondersteunt "Onthoud mij" checkbox en "Wachtwoord vergeten"-link.
+ */
 const Login = () => {
     const navigate = useNavigate();
     const { refresh } = useRole();
 
+    // Formulier-state: e-mail/gebruikersnaam en wachtwoord
     const [formData, setFormData] = useState({
         emailOrUsername: '',
         password: ''
     });
+    // UI-state
     const [rememberMe, setRememberMe] = useState(false);
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        // Update formulier-veld en wis gerelateerde fout als gebruiker begint in te typen
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -34,6 +51,7 @@ const Login = () => {
         setIsLoading(true);
         setErrors({});
 
+        // Valideer invoer: e-mail/username en wachtwoord zijn verplicht
         const newErrors = {};
         if (!formData.emailOrUsername.trim()) {
             newErrors.emailOrUsername = 'E-mailadres of gebruikersnaam is verplicht';
@@ -49,7 +67,7 @@ const Login = () => {
         }
 
         try {
-            // Identity minimal API login endpoint (MapIdentityApi<Gebruiker>())
+            // Stuur logingegevens naar ASP.NET Identity API (/login endpoint)
             const response = await fetch('http://localhost:5102/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -66,15 +84,18 @@ const Login = () => {
 
             const data = await response.json();
 
+            // Valideer dat accessToken aanwezig is in response
             if (!data?.accessToken) {
                 throw new Error('Login response bevat geen accessToken.');
             }
 
+            // Sla token op in localStorage voor toekomstige API-calls
             localStorage.setItem('accessToken', data.accessToken);
 
-            // Cruciaal: direct roles ophalen met het nieuwe token
+            // Haal rollen op met het nieuwe token en werk app-state bij
             await refresh();
 
+            // Navigeer naar account-pagina na succesvolle login
             navigate('/account');
         } catch (error) {
             setErrors({
@@ -89,6 +110,7 @@ const Login = () => {
         <div className="login-page">
             <div className="login-container">
                 <div className="login-card">
+                    {/* Avatar-icoon */}
                     <div className="login-avatar">
                         <svg className="avatar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -99,6 +121,7 @@ const Login = () => {
                     <h1 className="login-title">Welkom terug</h1>
                     <p className="login-subtitle">Log in op uw account om door te gaan</p>
 
+                    {/* Loginformulier */}
                     <form className="login-form" onSubmit={handleSubmit}>
                         {errors.general && (
                             <div className="message error-message">
@@ -106,6 +129,7 @@ const Login = () => {
                             </div>
                         )}
 
+                        {/* E-mail/gebruikersnaam-veld */}
                         <div className="form-group">
                             <label htmlFor="emailOrUsername">E-mailadres of Gebruikersnaam</label>
                             <input
@@ -121,6 +145,7 @@ const Login = () => {
                             )}
                         </div>
 
+                        {/* Wachtwoord-veld */}
                         <div className="form-group">
                             <label htmlFor="password">Wachtwoord</label>
                             <input
@@ -136,6 +161,7 @@ const Login = () => {
                             )}
                         </div>
 
+                        {/* Opties: "Onthoud mij" en wachtwoord vergeten link */}
                         <div className="form-options">
                             <label className="checkbox-label">
                                 <input
@@ -151,6 +177,7 @@ const Login = () => {
                             </Link>
                         </div>
 
+                        {/* Inlogknop */}
                         <button
                             type="submit"
                             className="btn-login-submit"
@@ -160,6 +187,7 @@ const Login = () => {
                         </button>
                     </form>
 
+                    {/* Link naar registratiepagina */}
                     <div className="register-prompt">
                         <span>Nog geen account? </span>
                         <Link to="/register" className="register-link">

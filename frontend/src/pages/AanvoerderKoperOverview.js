@@ -1,5 +1,15 @@
 import '../styles/AanvoerderKoperOverview.css';
+
+/**
+ * KoperOverview
+ * Toont een beknopt klantenoverzicht voor de aanvoerder met
+ * basisinformatie over de laatste veilingtransactie en kopergegevens.
+ *
+ * Huidige implementatie gebruikt statische mockdata ter illustratie.
+ * In productie kan dit vervangen worden door data uit de backend (fetch/Query).
+ */
 function KoperOverview() {
+  // Mock kopergegevens; vervang door API-response indien beschikbaar.
   const koper = {
     naam: 'Piets plantpaleis',
     kvk: '12345678',
@@ -8,6 +18,7 @@ function KoperOverview() {
     iban: 'NL99 INGB 0123 4567 89'
   };
 
+  // Mock veilinginformatie; bevat samenvatting van laatste verkoop.
   const veiling = {
     product: 'Roze Tulpen',
     status: 'Geveild',
@@ -21,6 +32,7 @@ function KoperOverview() {
       <main className="koper-overview-container">
         <h1>Klantenoverzicht</h1>
 
+        {/* Sectie: product-/veilinginformatie in readOnly inputs voor snelle scan */}
         <section aria-labelledby="product-info-heading" className="product-info">
           <div className="info-row-single">
             <label htmlFor="product">Product:</label>
@@ -40,6 +52,7 @@ function KoperOverview() {
           </div>
         </section>
 
+        {/* Sectie: koperprofiel met basis contact-/facturatiegegevens */}
         <section aria-labelledby="koper-info-heading" className="koper-info">
           <h2 id="koper-info-heading">Koperinformatie:</h2>
 

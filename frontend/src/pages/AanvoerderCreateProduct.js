@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import '../styles/AanvoerderCreateProduct.css';
 
+/**
+ * AanvoerderCreateProduct
+ * Beheert het aanmaken, tonen en verwijderen van producten door de aanvoerder.
+ * - Laadt bestaande producten bij initiële render
+ * - Biedt formulier met basisvalidatie (soort/minimumprijs)
+ * - Uploadt optionele afbeelding (base64 DataURL)
+ * - Gebruikt Bearer-token uit localStorage voor API-calls
+ * - Toont detailmodal en ondersteunt ESC/Enter toegankelijkheid
+ */
+
 function AanvoerderCreateProduct() {
     const [showForm, setShowForm] = useState(false);
     const [showDetail, setShowDetail] = useState(false);
@@ -20,10 +30,12 @@ function AanvoerderCreateProduct() {
     });
 
     useEffect(() => {
+        // Initieel producten ophalen bij mount.
         fetchProducts();
     }, []);
 
     useEffect(() => {
+    // Globale ESC-sneltoets: sluit detailmodal of formulier indien open.
     const handleKeyDown = (e) => {
         if (e.key === 'Escape') {
             if (showDetail) closeDetail();
@@ -39,6 +51,10 @@ function AanvoerderCreateProduct() {
 }, [showForm, showDetail]);
 
 
+    /**
+     * Haal alle producten op voor de aanvoerder.
+     * Vereist geldig Bearer-token in localStorage onder 'accessToken'.
+     */
     const fetchProducts = async () => {
         try {
             const response = await fetch('http://localhost:5102/api/products', {headers: {Authorization: `Bearer ${localStorage.getItem('accessToken')}`}});
@@ -50,6 +66,10 @@ function AanvoerderCreateProduct() {
         }
     };
 
+    /**
+     * Verwijder product met bevestiging.
+     * Bij succes: update lokale lijst zonder nieuwe fetch.
+     */
     const handleDelete = async (id) => {
         if (!window.confirm('Weet je zeker dat je dit product wilt verwijderen?')) return;
 
@@ -66,6 +86,7 @@ function AanvoerderCreateProduct() {
         }
     };
 
+    // Detailmodal open/sluit helpers.
     const openDetail = (product) => {
         setSelectedProduct(product);
         setShowDetail(true);
@@ -76,6 +97,10 @@ function AanvoerderCreateProduct() {
         setShowDetail(false);
     };
 
+    /**
+     * Bestand-upload handler: converteer afbeelding naar base64 DataURL
+     * en sla op in formulierstate voor directe preview en POST.
+     */
     const handleFileChange = (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
@@ -86,6 +111,13 @@ function AanvoerderCreateProduct() {
         reader.readAsDataURL(file);
     };
 
+    /**
+     * Verstuur nieuw product naar backend.
+     * - Basisvalidatie client-side (verplicht soort, minprijs >= 0)
+     * - Normaliseert numerieke velden naar getal of null
+     * - Stuurt Bearer-token mee in headers
+     * - Foutafhandeling: toont backend-bericht indien beschikbaar
+     */
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.soort) {
@@ -167,6 +199,7 @@ function AanvoerderCreateProduct() {
             </div>
 
             {showForm && (
+                /* Formulier-overlay en modal voor aanmaken nieuw product */
                 <div className="form-overlay">
                     <div className="form-modal">
                         <div className="form-header">
@@ -177,6 +210,7 @@ function AanvoerderCreateProduct() {
                             {error && <div className="error-message">{error}</div>}
 
                             <div className="form-grid">
+                                {/* Basis productvelden: soort/potmaat/steellengte/hoeveelheid/minimumprijs */}
                                 <div className="form-group">
                                     <label>Soort</label>
                                     <input autoFocus onFocus={(e) => e.target.select()} placeholder="bijv. Roos" type="text" value={formData.soort} onChange={(e) => setFormData({...formData, soort: e.target.value})} required disabled={loading} />
@@ -231,6 +265,7 @@ function AanvoerderCreateProduct() {
             <div className="auctions-list-create">
                 <h2>Huidige Producten</h2>
                 <div className="auctions-grid-create">
+                    {/* Overzicht van bestaande producten met delete-actie en detail-openen */}
                     {localProducts.length === 0 ? (
                         <div className="no-auctions">Geen producten gevonden.</div>
                     ) : (
@@ -255,6 +290,7 @@ function AanvoerderCreateProduct() {
             </div>
 
             {showDetail && selectedProduct && (
+                /* Detailmodal voor snelle inspectie van productvelden */
                 <div className="detail-modal-overlay" onClick={closeDetail}>
                     <div className="detail-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="detail-modal-header">
